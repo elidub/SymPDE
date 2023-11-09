@@ -1,0 +1,7 @@
+matplotlib
+numba
+numpy
+scipy
+tqdm
+sympy
+py-pde
