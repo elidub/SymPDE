@@ -6,3 +6,6 @@ tqdm
 sympy
 py-pde
 torch
+h5py
+torch_geometric
+torch-cluster

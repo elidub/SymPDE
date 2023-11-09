@@ -11,6 +11,9 @@ from torch import nn
 from torch.nn import functional as F
 from torch_geometric.data import Data
 from torch_cluster import radius_graph, knn_graph
+
+import sys, os
+sys.path.append(os.getcwd())
 from common.augmentation import KdV_augmentation, KS_augmentation, Heat_augmentation, to_coords
 from common.augmentation import Subalgebra
 from equations.PDEs import PDE, KdV

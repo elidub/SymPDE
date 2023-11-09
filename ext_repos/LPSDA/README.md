@@ -72,3 +72,11 @@ Setting any of these values to zero corresponds to switching off the augmentatio
 The mixing parameter determines to which extend different trajectories are mixed to generate a new trajectory. 
 
 `CUDA_VISIBLE_DEVICES=0 python experiments/train.py --device=cuda:0 --experiment=KS --Burgers_augmentation=1,1.0,0.5 --train_samples=512`
+
+
+## SymPDE dev
+```bash
+python generate/generate_data.py --experiment=KdV --train_samples=10 --valid_samples=10 --test_samples=10 --L=128 --end_time=50. --suffix=easy
+python experiments/train.py --experiment=KdV --KdV_augmentation=1,1.0,0.4,0.1 --train_samples=10 --suffix=easy
+
+```

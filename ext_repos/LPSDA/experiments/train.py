@@ -12,6 +12,9 @@ from typing import Tuple
 from torch import nn, optim
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
+
+import sys, os
+sys.path.append(os.getcwd())
 from common.utils import HDF5Dataset, DataCreator
 from experiments.models_cnn import CNN, ResNet, BasicBlock1d
 from experiments.models_fno import FNO1d
@@ -174,7 +177,7 @@ def main(args: argparse):
         train_loader = DataLoader(train_dataset,
                                   batch_size=args.batch_size,
                                   shuffle=True,
-                                  num_workers=4,
+                                  num_workers=args.num_workers,
                                   persistent_workers=True,
                                   pin_memory=True)
 
@@ -187,7 +190,7 @@ def main(args: argparse):
         valid_loader = DataLoader(valid_dataset,
                                   batch_size=args.batch_size,
                                   shuffle=False,
-                                  num_workers=4,
+                                  num_workers=args.num_workers,
                                   persistent_workers=True,
                                   pin_memory=True)
 
@@ -200,7 +203,7 @@ def main(args: argparse):
         test_loader = DataLoader(test_dataset,
                                  batch_size=args.batch_size,
                                  shuffle=False,
-                                 num_workers=4,
+                                 num_workers=args.num_workers,
                                  persistent_workers=True,
                                  pin_memory=True)
     except:
@@ -346,6 +349,7 @@ if __name__ == "__main__":
                         help='Interval between print statements')
     parser.add_argument('--log', type=eval, default=False,
                         help='pip the output to log file')
+    parser.add_argument('--num_workers', type=int, default=0,)
 
     args = parser.parse_args()
     main(args)

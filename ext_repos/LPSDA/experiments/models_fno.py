@@ -9,6 +9,9 @@ from typing import Tuple
 
 from torch import nn
 from torch.nn import functional as F
+
+import sys, os
+sys.path.append(os.getcwd())
 from equations.PDEs import PDE
 
 ################################################################

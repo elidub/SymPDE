@@ -4,6 +4,9 @@ import random
 from typing import Tuple
 from torch import nn, optim
 from torch.utils.data import DataLoader
+
+import sys, os
+sys.path.append(os.getcwd())
 from common.utils import HDF5Dataset, DataCreator
 from equations.PDEs import *
 

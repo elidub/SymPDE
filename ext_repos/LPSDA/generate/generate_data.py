@@ -11,6 +11,9 @@ from typing import Tuple
 from scipy.integrate import solve_ivp
 from copy import copy
 from datetime import datetime
+
+import sys, os
+sys.path.append(os.getcwd())
 from equations.PDEs import PDE, KdV, KS, Heat
 
 
