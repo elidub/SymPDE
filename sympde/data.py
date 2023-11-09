@@ -4,71 +4,17 @@ import numpy as np
 from math import pi
 from tqdm import tqdm
 from scipy.integrate import solve_ivp
+from scipy.fftpack import diff as psdiff
 
 from pde import PDE, CartesianGrid, ScalarField, MemoryStorage
 
-def generate_params(N_params: int = 10, seed: int = 42):
-    np.random.seed(seed)
-    As = np.random.uniform(-0.5, 0.5, N_params)
-    ws = np.random.choice([1, 2, 3], N_params)
-    phis = np.random.uniform(0, 2*pi, N_params)
+# def generate_params(N_params: int = 10, seed: int = 42):
+#     np.random.seed(seed)
+#     As = np.random.uniform(-0.5, 0.5, N_params)
+#     ws = np.random.choice([1, 2, 3], N_params)
+#     phis = np.random.uniform(0, 2*pi, N_params)
 
-    return (As, ws, phis)
-
-
-# class CreatePDEData_SymPDE:
-#     def __init__(self, pde_exp: str = 'd2_dx2(u)', Nt: int = 600):
-#         self.pde_exp = pde_exp
-#         self.Nt = Nt
-#         self.grid_sizes = [50]
-#         self.N_init_cond = 10
-
-#     def get_init_cond(self, N: int) -> str:
-#         """
-#         Sample initial condition as a sum of N sine functions
-#         """
-#         params = generate_params()
-#         sins = [f'{A} * sin({w} * x + {phi})' for A, w, phi in zip(*params)]
-#         init_cond = ' + '.join(sins)
-#         return init_cond
-
-
-#     def solve_pde(self, 
-#             pde_exp, dt, Nt,
-#             bounds = [[0, 2 * pi]], grid_sizes = [50]
-#         ):
-
-#         init_cond = self.get_init_cond(self.N_init_cond)
-
-#         t_range = 1
-#         dt = t_range/(Nt - 1)
-#         dt_track = t_range/(Nt - 1)
-
-#         eq = PDE({"u": pde_exp})
-#         grid = CartesianGrid(bounds, grid_sizes, periodic=True)
-#         state = ScalarField.from_expression(grid, init_cond)
-
-#         # solve the equation and store the trajectory
-#         storage = MemoryStorage()
-#         eq.solve(state, 
-#                 t_range=t_range, 
-#                 dt = dt, 
-#                 adaptive = True,
-#                 tracker=[storage.tracker(dt_track)],
-#         )
-
-#         return storage
-    
-#     def get_data(self, N_samples: int = 1):
-#         data = np.zeros((N_samples, self.Nt, *self.grid_sizes))
-
-#         for i in tqdm(range(N_samples), desc = f'Generating data for {self.pde_exp}!'):
-#             storage = self.solve_pde(self.pde_exp, self.dt, self.Nt)
-#             data[i] = storage.data
-
-#         storage.data = np.zeros_like(storage.data)
-
-#         return data, storage
+#     return (As, ws, phis)
     
 class CreatePDEData:
     def __init__(self, L, N, T, Nt):
@@ -125,13 +71,15 @@ class CreatePDEData:
         """
         params = self.generate_params()
         N, A, phi, l = params   
-        u = np.sum(A * np.sin((2 * np.pi * l * x[:, None] / L ) + phi), -1)
-        return u
+        u0 = np.sum(A * np.sin((2 * np.pi * l * x[:, None] / L ) + phi), -1)
+        return u0
 
-    def solve_pde(self, pde_func, tol = 1e-6):
+    def solve_pde(self, pde_func, t = None, u0 = None, tol = 1e-6):
 
-        u0 = self.get_init_cond(self.x, self.L)
-        t = self.t
+        if u0 is None:
+            u0 = self.get_init_cond(self.x, self.L)
+        if t is None:
+            t = self.t
 
         sol = solve_ivp(fun=pde_func, 
                     t_span=[t[0], t[-1]], 
@@ -142,9 +90,7 @@ class CreatePDEData:
                     atol=tol, 
                     rtol=tol)
         
-        ts = sol.y.T[::-1]
-        
-        return ts
+        return sol.y.T[::-1]
 
         # init_cond = self.get_init_cond(self.N_init_cond)
 
@@ -172,8 +118,30 @@ class CreatePDEData:
     def get_data(self, pde_func, tol = 1e-6, N_samples: int = 1):
         data = np.zeros((N_samples, self.Nt, self.N))
 
-        for i in tqdm(range(N_samples), desc = f'Generating data pde_func!'):
-            ts = self.solve_pde(pde_func, tol)
-            data[i] = ts
+        fail_count = 0
 
-        return data
+        for i in tqdm(range(N_samples), desc = f'Generating data pde_func!'):
+            x = self.solve_pde(pde_func, tol = tol)
+            x_tf = x.shape[0]
+            if x_tf < self.Nt: 
+                # print(f'Warning: x_tf = {x_tf} < Nt = {self.Nt}')
+                fail_count += 1
+            data[i, :x_tf, :] = x
+
+        return data, fail_count
+    
+class PDE_Pseudospectral:
+    def __init__(self, L):
+        self.L = L
+
+    def ux(self, u):
+        return psdiff(u, order = 1, period=self.L)
+    
+    def uxx(self, u):
+        return psdiff(u, order = 2, period=self.L)
+    
+    def uxxx(self, u):
+        return psdiff(u, order = 3, period=self.L)
+    
+    def uxxxx(self, u):
+        return psdiff(u, order = 4, period=self.L)
