@@ -84,7 +84,7 @@ class CNN(nn.Module):
         Returns:
             torch.Tensor: output has the shape [batch, time_future, x]
         """
-        # TODO: rewrite training method and forward pass without permutation
+        # todo: rewrite training method and forward pass without permutation
         x = torch.cat((u, dx[:, None, None].to(u.device).repeat(1, self.pde.nx, 1),
                        dt[:, None, None].repeat(1, self.pde.nx, 1).to(u.device)), -1)
         x = self.fc0(x)

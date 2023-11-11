@@ -297,7 +297,7 @@ class Heat_augmentation:
             max_x_shift (float): parameter of sub-pixel space translation
         """
         self.generators = [SpaceTranslate(max_x_shift)]
-        # TODO add other generators
+        # todo add other generators
 
     def __call__(self, u: torch.Tensor) -> torch.Tensor:
         """
