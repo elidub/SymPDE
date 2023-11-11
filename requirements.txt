@@ -9,3 +9,5 @@ torch
 h5py
 torch_geometric
 torch-cluster
+pytorch-lightning
+tensorboard
