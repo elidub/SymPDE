@@ -209,6 +209,9 @@ def main(args: argparse):
     except:
         raise Exception("Datasets could not be loaded properly")
 
+    print('dataset shapes', len(train_dataset), len(valid_dataset), len(test_dataset))
+    print('dataloader shapes', len(train_loader), len(valid_loader), len(test_loader))
+
     # Log file and save path for model
     dateTimeObj = datetime.now()
     timestring = f'{dateTimeObj.date().month}{dateTimeObj.date().day}{dateTimeObj.time().hour}{dateTimeObj.time().minute}'
@@ -349,7 +352,7 @@ if __name__ == "__main__":
                         help='Interval between print statements')
     parser.add_argument('--log', type=eval, default=False,
                         help='pip the output to log file')
-    parser.add_argument('--num_workers', type=int, default=0,)
+    parser.add_argument('--num_workers', type=int, default=4,)
 
     args = parser.parse_args()
     main(args)

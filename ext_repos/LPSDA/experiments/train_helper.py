@@ -54,6 +54,7 @@ def training_loop(pde: PDE,
     """
     losses = []
     for (u, dx, dt) in loader:
+        print('data.shape', u.shape)
         optimizer.zero_grad()
 
         # Select the number of pushforward steps
@@ -93,6 +94,7 @@ def training_loop(pde: PDE,
 
         pred = model(data, dx, dt)
 
+        # print('\ndata', data.shape, '\npred', pred.permute(0, 2, 1).shape, '\nlabels', labels.shape, '\n')
         loss = criterion(pred.permute(0, 2, 1), labels)
         loss = loss.sum()
         loss.backward()

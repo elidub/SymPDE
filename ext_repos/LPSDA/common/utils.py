@@ -128,6 +128,8 @@ class HDF5Dataset(Dataset):
             dx = X[0, 1, 0] - X[0, 0, 0]
             dt = X[1, 0, 1] - X[0, 0, 1]
 
+        print('get item u.shape', u.shape)
+
         return u.float(), dx.float(), dt.float()
 
 
