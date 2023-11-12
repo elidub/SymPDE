@@ -37,6 +37,7 @@ class PDEDataset(torch.utils.data.Dataset):
 
 class PDEDataModule(pl.LightningDataModule):
     def __init__(self, pde_name, data_dir, batch_size=1, num_workers=1):
+        super().__init__()
         self.pde_name = pde_name
         self.batch_size = batch_size
         self.data_dir = data_dir
@@ -53,10 +54,21 @@ class PDEDataModule(pl.LightningDataModule):
         return torch.stack(us), torch.stack(dx), torch.stack(dt)
 
     def train_dataloader(self):
-        return torch.utils.data.DataLoader(self.dataset['train'], batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers)
+        return torch.utils.data.DataLoader(self.dataset['train'], batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers,
+            persistent_workers = True,
+        )
 
     def val_dataloader(self):
-        return torch.utils.data.DataLoader(self.dataset['validation'], batch_size=self.batch_size, shuffle=False, num_workers=self.num_workers)
+        return torch.utils.data.DataLoader(self.dataset['val'], batch_size=self.batch_size, shuffle=False, num_workers=self.num_workers,
+            persistent_workers = True,
+        )
     
     def test_dataloader(self):
-        return torch.utils.data.DataLoader(self.dataset['test'], batch_size=self.batch_size, shuffle=False, num_workers=self.num_workers)
+        return torch.utils.data.DataLoader(self.dataset['test'], batch_size=self.batch_size, shuffle=False, num_workers=self.num_workers,
+            persistent_workers = True,
+        )
+    
+    def predict_dataloader(self):
+        return torch.utils.data.DataLoader(self.dataset['test'], batch_size=self.batch_size, shuffle=False, num_workers=self.num_workers,
+            persistent_workers = True,
+        )
