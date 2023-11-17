@@ -5,3 +5,6 @@ __pycache__
 # data/test/
 
 logs/
+data/
+data_old/
+ext_repos/G-FNO/results/

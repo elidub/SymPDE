@@ -70,11 +70,11 @@ class GeneratePDEData:
         
         return sol.y.T, (self.dx, self.dt)
 
-    def generate_data(self, pde_func, N_samples: int = 1):
+    def generate_data(self, pde_func, N_samples: int = 1, tqdm_desc: str = 'Generating data pde_func!'):
         us = np.full((N_samples, self.Nt, self.Nx), np.nan)
 
 
-        for i in tqdm(range(N_samples), desc = f'Generating data pde_func!'):
+        for i in tqdm(range(N_samples), desc = tqdm_desc):
             u, (dx, dt) = self.solve_pde(pde_func)
             u_tf = u.shape[0]
             if u_tf < self.Nt: 

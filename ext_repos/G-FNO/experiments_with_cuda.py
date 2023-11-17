@@ -194,47 +194,47 @@ writer = SummaryWriter(root)
 ################################################################
 if args.model_type in ["FNO2d", "FNO2d_aug"]:
     model = FNO2d(num_channels=num_channels, initial_step=initial_step, modes1=modes, modes2=modes, width=width,
-                  grid_type=grid_type)
+                  grid_type=grid_type).cuda()
 elif args.model_type in ["FNO3d", "FNO3d_aug"]:
     modes3 = time_modes if time_modes else modes
     model = FNO3d(num_channels=num_channels, initial_step=initial_step, modes1=modes, modes2=modes, modes3=modes3,
-                  width=width, time=time, time_pad=args.time_pad)
+                  width=width, time=time, time_pad=args.time_pad).cuda()
 elif "GCNN2d" in args.model_type:
     reflection = "p4m" in args.model_type
-    model = GCNN2d(num_channels=num_channels, initial_step=initial_step, width=width, reflection=reflection)
+    model = GCNN2d(num_channels=num_channels, initial_step=initial_step, width=width, reflection=reflection).cuda()
 elif "GCNN3d" in args.model_type:
     reflection = "p4m" in args.model_type
-    model = GCNN3d(num_channels=num_channels, initial_step=initial_step, width=width, reflection=reflection)
+    model = GCNN3d(num_channels=num_channels, initial_step=initial_step, width=width, reflection=reflection).cuda()
 elif "GFNO2d" in args.model_type and "steer" in args.model_type:
     reflection = "p4m" in args.model_type
     model = GFNO2d_steer(num_channels=num_channels, initial_step=initial_step, input_size=S, modes=modes, width=width,
-                         reflection=reflection)
+                         reflection=reflection).cuda()
 elif "GFNO2d" in args.model_type:
     reflection = "p4m" in args.model_type
     model = GFNO2d(num_channels=num_channels, initial_step=initial_step, modes=modes, width=width,
-                   reflection=reflection, grid_type=grid_type)#
+                   reflection=reflection, grid_type=grid_type)#.cuda()
 elif "GFNO3d" in args.model_type:
     reflection = "p4m" in args.model_type
     model = GFNO3d(num_channels=num_channels, initial_step=initial_step, modes=modes, time_modes=time_modes,
-                   width=width, reflection=reflection, grid_type=grid_type, time_pad=args.time_pad)
+                   width=width, reflection=reflection, grid_type=grid_type, time_pad=args.time_pad).cuda()
 elif "Ghybrid2d" in args.model_type:
     reflection = "p4m" in args.model_type
     model = Ghybrid2d(num_channels=num_channels, initial_step=initial_step, modes=modes, Gwidth=args.Gwidth,
-                      width=width, reflection=reflection, n_equiv=args.n_equiv)
+                      width=width, reflection=reflection, n_equiv=args.n_equiv).cuda()
 elif "radialNO2d" in args.model_type:
     reflection = "p4m" in args.model_type
     model = radialNO2d(num_channels=num_channels, initial_step=initial_step, modes=modes, width=width, reflection=reflection,
-                       grid_type=grid_type)
+                       grid_type=grid_type).cuda()
 elif "radialNO3d" in args.model_type:
     reflection = "p4m" in args.model_type
     model = radialNO3d(num_channels=num_channels, initial_step=initial_step, modes=modes, time_modes=time_modes,
-                       width=width, reflection=reflection, grid_type=grid_type, time_pad=args.time_pad)
+                       width=width, reflection=reflection, grid_type=grid_type, time_pad=args.time_pad).cuda()
 elif args.model_type == "Unet_Rot2d":
-    model = Unet_Rot(input_frames=initial_step * num_channels, output_frames=num_channels, kernel_size=3, N=4)
+    model = Unet_Rot(input_frames=initial_step * num_channels, output_frames=num_channels, kernel_size=3, N=4).cuda()
 elif args.model_type == "Unet_Rot_M2d":
-    model = Unet_Rot_M(input_frames=initial_step * num_channels, output_frames=num_channels, kernel_size=3, N=4, grid_type=grid_type, width=width)
+    model = Unet_Rot_M(input_frames=initial_step * num_channels, output_frames=num_channels, kernel_size=3, N=4, grid_type=grid_type, width=width).cuda()
 elif args.model_type == "Unet_Rot_3D":
-    model = Unet_Rot_3D(input_frames=initial_step * num_channels, output_frames=num_channels, kernel_size=3, N=4, grid_type=grid_type, width=width)
+    model = Unet_Rot_3D(input_frames=initial_step * num_channels, output_frames=num_channels, kernel_size=3, N=4, grid_type=grid_type, width=width).cuda()
 else:
     raise NotImplementedError("Model not recognized")
 
@@ -250,7 +250,7 @@ else: # strategy == recurrent or teacher_forcing
     x_shape_super = [1, *(S_super, ) * d, T_in, num_channels]
 
 model.train()
-x = torch.randn(*x_shape)
+x = torch.randn(*x_shape).cuda()
 if args.strategy == "recurrent":
     for _ in range(T):
         im = model(x)
@@ -262,7 +262,7 @@ eq_check_rf(model, x, spatial_dims)
 if args.super:
     model.eval()
     with torch.no_grad():
-        x = torch.randn(*x_shape_super)
+        x = torch.randn(*x_shape_super).cuda()
         model(x)
 
 ################################################################
@@ -354,7 +354,6 @@ if args.verbose:
 assert Sx == train.shape[-3], f"Spatial downsampling should give {Sx} grid points"
 assert Sy == train.shape[-4], f"Spatial downsampling should give {Sy} grid points"
 
-print('train.shape', train.shape)
 train_data = pde_data(train, strategy=args.strategy, T_in=T_in, T_out=T, std=args.noise_std)
 ntrain = len(train_data)
 valid_data = pde_data(valid, train=False, strategy=args.strategy, T_in=T_in, T_out=T)
@@ -395,8 +394,8 @@ lploss = LpLoss(size_average=False)
 best_valid = float("inf")
 
 x_train, y_train = next(iter(train_loader))
-x = x_train
-y = y_train
+x = x_train.cuda()
+y = y_train.cuda()
 x_valid, y_valid = next(iter(valid_loader))
 if args.verbose:
     print(f"{args.model_type}; Input shape: {x.shape}, Target shape: {y.shape}")
@@ -436,8 +435,8 @@ for ep in range(epochs):
 
     for xx, yy in tqdm(train_loader, disable=not args.verbose):
         loss = 0
-        xx = xx
-        yy = yy
+        xx = xx.cuda()
+        yy = yy.cuda()
 
         print('ADAPTION:', 'xx.shape', xx.shape, 'yy.shape', yy.shape)
 
@@ -498,8 +497,8 @@ for ep in range(epochs):
         model(xx)
         for xx, yy in valid_loader:
 
-            xx = xx
-            yy = yy
+            xx = xx.cuda()
+            yy = yy.cuda()
 
             if valid_l2 == 0:
                 writer.add_scalar("Valid/Rotation", eq_check_rt(model, xx, spatial_dims), ep)
@@ -552,8 +551,8 @@ test_rf_l2 = 0
 test_loss_by_channel = None
 with torch.no_grad():
     for xx, yy in test_loader:
-        xx = xx
-        yy = yy
+        xx = xx.cuda()
+        yy = yy.cuda()
         pred = get_eval_pred(model=model, x=xx, strategy=args.strategy, T=T, times=[]).view(len(xx), Sy, Sx, T, num_channels)
         test_l2 += lploss(pred.reshape(len(pred), -1, num_channels), yy.reshape(len(yy), -1, num_channels)).item()
 
@@ -567,14 +566,14 @@ with torch.no_grad():
                                 model(xx.flip(dims=(spatial_dims[0], ))).reshape(len(pred), -1, num_channels))
 
     for xx, yy in test_rt_loader:
-        xx = xx
-        yy = yy
+        xx = xx.cuda()
+        yy = yy.cuda()
         pred = get_eval_pred(model=model, x=xx, strategy=args.strategy, T=T, times=[]).view(len(xx), Sy, Sx, T, num_channels)
         test_rt_l2 += lploss(pred.reshape(len(pred), -1, num_channels), yy.reshape(len(yy), -1, num_channels)).item()
 
     for xx, yy in test_rf_loader:
-        xx = xx
-        yy = yy
+        xx = xx.cuda()
+        yy = yy.cuda()
         pred = get_eval_pred(model=model, x=xx, strategy=args.strategy, T=T, times=[]).view(len(xx), Sy, Sx, T, num_channels)
         test_rf_l2 += lploss(pred.reshape(len(pred), -1, num_channels), yy.reshape(len(yy), -1, num_channels)).item()
     rotations_l2 = rotations_l2 / ntest
@@ -661,24 +660,24 @@ if args.super:
 
     with torch.no_grad():
         for xx, yy in space_loader:
-            xx = xx
-            yy = yy
+            xx = xx.cuda()
+            yy = yy.cuda()
             pred = get_eval_pred(model=model, x=xx, strategy=args.strategy, T=T, times=[]).view(len(xx), *(S_super, ) * d, T, num_channels)
             test_space_l2 += lploss(pred.reshape(len(pred), -1, num_channels), yy.reshape(len(yy), -1, num_channels)).item()
 
         for xx, yy in space_int_loader:
             if rdb:
-                xx = sampler(xx.view(1, S_super, S_super, -1).permute(0, 3, 1, 2)).permute(0, 2, 3, 1).view((1, *x_shape[1:]))
+                xx = sampler(xx.view(1, S_super, S_super, -1).permute(0, 3, 1, 2)).permute(0, 2, 3, 1).view((1, *x_shape[1:])).cuda()
             else:
-                xx = xx[:, ::4, ::4]
-            yy = yy
+                xx = xx[:, ::4, ::4].cuda()
+            yy = yy.cuda()
             pred = get_eval_pred(model=model, x=xx, strategy=args.strategy, T=T, times=[]).view(len(xx), *(S, ) * d, T)
             pred = torch.nn.functional.interpolate(pred.permute(space_permute_inds), size=space_int_size, mode="bilinear").permute(space_unpermute_inds)
             test_int_space_l2 += lploss(pred.reshape(len(pred), -1, num_channels), yy.reshape(len(yy), -1, num_channels)).item()
 
         for xx, yy in time_loader:
-            xx = xx
-            yy = yy
+            xx = xx.cuda()
+            yy = yy.cuda()
             pred = get_eval_pred(model=model, x=xx, strategy=args.strategy, T=T_super, times=[]).view(len(xx), *(S_super, ) * d, T_super, num_channels)
             test_time_l2 += lploss(pred.reshape(len(pred), -1, num_channels), yy.reshape(len(yy), -1, num_channels)).item()
 
@@ -688,13 +687,13 @@ if args.super:
         x_new_shape[0] = 1
         for xx, yy in time_int_loader:
             if rdb:
-                xx = sampler(xx.view(1, S_super, S_super, -1).permute(0, 3, 1, 2)).permute(0, 2, 3, 1).view(x_new_shape)
+                xx = sampler(xx.view(1, S_super, S_super, -1).permute(0, 3, 1, 2)).permute(0, 2, 3, 1).view(x_new_shape).cuda()
             else:
-                xx = xx[:, ::4, ::4]
+                xx = xx[:, ::4, ::4].cuda()
             if threeD:
                 xx = xx[:, :, :, ::4]
 
-            yy = yy
+            yy = yy.cuda()
             pred = get_eval_pred(model=model, x=xx, strategy=args.strategy, T=T, times=[]).view(len(xx), *(S, ) * d, T, num_channels)
             pred = torch.nn.functional.interpolate(pred.permute(time_permute_inds), size=time_int_size, mode="trilinear").permute(time_unpermute_inds)
             test_int_time_l2 += lploss(pred.reshape(len(pred), -1, num_channels), yy.reshape(len(yy), -1, num_channels)).item()

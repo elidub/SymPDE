@@ -130,7 +130,8 @@ parser.add_argument("--sym", action="store_true", default=True, help="Use a symm
 parser.add_argument("--domain_size", type=float, default=1)
 args = parser.parse_args()
 
-device = torch.device('cuda')
+# device = torch.device('cuda')
+device = 'cpu'
 
 #Resolution
 s = args.s # 256
@@ -172,7 +173,7 @@ for j in tqdm(range(N//bsize)):
     w0 = GRF.sample(bsize)
 
     #Solve NS
-    sol, sol_t = navier_stokes_2d(w0, f, args.domain_size, args.nu, args.T, 1e-4, record_steps) # navier_stokes_2d(w0, f, 1e-3, 50.0, 1e-4, record_steps)
+    sol, sol_t = navier_stokes_2d(w0, f, args.domain_size, args.nu, args.T, 1e-2, record_steps) # navier_stokes_2d(w0, f, 1e-3, 50.0, 1e-4, record_steps)
 
     a[c:(c+bsize),...] = w0
     u[c:(c+bsize),...] = sol
@@ -180,6 +181,7 @@ for j in tqdm(range(N//bsize)):
     c += bsize
     t1 = default_timer()
     print(j, c, t1-t0)
+
 
 a_super = a[-args.ntest:]
 u_super = u[-args.ntest:]

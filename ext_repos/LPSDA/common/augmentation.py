@@ -3,6 +3,8 @@ import torch
 import random
 from typing import Optional, Tuple
 
+torch.manual_seed(42)
+print('Set seed!')
 
 def fourier_shift(u: torch.Tensor, eps: float=0., dim: int=-1, order: int=0) -> torch.Tensor:
     """
@@ -91,6 +93,8 @@ class SpaceTranslate:
         else:
             eps = eps * torch.ones(())
 
+        # ADAPTION: 
+        eps = -eps # Shouldn't matter, but implemented for theoretical consistency
         if shift == 'fourier':
             output = (fourier_shift(u, eps=eps, dim=-1), X)
         elif shift == 'linear':

@@ -41,6 +41,12 @@ python ns_2d_rt.py --nu=1e-4 --T=30 --N=1200 --save_path=./data --ntest=100 --pe
 We use the shell script [`run_experiment.sh`](run_experiment.sh) to run all experiments on all datasets and models. 
 Below are commands for training *G*-FNO2d-*p4* on each of the datasets.
 
+My own
+```python
+python experiments.py --data_path=./data/ns_V0.01_N10_T30_cos4.mat --results_path=./results --strategy=teacher_forcing --T=20 --ntrain=5 --nvalid=3 --ntest=2 --model_type=GFNO2d_p4 --modes=12 --width=10 --batch_size=1 --epochs=3 --suffix=seed1 --verbose
+
+```
+
 NS:
 
 ```python

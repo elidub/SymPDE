@@ -11,3 +11,4 @@ torch_geometric
 torch-cluster
 pytorch-lightning
 tensorboard
+xarray

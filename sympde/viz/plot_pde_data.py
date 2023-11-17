@@ -53,12 +53,13 @@ def plot_1d(t, L, T):
     plt.xticks(fontsize=28)
     plt.show()
 
-def plot_1ds(us, L, T):
+def plot_1ds(us, dx, dt):
     n_rows, n_cols = us.shape[:2]
     fig, axs = plt.subplots(n_rows, n_cols, figsize=np.array([12*n_cols,8*n_rows]), sharex=True, sharey=True, constrained_layout=True)
 
     for i in range(n_rows):
         for j in range(n_cols):
+            L, T = d_to_LT(us[i,j], dx, dt)
             ax = axs[i,j] if n_rows > 1 else axs[j] if n_cols > 1 else axs
             ax.imshow(us[i,j], origin = 'lower', extent=[0,L,0,T], cmap='PuOr_r', aspect='auto')
             ax.tick_params(axis='both', which='major', labelsize=28)

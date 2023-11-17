@@ -9,6 +9,7 @@ class pde_data(torch.utils.data.Dataset):
         self.teacher_forcing = strategy == "teacher_forcing"
         self.one_shot = strategy == "oneshot"
         self.data = data[..., :(T_in + T_out)] if self.one_shot else data[..., :(T_in + T_out), :]
+        print('pde data:', 'self data.shape', self.data.shape)
         self.nt = T_in + T_out
         self.T_in = T_in
         self.T_out = T_out
@@ -42,6 +43,8 @@ class pde_data(torch.utils.data.Dataset):
         y = pde[..., t_idx, :]
         if self.noise_std > 0:
             x += torch.randn(*x.shape, device=x.device) * self.noise_std
+
+        print('pde data get item:', 'x.shape', x.shape, 'y.shape', y.shape)
 
         return x, y
 

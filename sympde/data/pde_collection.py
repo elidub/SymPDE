@@ -54,6 +54,3 @@ class CollectionPDE_Pseudospectral(PDE_Pseudospectral):
     
     def KdV(self, t, u):
         return - u * self.ux(u) - self.uxxx(u)
-
-    
-        
