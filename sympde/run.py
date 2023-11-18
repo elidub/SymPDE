@@ -27,7 +27,7 @@ def parse_options(notebook = False):
     parser.add_argument("--local", action="store_true", help="Run on local machine")
     parser.add_argument("--do_return", action="store_true", help="Return model, trainer, datamodule")
 
-    parser.add_argument("--n_splits", type=list, default=[160,20,20], help="Train, val, test split")
+    parser.add_argument("--n_splits", nargs='+', default=[160,20,20], help="Train, val, test split")
     parser.add_argument("--generators", action="store_true", help="Use generators")
 
     args = parser.parse_args([]) if notebook else parser.parse_args()
@@ -41,7 +41,7 @@ def main(args):
         data_dir = args.data_dir, 
         batch_size = args.batch_size, 
         num_workers = args.num_workers,
-        n_splits = args.n_splits,
+        n_splits = [int(n_split) for n_split in args.n_splits],
         generators = args.generators,
         persistent_workers = args.persistent_workers,
     )
