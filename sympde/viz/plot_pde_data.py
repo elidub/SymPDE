@@ -74,17 +74,20 @@ def plot_1ds(us, dx, dt):
 
 def plot_1d_dict(u_dict):
     n_rows, n_cols = len(u_dict), len(list(u_dict.values())[0][0])
-    fig, axs = plt.subplots(n_rows, n_cols, figsize=np.array([12*n_cols,8*n_rows]), sharex=True, sharey=True, constrained_layout=True)
+    figsize = [12, 8]
+    figsize = [3, 4]
+    fig, axs = plt.subplots(n_rows, n_cols, figsize=np.array([figsize[0]*n_cols,figsize[1]*n_rows]), sharex=True, sharey=True, constrained_layout=True)
 
     for i, (pde_name, d) in enumerate(u_dict.items()):
         us, dx, dt = d
         L, T = d_to_LT(us, dx, dt)
         for j in range(n_cols):
-            ax = axs[i,j] if n_rows > 1 else axs[j] if n_cols > 1 else axs
+            ax = axs[i, j] if n_rows > 1 and n_cols > 1 else (axs[i] if n_rows > 1 else axs[j] if n_cols > 1 else None)
             ax.imshow(us[j], origin = 'lower', extent=[0,L,0,T], cmap='PuOr_r', aspect='auto')
             ax.tick_params(axis='both', which='major', labelsize=28)
             ax.tick_params(axis='both', which='minor', labelsize=28)
-            ax.set_title(pde_name, fontsize=34)
+            ax.set_title(pde_name, fontsize=34) if j == 1 else None
+            ax.set_axis_off()
 
 
     fig.supxlabel('x', fontsize=34)
