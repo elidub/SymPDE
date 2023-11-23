@@ -140,10 +140,10 @@ def main(args: argparse):
     # Initialize equations and data augmentation
     if args.experiment == 'KdV':
         pde = KdV()
-        pde.time_shift = args.KdV_augmentation[0]
-        pde.max_x_shift = args.KdV_augmentation[1]
-        pde.max_velocity = args.KdV_augmentation[2]
-        pde.max_scale = args.KdV_augmentation[3]
+        pde.time_shift = args.KdV_augmentation[0] # 1
+        pde.max_x_shift = args.KdV_augmentation[1] # 1.
+        pde.max_velocity = args.KdV_augmentation[2] # 0.4
+        pde.max_scale = args.KdV_augmentation[3] # 0.1
     elif args.experiment == 'KS':
         pde = KS()
         pde.time_shift = args.KS_augmentation[0]

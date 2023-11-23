@@ -12,3 +12,4 @@ torch-cluster
 pytorch-lightning
 tensorboard
 xarray
+tensorflow

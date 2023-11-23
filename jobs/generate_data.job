@@ -1,0 +1,18 @@
+#!/bin/bash
+
+#SBATCH --partition=genoa
+#SBATCH --gpus=0
+#SBATCH --job-name=GenData
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=128
+#SBATCH --time=00:05:00
+#SBATCH --output=jobs/slurm_output/generate_data_%A.out
+
+module purge
+module load 2022
+module load Anaconda3/2022.05
+
+cd $HOME/thesis/SymPDE/sympde
+source activate sympde
+
+srun python -u generate_data.py --pde_names KdV --n_splits 160 20 20

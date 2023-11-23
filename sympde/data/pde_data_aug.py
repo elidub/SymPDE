@@ -112,6 +112,6 @@ def augment_KdV(u_new, x_new, t_new):
 
     u_new, x_new, t_new = KdV_u2(u_new, x_new, t_new, eps = (torch.rand(()) - 0.5) * 1.) #  space translate
     u_new, x_new, t_new = KdV_u4(u_new, x_new, t_new, eps = (torch.rand(()) - 0.5) * 0.1) # scaling
-    u_new, x_new, t_new = KdV_u3(u_new, x_new, t_new, eps = (torch.rand(()) - 0.5) * 2. * 1.) # galileo
+    u_new, x_new, t_new = KdV_u3(u_new, x_new, t_new, eps = (torch.rand(()) - 0.5) * 2. * .4) # galileo
     
     return u_new, x_new, t_new

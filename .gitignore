@@ -1,14 +1,15 @@
 __pycache__
 
-# data/train/
-# data/val/
-# data/test/
+logs/FNO1d
+logs/FNO1d_old
 
-logs/FNO1D
+jobs/slurm_output
+
 data/train
 data/val
 data/test
 data_old/
+data.zip
 
 ext_repos/G-FNO/results/
 ext_repos/G-FNO/data/
