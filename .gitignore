@@ -12,5 +12,8 @@ data/test
 data_old/
 data.zip
 
+ext_repos/LPSDA/models
+ext_repos/LPSDA/data
+
 ext_repos/G-FNO/results/
 ext_repos/G-FNO/data/
