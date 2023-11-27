@@ -86,6 +86,5 @@ class GeneratePDEData:
 
         dxs = np.array(dxs)
         dts = np.array(dts)
-
         return us, dx, dt
     

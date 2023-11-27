@@ -38,7 +38,7 @@ def main(args):
 
     if args.version == None:
         generator_indicator = '1' if args.generators else '0'
-        args.version = f'precision_aug{generator_indicator}_{args.pde_name}_seed{args.seed}'
+        args.version = f'precision_datasympde_aug{generator_indicator}_{args.pde_name}_seed{args.seed}'
         print("\n\n###Version: ", args.version, "###\n\n")
 
     datamodule = PDEDataModule(
