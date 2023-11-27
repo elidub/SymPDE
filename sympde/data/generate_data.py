@@ -72,6 +72,7 @@ class GeneratePDEData:
 
     def generate_data(self, pde_func, N_samples: int = 1, tqdm_desc: str = 'Generating data pde_func!'):
         us = np.full((N_samples, self.Nt, self.Nx), np.nan)
+        dxs, dts = [], []
 
 
         for i in tqdm(range(N_samples), desc = tqdm_desc):
@@ -80,6 +81,11 @@ class GeneratePDEData:
             if u_tf < self.Nt: 
                 print(f'Warning: x_tf = {u_tf} < Nt = {self.Nt}')
             us[i, :u_tf, :] = u
+            dxs.append(dx)
+            dts.append(dt)
+
+        dxs = np.array(dxs)
+        dts = np.array(dts)
 
         return us, dx, dt
     

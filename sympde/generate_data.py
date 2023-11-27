@@ -45,8 +45,8 @@ def main(args):
             continue
         for split, split_dict in splits.items():
             os.makedirs(os.path.join(args.data_dir, split), exist_ok=True)
-            us, dx, dt = pde_data.generate_data(pde_func, N_samples = split_dict['n_samples'], tqdm_desc=f"Generating {split} data for {pde_name}!")
-            save_obj((us, dx, dt), os.path.join(args.data_dir, split, pde_name))
+            us, dxs, dts = pde_data.generate_data(pde_func, N_samples = split_dict['n_samples'], tqdm_desc=f"Generating {split} data for {pde_name}!")
+            save_obj((us, dxs, dts), os.path.join(args.data_dir, split, pde_name))
 
 
 if __name__ == '__main__':

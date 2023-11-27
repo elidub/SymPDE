@@ -8,6 +8,8 @@ def d_to_LT(us, dx, dt):
     L = dx * Nx
     T = dt * (Nt - 1)
 
+    return L, T
+
     # check if L is float
     if isinstance(L, float):
         return L, T

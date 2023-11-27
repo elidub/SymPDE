@@ -18,7 +18,7 @@ def parse_options(notebook = False):
     parser.add_argument("--net", type=str, default='FNO1d', help="Name of the network")
     parser.add_argument("--log_dir", type=str, default="../logs", help="Path to log directory")
     parser.add_argument("--max_epochs", type=int, default=3, help="Number of epochs")
-    parser.add_argument("--batch_size", type=int, default=1, help="Batch size")
+    parser.add_argument("--batch_size", type=int, default=16, help="Batch size")
     parser.add_argument("--num_workers", type=int, default=1, help="Number of workers")
     parser.add_argument("--persistent_workers", action="store_true", help="Persistent workers")
     parser.add_argument("--version", type=str, default=None, help="Version of the training run")
@@ -27,7 +27,7 @@ def parse_options(notebook = False):
     parser.add_argument("--local", action="store_true", help="Run on local machine")
     parser.add_argument("--do_return", action="store_true", help="Return model, trainer, datamodule")
 
-    parser.add_argument("--n_splits", nargs='+', default=[160,20,20], help="Train, val, test split")
+    parser.add_argument("--n_splits", nargs='+', default=[-1,-1,-1], help="Train, val, test split")
     parser.add_argument("--generators", action="store_true", help="Use generators")
 
     args = parser.parse_args([]) if notebook else parser.parse_args()
@@ -35,6 +35,11 @@ def parse_options(notebook = False):
 
 def main(args):
     pl.seed_everything(args.seed, workers=True)
+
+    if args.version == None:
+        generator_indicator = '1' if args.generators else '0'
+        args.version = f'precision_aug{generator_indicator}_{args.pde_name}_seed{args.seed}'
+        print("\n\n###Version: ", args.version, "###\n\n")
 
     datamodule = PDEDataModule(
         pde_name = args.pde_name, 
@@ -71,11 +76,5 @@ def main(args):
 
 if __name__ == '__main__':
     args = parse_options()
-
-    if args.local:
-        args.num_workers = 7
-
-    # torch.set_float32_matmul_precision("medium")
-
     print(args)
     main(args)

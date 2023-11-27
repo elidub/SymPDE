@@ -3,6 +3,7 @@ __pycache__
 
 logs/FNO1d
 logs/FNO1d_old
+logs/FNO1d_noprecision
 
 jobs/slurm_output
 

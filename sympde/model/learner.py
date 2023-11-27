@@ -21,7 +21,7 @@ class Learner(pl.LightningModule):
         (x, y) refer to (input, target), not to space coordinates
         """
 
-        us, dx, dt = batch
+        us, dxs, dts = batch
 
         # [batch, time, space] -> [batch, space, time]
         us = us.permute(0, 2, 1) 
@@ -31,7 +31,7 @@ class Learner(pl.LightningModule):
         y = us[:, :, self.y_start:self.y_end] 
 
         # Pass the time history through the network
-        y_pred = self.net(x, dx, dt)
+        y_pred = self.net(x, dxs, dts)
 
         # [batch, space, time] -> [batch, time, space]
         y_pred = y_pred.permute(0, 2, 1)
@@ -87,7 +87,8 @@ class Learner(pl.LightningModule):
     def log_fig(self, batch, preds, mode = None, sample_id = 0):
         x_start, x_end, y_start, y_end  = self.x_start, self.x_end, self.y_start, self.y_end
 
-        us, dx, dt = batch
+        us, dxs, dts = batch
+        dx, dt = dxs[sample_id].cpu().numpy(), dts[sample_id].cpu().numpy()
         u = us[sample_id].cpu().numpy()
         pred = preds[sample_id].cpu().numpy()
 

@@ -11,7 +11,7 @@ class PDEDataset(torch.utils.data.Dataset):
     def __init__(
         self, pde_name, data_dir, split="val", 
         transform=None, target_transform=None,
-        generators = None, n_samples = None
+        generators=None, n_samples = -1
     ):
         self.split = split
         split_dir = os.path.join(data_dir, split)
@@ -20,14 +20,14 @@ class PDEDataset(torch.utils.data.Dataset):
         self.target_transform = target_transform
         self.generators = generators
 
-        self.us, self.dx, self.dt = load_obj(os.path.join(split_dir, f"{pde_name}"))
+        self.us, self.dxs, self.dts = load_obj(os.path.join(split_dir, f"{pde_name}"))
         
-        if n_samples is not None:
-            if n_samples > len(self.us):
-                print(f'n_samples = {n_samples} > number of available samples = {len(self.us)}.\nReturning only all available samples!')
-                n_samples = len(self.us)
-            print(f'Selecting {n_samples} out of the {len(self.us)} {split} samples!')
-            self.us = self.us[:n_samples]
+        n_samples = len(self.us) if n_samples == -1 else n_samples
+        if n_samples > len(self.us):
+            print(f'n_samples = {n_samples} > number of available samples = {len(self.us)}.\nReturning only all available samples!')
+            n_samples = len(self.us)
+        print(f'Selecting {n_samples} out of the {len(self.us)} {split} samples!')
+        self.us = self.us[:n_samples]
         
         if pde_name == 'pde1':
             self.augment_pde = augment_pde1
@@ -44,7 +44,7 @@ class PDEDataset(torch.utils.data.Dataset):
     
     def __getitem__(self, idx):
 
-        u = self.us[idx]
+        u, dx, dt = self.us[idx], self.dxs[idx], self.dts[idx]
 
         if self.transform:
             u = self.transform(u)
@@ -53,12 +53,15 @@ class PDEDataset(torch.utils.data.Dataset):
             u = self.target_transform(u)
 
         u = torch.from_numpy(u)
+        dx = torch.tensor(dx)
+        dt = torch.tensor(dt)
 
-        u, dx, dt = u.float(), torch.tensor(self.dx, dtype = torch.float32), torch.tensor(self.dt, dtype = torch.float32)
-
-        if self.generators is not None:
+        # torch.float64 are used for augmentation
+        if self.generators:
             u, dx, dt = self.augment(u, dx, dt)
 
+        # torch.float32 are passed to the model
+        u, dx, dt = u.float(), dx.float(), dt.float()
         return u, dx, dt
 
     def augment(self, u, dx, dt):
@@ -69,21 +72,9 @@ class PDEDataset(torch.utils.data.Dataset):
         X = d_to_coords(u, dx, dt)
         x, t = X.permute(2, 0, 1)[:2]
 
-        # # Augment
-        # sol = (u, X)
-        # for g in self.generators:
-        #     sol = g(sol, shift = 'fourier')
-        # u, X = sol
-
-        # # Get new coordinates
-        # dx = X[0, 1, 0] - X[0, 0, 0]
-        # dt = X[1, 0, 1] - X[0, 0, 1]
-        # print(u.shape, dx, dt)
-
-        if self.generators is True:
-            u, x, t = self.augment_pde(u.clone(), x.clone(), t.clone())
-            dx = x[0,1] - x[0, 0]
-            dt = t[1,0] - t[0, 0]
+        u, x, t = self.augment_pde(u.clone(), x.clone(), t.clone())
+        dx = x[0,1] - x[0, 0]
+        dt = t[1,0] - t[0, 0]
 
         return u, dx, dt
     
@@ -121,8 +112,8 @@ class PDEDataModule(pl.LightningDataModule):
         self.collate_fn = self.custom_collate
 
     def custom_collate(self, batch):
-        us, dx, dt = zip(*batch)
-        return torch.stack(us), torch.stack(dx), torch.stack(dt)
+        us, dxs, dts = zip(*batch)
+        return torch.stack(us), torch.stack(dxs), torch.stack(dts)
 
     def train_dataloader(self):
         return torch.utils.data.DataLoader(self.dataset['train'], batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers,
