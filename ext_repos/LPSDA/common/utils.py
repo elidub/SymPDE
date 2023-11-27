@@ -127,10 +127,11 @@ class HDF5Dataset(Dataset):
             X = sol[1]
             dx = X[0, 1, 0] - X[0, 0, 0]
             dt = X[1, 0, 1] - X[0, 0, 1]
-
-        # print('get item u.shape', u.shape)
-
-        return u.float(), dx.float(), dt.float()
+        # print('HDF5 dtypes', u.dtype, dx.dtype, dt.dtype)
+        u, dx, dt = u.float(), dx.float(), dt.float()
+        # print('HDF5 dtypes', u.dtype, dx.dtype, dt.dtype)
+        # print('Done!')
+        return u, dx, dt
 
 
 class DataCreator(nn.Module):

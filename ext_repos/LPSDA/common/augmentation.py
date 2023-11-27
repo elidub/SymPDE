@@ -161,6 +161,12 @@ class Galileo:
         """
         u, X = sample
 
+        if self.max_velocity == 0:
+            return sample
+
+        # print(X.shape)
+        # print(X)
+
         T = u.shape[-2]
         N = u.shape[-1]
         dx = X[0, 1, 0] - X[0, 0, 0]
@@ -169,7 +175,9 @@ class Galileo:
         L = dx * N
 
         if eps is None:
-            eps = 2 * self.max_velocity * (torch.rand(()) - 0.5)
+            rand = torch.rand(())
+            rand = 0.1
+            eps = 2. * self.max_velocity * (rand - 0.5)
         else:
             eps = eps * torch.ones(())
         # shift in pixel

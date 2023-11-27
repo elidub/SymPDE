@@ -1,5 +1,6 @@
 import pickle
 import torch
+import os
 
 from data.lpda_data_aug import to_coords
 
@@ -28,5 +29,12 @@ def save_obj(obj, name):
         pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
 
 def load_obj(name):
-    with open(name + '.pkl', 'rb') as f:
-        return pickle.load(f)
+    try:
+        with open(name + '.pkl', 'rb') as f:
+            return pickle.load(f)
+    except:
+        print('Current dir', os.getcwd())
+        dir = os.path.dirname(name)
+        print('Searching in dir', dir)
+        files = os.listdir(dir)
+        print(f'Available files in {dir}:', files)

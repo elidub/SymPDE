@@ -53,6 +53,7 @@ def training_loop(pde: PDE,
         torch.Tensor: losses for whole dataset
     """
     losses = []
+    print('test')
     for (u, dx, dt) in loader:
         # print('data.shape', u.shape)
         optimizer.zero_grad()
@@ -79,16 +80,18 @@ def training_loop(pde: PDE,
             # start_time = random.choices([t for t in range(data_creator.time_history,
             #                                               max_start_time + 1, data_creator.time_history)], k=batch_size)
             start_time = random.choices([data_creator.time_history], k=batch_size) 
-        # print('start time', start_time)
+        print('start time', start_time)
+        print('pf_steps', pf_steps)
+        return u, u
         data, labels = data_creator.create_data(u, start_time, pf_steps)
         data, labels = data.to(device), labels.to(device)
 
-        return data, labels
 
         # print('data.shape, labels.shape', data.shape, labels.shape)
 
         # CHhange [batch, time, space] -> [batch, space, time]
         data = data.permute(0, 2, 1)
+        return data, labels
 
         # The unrolling of the equation which serves as input at the current step # CHANGE
         # with torch.no_grad():

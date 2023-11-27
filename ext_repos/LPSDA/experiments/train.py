@@ -22,6 +22,9 @@ from experiments.train_helper import *
 from equations.PDEs import PDE, KdV, KS, Heat
 from common.augmentation import Subalgebra
 
+import torch
+torch.manual_seed(0)
+
 import os, sys
 sys.path.append(os.path.join(os.getcwd(), '../../sympde'))
 from data.dataset import PDEDataset, PDEDataModule
@@ -199,6 +202,8 @@ def main(args: argparse):
         # valid_dataset = datamodule.val_dataloader().dataset
         # test_dataset = datamodule.test_dataloader().dataset 
 
+        mem = False
+
         train_dataset = HDF5Dataset(train_string,
                                     mode='train',
                                     nt=args.nt,
@@ -207,10 +212,10 @@ def main(args: argparse):
                                     pde=pde)
         train_loader = DataLoader(train_dataset,
                                   batch_size=args.batch_size,
-                                  shuffle=True,
+                                  shuffle=False, # TODO: shuffle=True
                                   num_workers=args.num_workers,
-                                  persistent_workers=True,
-                                  pin_memory=True)
+                                  persistent_workers=mem,
+                                  pin_memory=mem)
         valid_dataset = HDF5Dataset(valid_string,
                                     mode='valid',
                                     nt=args.nt,
@@ -221,8 +226,8 @@ def main(args: argparse):
                                   batch_size=args.batch_size,
                                   shuffle=False,
                                   num_workers=args.num_workers,
-                                  persistent_workers=True,
-                                  pin_memory=True)
+                                  persistent_workers=mem,
+                                  pin_memory=mem)
 
         test_dataset = HDF5Dataset(test_string,
                                    mode='test',
@@ -234,8 +239,8 @@ def main(args: argparse):
                                  batch_size=args.batch_size,
                                  shuffle=False,
                                  num_workers=args.num_workers,
-                                 persistent_workers=True,
-                                 pin_memory=True)
+                                 persistent_workers=mem, 
+                                 pin_memory=mem)
     except:
         raise Exception("Datasets could not be loaded properly")
     
@@ -324,7 +329,7 @@ def main(args: argparse):
     for epoch in range(args.num_epochs):
         print(f"Epoch {epoch}")
         data, labels = train(args, pde, epoch, model, optimizer, train_loader, data_creator, criterion, device=device)
-        return dict(train_dataset=train_dataset, model=model, data=data, labels=labels)
+        return dict(train_dataset=train_dataset, train_loader=train_loader,model=model, data=data, labels=labels)
         
         
         print("Evaluation on validation dataset:")

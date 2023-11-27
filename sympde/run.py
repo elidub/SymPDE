@@ -43,6 +43,8 @@ def parse_options(notebook = False):
 def main(args):
     pl.seed_everything(args.seed, workers=True)
 
+    torch.set_default_dtype(torch.float64)
+
     datamodule = PDEDataModule(
         pde_name = args.pde_name, 
         data_dir = args.data_dir, 
@@ -58,7 +60,7 @@ def main(args):
 
     datamodule.setup()
     train_dataset = datamodule.train_dataloader().dataset
-    return dict(train_dataset=train_dataset, model=model)
+    return dict(train_dataset=train_dataset, datamodule=datamodule, model=model)
 
 
     if args.version == None:

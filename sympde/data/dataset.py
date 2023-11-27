@@ -25,18 +25,20 @@ class PDEDataset(torch.utils.data.Dataset):
         self.target_transform = target_transform
         self.generators = generators
 
-        pde = KdV()
-        if split == 'val': split = 'valid'
-        hdf5_data_dir = f'../ext_repos/LPSDA/data/KdV_{split}_easy.h5' if split != 'train' else f'../ext_repos/LPSDA/data/KdV_{split}_10_easy.h5' 
-        self.us = HDF5Dataset(hdf5_data_dir,
-            mode=split,
-            nt=140,
-            nx=256,
-            shift='fourier',
-            pde=pde,
-        )
+        # pde = KdV()
+        # pde.max_velocity = 0.4
+        # self.us = dataset_split = select_hdf5_dataset(split, pde)
+        # if split == 'val': split = 'valid'
+        # hdf5_data_dir = f'../ext_repos/LPSDA/data/KdV_{split}_easy.h5' if split != 'train' else f'../ext_repos/LPSDA/data/KdV_{split}_10_easy.h5' 
+        # self.us = HDF5Dataset(hdf5_data_dir,
+        #     mode=split,
+        #     nt=140,
+        #     nx=256,
+        #     shift='fourier',
+        #     pde=pde,
+        # )
 
-        # self.us, self.dxs, self.dts = load_obj(os.path.join(split_dir, f"{pde_name}"))
+        self.us, self.dxs, self.dts = load_obj(os.path.join(split_dir, f"{pde_name}"))
         
         # if n_samples is not None:
         #     if n_samples > len(self.us):
@@ -63,7 +65,7 @@ class PDEDataset(torch.utils.data.Dataset):
     def __getitem__(self, idx):
 
         # u = self.us[idx]
-        u, dx, dt = self.us[idx]
+        u, dx, dt = self.us[idx], self.dxs[idx], self.dts[idx]
 
         if self.transform:
             u = self.transform(u)
@@ -71,14 +73,17 @@ class PDEDataset(torch.utils.data.Dataset):
         if self.target_transform:
             u = self.target_transform(u)
 
-        # u = torch.from_numpy(u)
+        u = torch.tensor(u)
+        dx = torch.tensor(dx)
+        dt = torch.tensor(dt)
 
         # u, dx, dt = u.float(), torch.tensor(self.dxs[idx], dtype = torch.float32), torch.tensor(self.dts[idx], dtype = torch.float32)
+
 
         if self.generators is True:
             u, dx, dt = self.augment(u, dx, dt)
 
-        return u, dx, dt
+        return u.float(), dx.float(), dt.float()
 
     def augment(self, u, dx, dt):
         """
@@ -102,7 +107,8 @@ class PDEDataset(torch.utils.data.Dataset):
         u, x, t = self.augment_pde(u.clone(), x.clone(), t.clone())
         dx = x[0,1] - x[0, 0]
         dt = t[1,0] - t[0, 0]
-
+        
+        # return u, dx, dt
         return u, dx, dt
     
 def select_hdf5_dataset(split, pde):
@@ -149,14 +155,14 @@ class PDEDataModule(pl.LightningDataModule):
         
         self.dataset = { 
             split : 
-                # PDEDataset(
-                #     pde_name=self.pde_name, 
-                #     data_dir=self.data_dir, 
-                #     split=split,
-                #     generators = self.generators if split == 'train' else None,
-                #     n_samples    = self.n_splits[split],
-                # ) 
-                select_hdf5_dataset(split, pde)
+                PDEDataset(
+                    pde_name=self.pde_name, 
+                    data_dir=self.data_dir, 
+                    split=split,
+                    generators = self.generators if split == 'train' else None,
+                    n_samples    = self.n_splits[split],
+                ) 
+                # select_hdf5_dataset(split, pde)
             for split in self.splits 
         }
         self.collate_fn = self.custom_collate
@@ -166,7 +172,7 @@ class PDEDataModule(pl.LightningDataModule):
         return torch.stack(us), torch.stack(dx), torch.stack(dt)
 
     def train_dataloader(self):
-        return torch.utils.data.DataLoader(self.dataset['train'], batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers,
+        return torch.utils.data.DataLoader(self.dataset['train'], batch_size=self.batch_size, shuffle=False, num_workers=self.num_workers, #TODO: shuffle=True
             persistent_workers = self.persistent_workers,
         )
 

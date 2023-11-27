@@ -33,6 +33,8 @@ class Learner(pl.LightningModule):
         x = us[:, :, :self.x_end]        
         y = us[:, :, self.y_start:self.y_end] 
 
+        return x, y
+
         # Pass the time history through the network
         y_pred = self.net(x, dx, dt)
 

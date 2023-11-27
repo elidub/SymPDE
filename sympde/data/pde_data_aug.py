@@ -96,6 +96,7 @@ def KdV_u3(u, x, t, eps):
     x_new = x
     t_new = t
     u_new = (fourier_shift(u, eps=d[:, None], dim=-1) + eps_u).squeeze(0) # minus is necassary
+
     return u_new, x_new, t_new
 
 def KdV_u4(u, x, t, eps):
@@ -112,6 +113,8 @@ def augment_KdV(u_new, x_new, t_new):
 
     # u_new, x_new, t_new = KdV_u2(u_new, x_new, t_new, eps = (torch.rand(()) - 0.5) * 1.) #  space translate
     # u_new, x_new, t_new = KdV_u4(u_new, x_new, t_new, eps = (torch.rand(()) - 0.5) * 0.1) # scaling
-    u_new, x_new, t_new = KdV_u3(u_new, x_new, t_new, eps = (torch.rand(()) - 0.5) * 2. * .4) # galileo
+    rand = torch.rand(()) 
+    rand = 0.1
+    u_new, x_new, t_new = KdV_u3(u_new, x_new, t_new, eps = (rand- 0.5) * 2. * .4) # galileo
     
     return u_new , x_new, t_new

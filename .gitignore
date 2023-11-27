@@ -6,6 +6,7 @@ logs/FNO1d_old
 
 jobs/slurm_output
 
+data_org/
 data/train
 data/val
 data/test

@@ -159,6 +159,10 @@ class Galileo:
             torch.Tensor: Galilean shifted tensor of the form [u, X]
         """
         u, X = sample
+        # print(X.shape)
+        # print(X)
+
+        assert False
 
         T = u.shape[-2]
         N = u.shape[-1]
@@ -168,11 +172,17 @@ class Galileo:
         L = dx * N
 
         if eps is None:
-            eps = 2 * self.max_velocity * (torch.rand(()) - 0.5)
+            rand = torch.rand(())
+            rand = 0.1
+            eps = self.max_x_shift * (rand - 0.5)
         else:
             eps = eps * torch.ones(())
         # shift in pixel
         d = -(eps * t) / L
+
+        print(eps, d)
+
+        return (u, X)
 
         if shift == 'fourier':
             output = (fourier_shift(u, eps=d[:, None], dim=-1) - eps, X)
