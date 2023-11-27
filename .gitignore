@@ -6,6 +6,7 @@ logs/FNO1d_old
 
 jobs/slurm_output
 
+data_org/
 data/train
 data/val
 data/test
@@ -17,3 +18,5 @@ ext_repos/LPSDA/data
 
 ext_repos/G-FNO/results/
 ext_repos/G-FNO/data/
+
+ext_repos/e2cnn/mnist_rotation_new/

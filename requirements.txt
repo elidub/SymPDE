@@ -13,3 +13,5 @@ pytorch-lightning
 tensorboard
 xarray
 tensorflow
+e2cnn
+torchvision
