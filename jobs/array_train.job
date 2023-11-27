@@ -1,0 +1,50 @@
+#!/bin/bash
+
+#SBATCH --partition=gpu
+#SBATCH --gpus=1
+#SBATCH --job-name=Train
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=18
+#SBATCH --time=01:00:00
+#SBATCH --array=1-8%8
+#SBATCH --output=jobs/slurm_output/array_train_%A_%a.out
+
+ARRAY_FILE=$HOME/thesis/SymPDE/jobs/array_train_hparams.txt
+cd $HOME/thesis/SymPDE/sympde
+
+module purge
+module load 2022
+module load Anaconda3/2022.05
+source activate sympde
+
+
+
+pde_name="KdV"
+max_epochs=10
+
+for seed in {1..10}
+do
+    # python run.py \
+    srun python -u run.py \
+        --train \
+        --pde_name $pde_name \
+        --max_epochs $max_epochs \
+        --seed $seed \
+        --generators \
+        --num_workers 20 \
+        --n_splits 10 10 10 \
+        $(head -$SLURM_ARRAY_TASK_ID $ARRAY_FILE | tail -1)
+
+
+    # python run.py \
+    srun python -u run.py \
+        --train \
+        --pde_name $pde_name \
+        --max_epochs $max_epochs \
+        --seed $seed \
+        --num_workers 20 \
+        --n_splits 10 10 10 \
+        $(head -$SLURM_ARRAY_TASK_ID $ARRAY_FILE | tail -1)
+
+
+done

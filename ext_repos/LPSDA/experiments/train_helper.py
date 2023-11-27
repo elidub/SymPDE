@@ -54,11 +54,12 @@ def training_loop(pde: PDE,
     """
     losses = []
     for (u, dx, dt) in loader:
-        print('data.shape', u.shape)
+        # print('data.shape', u.shape)
         optimizer.zero_grad()
 
         # Select the number of pushforward steps
         pf_steps = random.choice(unrolling)
+        pf_steps = 0 # ADAPTION: no pushforward trick # CHANGE
         # Length of trajectory
         time_resolution = data_creator.t_res
         # Max number of previous points solver can eat
@@ -71,26 +72,32 @@ def training_loop(pde: PDE,
         # and use all starting points of the trajectory.
         # If time translation is not chosen we use only those starting points for training
         # which are used for unrolling in the valid/test routing.
+        # print(data_creator.time_history, max_start_time + 1, data_creator.time_history)
         if pde.time_shift:
             start_time = random.choices([t for t in range(max_start_time+1)], k=batch_size)
-        else:
-            start_time = random.choices([t for t in range(data_creator.time_history,
-                                                          max_start_time + 1, data_creator.time_history)], k=batch_size)
-
+        else: # CHANGE
+            # start_time = random.choices([t for t in range(data_creator.time_history,
+            #                                               max_start_time + 1, data_creator.time_history)], k=batch_size)
+            start_time = random.choices([data_creator.time_history], k=batch_size) 
+        # print('start time', start_time)
         data, labels = data_creator.create_data(u, start_time, pf_steps)
         data, labels = data.to(device), labels.to(device)
 
-        # Change [batch, time, space] -> [batch, space, time]
+        return data, labels
+
+        # print('data.shape, labels.shape', data.shape, labels.shape)
+
+        # CHhange [batch, time, space] -> [batch, space, time]
         data = data.permute(0, 2, 1)
 
-        # The unrolling of the equation which serves as input at the current step
-        with torch.no_grad():
-            for _ in range(pf_steps):
+        # The unrolling of the equation which serves as input at the current step # CHANGE
+        # with torch.no_grad():
+        #     for _ in range(pf_steps):
 
-                pred = model(data, dx, dt)
+        #         pred = model(data, dx, dt)
 
-                data = torch.cat([data, pred], -1)
-                data = data[..., -data_creator.time_history:]
+        #         data = torch.cat([data, pred], -1)
+        #         data = data[..., -data_creator.time_history:]
 
         pred = model(data, dx, dt)
 
@@ -211,6 +218,7 @@ def test_unrolled_losses(model: torch.nn.Module,
                 losses_tmp.append(loss)
                 nlosses_tmp.append(nloss)
 
+        print('loooes tmp', losses_tmp)
         losses.append(torch.sum(torch.stack(losses_tmp)))
         nlosses.append(torch.sum(torch.stack(nlosses_tmp)))
 

@@ -1,0 +1,8 @@
+--optimizer adamw --scheduler multisteplr --lr 1e-3
+--optimizer adam  --scheduler multisteplr --lr 1e-3
+--optimizer adamw --scheduler none        --lr 1e-3
+--optimizer adam  --scheduler none        --lr 1e-3
+--optimizer adamw --scheduler multisteplr --lr 1e-4
+--optimizer adam  --scheduler multisteplr --lr 1e-4
+--optimizer adamw --scheduler none        --lr 1e-4
+--optimizer adam  --scheduler none        --lr 1e-4

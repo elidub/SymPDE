@@ -7,6 +7,11 @@ from data.utils import load_obj
 from data.utils import d_to_coords
 from data.pde_data_aug import augment_pde1, augment_KdV
 
+import os, sys
+sys.path.append(os.path.join(os.getcwd(), '../ext_repos/LPSDA'))
+from common.utils import HDF5Dataset, DataCreator
+from equations.PDEs import PDE, KdV, KS, Heat
+
 class PDEDataset(torch.utils.data.Dataset):
     def __init__(
         self, pde_name, data_dir, split="val", 
@@ -20,14 +25,25 @@ class PDEDataset(torch.utils.data.Dataset):
         self.target_transform = target_transform
         self.generators = generators
 
-        self.us, self.dx, self.dt = load_obj(os.path.join(split_dir, f"{pde_name}"))
+        pde = KdV()
+        if split == 'val': split = 'valid'
+        hdf5_data_dir = f'../ext_repos/LPSDA/data/KdV_{split}_easy.h5' if split != 'train' else f'../ext_repos/LPSDA/data/KdV_{split}_10_easy.h5' 
+        self.us = HDF5Dataset(hdf5_data_dir,
+            mode=split,
+            nt=140,
+            nx=256,
+            shift='fourier',
+            pde=pde,
+        )
+
+        # self.us, self.dxs, self.dts = load_obj(os.path.join(split_dir, f"{pde_name}"))
         
-        if n_samples is not None:
-            if n_samples > len(self.us):
-                print(f'n_samples = {n_samples} > number of available samples = {len(self.us)}.\nReturning only all available samples!')
-                n_samples = len(self.us)
-            print(f'Selecting {n_samples} out of the {len(self.us)} {split} samples!')
-            self.us = self.us[:n_samples]
+        # if n_samples is not None:
+        #     if n_samples > len(self.us):
+        #         print(f'n_samples = {n_samples} > number of available samples = {len(self.us)}.\nReturning only all available samples!')
+        #         n_samples = len(self.us)
+        #     print(f'Selecting {n_samples} out of the {len(self.us)} {split} samples!')
+        #     self.us = self.us[:n_samples]
         
         if pde_name == 'pde1':
             self.augment_pde = augment_pde1
@@ -38,13 +54,16 @@ class PDEDataset(torch.utils.data.Dataset):
 
         if self.generators is True:
             print(f'Augmenting {pde_name}!')
+        else:
+            print(f'Not augmenting {pde_name}!')
 
     def __len__(self):
         return len(self.us)
     
     def __getitem__(self, idx):
 
-        u = self.us[idx]
+        # u = self.us[idx]
+        u, dx, dt = self.us[idx]
 
         if self.transform:
             u = self.transform(u)
@@ -52,11 +71,11 @@ class PDEDataset(torch.utils.data.Dataset):
         if self.target_transform:
             u = self.target_transform(u)
 
-        u = torch.from_numpy(u)
+        # u = torch.from_numpy(u)
 
-        u, dx, dt = u.float(), torch.tensor(self.dx, dtype = torch.float32), torch.tensor(self.dt, dtype = torch.float32)
+        # u, dx, dt = u.float(), torch.tensor(self.dxs[idx], dtype = torch.float32), torch.tensor(self.dts[idx], dtype = torch.float32)
 
-        if self.generators is not None:
+        if self.generators is True:
             u, dx, dt = self.augment(u, dx, dt)
 
         return u, dx, dt
@@ -80,14 +99,26 @@ class PDEDataset(torch.utils.data.Dataset):
         # dt = X[1, 0, 1] - X[0, 0, 1]
         # print(u.shape, dx, dt)
 
-        if self.generators is True:
-            u, x, t = self.augment_pde(u.clone(), x.clone(), t.clone())
-            dx = x[0,1] - x[0, 0]
-            dt = t[1,0] - t[0, 0]
+        u, x, t = self.augment_pde(u.clone(), x.clone(), t.clone())
+        dx = x[0,1] - x[0, 0]
+        dt = t[1,0] - t[0, 0]
 
         return u, dx, dt
     
-
+def select_hdf5_dataset(split, pde):
+    if split == 'val': split = 'valid'
+    # path = '../ext_repos/LPSDA/data'
+    path = 'data'
+    hdf5_data_dir = f'{path}/KdV_{split}_easy.h5' if split != 'train' else f'{path}/KdV_{split}_10_easy.h5' 
+    dataset_split = HDF5Dataset(
+        hdf5_data_dir,
+        mode=split,
+        nt=140,
+        nx=256,
+        shift='fourier',
+        pde=pde,
+    )
+    return dataset_split
 
 class PDEDataModule(pl.LightningDataModule):
     def __init__(self, pde_name, data_dir, 
@@ -108,16 +139,26 @@ class PDEDataModule(pl.LightningDataModule):
         self.persistent_workers = persistent_workers
 
     def setup(self, stage=None):
+
+        pde = KdV()
+        if self.generators is True:
+            print(f'Augmenting {self.pde_name}!')
+            pde.max_velocity = 0.4
+        else:
+            print(f'Not augmenting {self.pde_name}!')
+        
         self.dataset = { 
             split : 
-                PDEDataset(
-                    pde_name=self.pde_name, 
-                    data_dir=self.data_dir, 
-                    split=split,
-                    generators = self.generators if split == 'train' else None,
-                    n_samples    = self.n_splits[split],
-                ) 
-            for split in self.splits }
+                # PDEDataset(
+                #     pde_name=self.pde_name, 
+                #     data_dir=self.data_dir, 
+                #     split=split,
+                #     generators = self.generators if split == 'train' else None,
+                #     n_samples    = self.n_splits[split],
+                # ) 
+                select_hdf5_dataset(split, pde)
+            for split in self.splits 
+        }
         self.collate_fn = self.custom_collate
 
     def custom_collate(self, batch):

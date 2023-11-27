@@ -128,7 +128,7 @@ class HDF5Dataset(Dataset):
             dx = X[0, 1, 0] - X[0, 0, 0]
             dt = X[1, 0, 1] - X[0, 0, 1]
 
-        print('get item u.shape', u.shape)
+        # print('get item u.shape', u.shape)
 
         return u.float(), dx.float(), dt.float()
 
@@ -173,6 +173,8 @@ class DataCreator(nn.Module):
         # Loop over batch and different starting points
         # For every starting point, we take the number of time_history points as training data
         # and the number of time future data as labels
+        # print('start_time', start_time)
+        # print('datapoints.shape', datapoints.shape)
         for (dp, start) in zip(datapoints, start_time):
             end_time = start+self.time_history
             d = dp[start:end_time]
@@ -180,7 +182,11 @@ class DataCreator(nn.Module):
             target_end_time = target_start_time + self.time_future
             l = dp[target_start_time:target_end_time]
 
+
             data.append(d.unsqueeze(dim=0))
             labels.append(l.unsqueeze(dim=0))
+
+            # print(data[-1].shape)
+            # print(labels[-1].shape)
 
         return torch.cat(data, dim=0), torch.cat(labels, dim=0)

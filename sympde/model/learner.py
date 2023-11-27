@@ -7,14 +7,17 @@ import matplotlib.pyplot as plt
 from viz.plot_pde_data import plot_pred
 
 class Learner(pl.LightningModule):
-    def __init__(self, net, criterion):
+    def __init__(self, net, criterion, optimizer, lr, scheduler):
         super().__init__()
         self.net = net
         self.criterion = criterion
+        self.optimizer = optimizer
+        self.lr = lr
+        self.scheduler = scheduler
 
         self.x_start = 0
         self.y_start = self.x_end = self.net.time_history
-        self.y_end = self.net.time_history+self.net.time_future
+        self.y_end = self.y_start + self.net.time_future
 
     def forward(self, batch):
         """
@@ -35,7 +38,7 @@ class Learner(pl.LightningModule):
 
         # [batch, space, time] -> [batch, time, space]
         y_pred = y_pred.permute(0, 2, 1)
-        y     = y.permute(0, 2, 1)
+        y      = y.permute(0, 2, 1)
 
         return y_pred, y
 
@@ -73,8 +76,14 @@ class Learner(pl.LightningModule):
             self.log_fig(batch, y_pred, "test")
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=0.001)
-        return optimizer
+        optimizer = self.optimizer(self.parameters(), lr=self.lr)
+
+        if self.scheduler is None:
+            return optimizer
+
+        scheduler = self.scheduler(optimizer, milestones=[0, 5, 10, 15], gamma=0.4)
+        return [optimizer], [scheduler]
+    
     
     # def on_test_epoch_start(self):
     #     # Initialize lists to store inputs and predictions

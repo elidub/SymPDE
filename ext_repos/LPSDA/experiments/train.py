@@ -22,6 +22,10 @@ from experiments.train_helper import *
 from equations.PDEs import PDE, KdV, KS, Heat
 from common.augmentation import Subalgebra
 
+import os, sys
+sys.path.append(os.path.join(os.getcwd(), '../../sympde'))
+from data.dataset import PDEDataset, PDEDataModule
+
 def check_directory() -> None:
     """
     Check if log directory exists within experiments.
@@ -62,17 +66,22 @@ def train(args: argparse,
     # Sample how many steps we use for unrolling our model (only need if pushforward trick is applied )
     # The default is to unroll zero steps in the first epoch and then increase the max amount of unrolling steps per additional epoch
     max_unrolling = epoch if epoch <= args.unrolling else args.unrolling
-    unrolling = [r for r in range(max_unrolling + 1)]
+    # unrolling = [r for r in range(max_unrolling + 1)] # CHANGE but doesn't matter
+    unrolling = [0]
 
     # Run every epoch (twice) as often as we have number of timesteps in one trajectory.
     # This is done iteratively for the number of timesteps in one training sample.
     # One average, we therefore start at every starting point in every trajectory during one episode (twice).
-    for i in range(data_creator.t_res * 2):
+    for i in range(data_creator.t_res * 2): # CHANGE
+    # for i in range(1):
 
-        losses = training_loop(pde, model, unrolling, args.batch_size, optimizer, loader, data_creator, criterion, device)
+        # losses = training_loop(pde, model, unrolling, args.batch_size, optimizer, loader, data_creator, criterion, device)
+        data, labels = training_loop(pde, model, unrolling, args.batch_size, optimizer, loader, data_creator, criterion, device)
+        return data, labels
 
-        if(i % args.print_interval == 0):
-            print(f'Training Loss (progress: {i / (data_creator.t_res * 2):.2f}): {torch.mean(losses)}')
+        # if(i % args.print_interval == 0):
+        #     print(f'Training Loss (progress: {i / (data_creator.t_res * 2):.2f}): {torch.mean(losses)}')
+        print(f'Training Loss (progress: {i}): {torch.mean(losses)}')
 
 
 def test(args: argparse,
@@ -168,6 +177,28 @@ def main(args: argparse):
         valid_string = valid_string.replace(f'.h5', f'_{args.suffix}.h5')
         test_string = test_string.replace(f'.h5', f'_{args.suffix}.h5')
     try:
+        # generator = True if args.KdV_augmentation[2] > 0 else False
+        # print('Generator:', generator)
+        # datamodule = PDEDataModule(
+        #     pde_name = args.experiment, 
+        #     data_dir = '../../data',
+        #     batch_size = args.batch_size, 
+        #     num_workers = args.num_workers,
+        #     n_splits = [10, 10, 10],
+        #     generators = generator,
+        #     persistent_workers = True,
+        # )
+
+        # datamodule.setup()
+
+        # train_loader = datamodule.train_dataloader()
+        # valid_loader = datamodule.val_dataloader()
+        # test_loader = datamodule.test_dataloader()
+
+        # train_dataset = datamodule.train_dataloader().dataset
+        # valid_dataset = datamodule.val_dataloader().dataset
+        # test_dataset = datamodule.test_dataloader().dataset 
+
         train_dataset = HDF5Dataset(train_string,
                                     mode='train',
                                     nt=args.nt,
@@ -180,7 +211,6 @@ def main(args: argparse):
                                   num_workers=args.num_workers,
                                   persistent_workers=True,
                                   pin_memory=True)
-
         valid_dataset = HDF5Dataset(valid_string,
                                     mode='valid',
                                     nt=args.nt,
@@ -208,8 +238,10 @@ def main(args: argparse):
                                  pin_memory=True)
     except:
         raise Exception("Datasets could not be loaded properly")
+    
+    # return train_dataset #CHECK1
 
-    print('dataset shapes', len(train_dataset), len(valid_dataset), len(test_dataset))
+    # print('dataset shapes', len(train_dataset), len(valid_dataset), len(test_dataset))
     print('dataloader shapes', len(train_loader), len(valid_loader), len(test_loader))
 
     # Log file and save path for model
@@ -272,8 +304,15 @@ def main(args: argparse):
     params = sum([np.prod(p.size()) for p in model_parameters])
     print(f'Number of parameters: {params}')
 
+    # return dict(train_dataset=train_dataset, model=model)
+
     # Optimizer
-    optimizer = optim.AdamW(model.parameters(), lr=args.lr)
+    # if args.optimizer == 'adamw':
+    # optimizer = optim.AdamW(model.parameters(), lr=args.lr) # CHANGE
+    # elif args.optimizer == 'adam':
+    optimizer = optim.Adam(model.parameters(), lr=args.lr) 
+    # else:
+    #    raise Exception("Wrong optimizer specified")
     scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[args.unrolling, 5, 10, 15], gamma=args.lr_decay)
 
     # Training loop
@@ -284,7 +323,10 @@ def main(args: argparse):
 
     for epoch in range(args.num_epochs):
         print(f"Epoch {epoch}")
-        train(args, pde, epoch, model, optimizer, train_loader, data_creator, criterion, device=device)
+        data, labels = train(args, pde, epoch, model, optimizer, train_loader, data_creator, criterion, device=device)
+        return dict(train_dataset=train_dataset, model=model, data=data, labels=labels)
+        
+        
         print("Evaluation on validation dataset:")
         val_loss, _, _, _ = test(args, pde, model, valid_loader, data_creator, criterion, device=device)
         if(val_loss < min_val_loss):
@@ -301,15 +343,20 @@ def main(args: argparse):
             print(f"Saved model at {save_path}\n")
             min_val_loss = val_loss
 
-        scheduler.step()
+        # if args.scheduler:
+        # scheduler.step() # CHANGE
 
     print(f'Test loss mean {test_loss:.4f}, test loss std: {test_loss_std:.4f}')
     print(f'Normalized test loss mean {ntest_loss:.4f}, normalized test loss std: {ntest_loss_std:.4f}')
 
-if __name__ == "__main__":
+def parse_options(notebook = False):
     parser = argparse.ArgumentParser(description='Train an PDE solver')
+
+    parser.add_argument('--optimizer', type=str, default='adamw', help='Optimizer, has to be adamw or adam')
+    parser.add_argument('--scheduler', action = 'store_true', default = False, help = 'Use scheduler')
+
     # PDE
-    parser.add_argument('--device', type=str, default='cpu',
+    parser.add_argument('--device', type=str, default='cuda',
                         help='Used device')
     parser.add_argument('--experiment', type=str, default='KdV',
                         help='Experiment for PDE solver should be trained: [KdV, KS, Burgers]')
@@ -354,5 +401,9 @@ if __name__ == "__main__":
                         help='pip the output to log file')
     parser.add_argument('--num_workers', type=int, default=4,)
 
-    args = parser.parse_args()
+    args = parser.parse_args([]) if notebook else parser.parse_args()
+    return args
+
+if __name__ == "__main__":
+    args = parse_options()
     main(args)

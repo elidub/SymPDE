@@ -2,35 +2,57 @@
 
 #SBATCH --partition=gpu
 #SBATCH --gpus=1
-#SBATCH --job-name=Train
+#SBATCH --job-name=Train10
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=18
-#SBATCH --time=08:00:00
+#SBATCH --time=01:00:00
 #SBATCH --output=jobs/slurm_output/lpsda_train_%A.out
 
 module purge
 module load 2022
 module load Anaconda3/2022.05
-
-cd $HOME/thesis/SymPDE/sympde
 source activate sympde
 
-pde_name="KdV"
-max_epochs=60
+cd $HOME/thesis/SymPDE/ext_repos/LPSDA
 
-for seed in {1..3}
+# pde_name="KdV"
+# max_epochs=60
+
+
+for seed in {1..20}
 do
-    srun python -u experiments/train.py \
-        --experiment=KdV \
-        --KdV_augmentation=1,1.0,0.4,0.1 \
-        --train_samples=500 \ 
-        --suffix=medium \
+    echo "Seed: $seed"
+    # python experiments/train.py --train_samples=10 --experiment=KdV --KdV_augmentation=0,0.0,0.4,0.0 --suffix=easy --num_epochs=10 >> ../../jobs/slurm_output/output_lpsda_train_2.out 2>&1
+    # python experiments/train.py --train_samples=10 --experiment=KdV --KdV_augmentation=0,0.0,0.0,0.0 --suffix=easy --num_epochs=10 >> ../../jobs/slurm_output/output_lpsda_train_2.out 2>&1
+
+    srun python -u  experiments/train.py --train_samples=10 --experiment=KdV --KdV_augmentation=0,0.0,0.4,0.0 --suffix=easy --num_epochs=10
+    srun python -u  experiments/train.py --train_samples=10 --experiment=KdV --KdV_augmentation=0,0.0,0.0,0.0 --suffix=easy --num_epochs=10
+
+    # srun python -u  experiments/train.py --train_samples=10 --experiment=KdV --KdV_augmentation=0,0.0,0.4,0.0 --suffix=easy --num_epochs=10 --time_history=10 --time_future=10
+    # srun python -u  experiments/train.py --train_samples=10 --experiment=KdV --KdV_augmentation=0,0.0,0.0,0.0 --suffix=easy --num_epochs=10 --time_history=10 --time_future=10
+
+    # srun python -u  experiments/train.py --train_samples=10 --experiment=KdV --KdV_augmentation=0,0.0,0.4,0.0 --suffix=easy --num_epochs=10 --time_history=10 --time_future=10 --optimizer=adamw --scheduler
+    # srun python -u  experiments/train.py --train_samples=10 --experiment=KdV --KdV_augmentation=0,0.0,0.0,0.0 --suffix=easy --num_epochs=10 --time_history=10 --time_future=10 --optimizer=adamw --scheduler
+
+    # srun python -u  experiments/train.py --train_samples=10 --experiment=KdV --KdV_augmentation=0,0.0,0.4,0.0 --suffix=easy --num_epochs=10 --time_history=10 --time_future=10 --optimizer=adam --scheduler
+    # srun python -u  experiments/train.py --train_samples=10 --experiment=KdV --KdV_augmentation=0,0.0,0.0,0.0 --suffix=easy --num_epochs=10 --time_history=10 --time_future=10 --optimizer=adam --scheduler
+
+    # srun python -u  experiments/train.py --train_samples=10 --experiment=KdV --KdV_augmentation=0,0.0,0.4,0.0 --suffix=easy --num_epochs=10 --time_history=10 --time_future=10 --optimizer=adamw 
+    # srun python -u  experiments/train.py --train_samples=10 --experiment=KdV --KdV_augmentation=0,0.0,0.0,0.0 --suffix=easy --num_epochs=10 --time_history=10 --time_future=10 --optimizer=adamw 
+
+    # srun python -u  experiments/train.py --train_samples=10 --experiment=KdV --KdV_augmentation=0,0.0,0.4,0.0 --suffix=easy --num_epochs=10 --time_history=10 --time_future=10 --optimizer=adam 
+    # srun python -u  experiments/train.py --train_samples=10 --experiment=KdV --KdV_augmentation=0,0.0,0.0,0.0 --suffix=easy --num_epochs=10 --time_history=10 --time_future=10 --optimizer=adam
 
 
-    srun python -u experiments/train.py \
-        --experiment=KdV \
-        --KdV_augmentation=0,0.0,0.0,0.0 \
-        --train_samples=500 \ 
-        --suffix=medium \
+
+
+
+
+    # python experiments/train.py --train_samples=10 --experiment=KdV --KdV_augmentation=0,0.0,0.4,0.0 --suffix=easy --num_epochs=10 --nt=40 --time_history=10 --time_future=10
+    # python experiments/train.py --train_samples=10 --experiment=KdV --KdV_augmentation=0,0.0,0.0,0.0 --suffix=easy --num_epochs=10 --nt=40 --time_history=10 --time_future=10
+
+    # srun python -u  experiments/train.py --train_samples=500 --experiment=KdV --KdV_augmentation=1,1.0,0.4,0.1 --suffix=medium
+    # srun python -u  experiments/train.py --train_samples=500 --experiment=KdV --KdV_augmentation=0,0.0,0.0,0.0 --suffix=medium
+
 
 done

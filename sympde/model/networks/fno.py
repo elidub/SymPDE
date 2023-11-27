@@ -124,7 +124,7 @@ class FNO1d(nn.Module):
         
         # ADAPTION: use nx = u.shape[1] instead of nx = self.pde.nx
         nx = u.shape[1] 
-
+        print(dx, nx)
         x = torch.cat((u, dx[:, None, None].to(u.device).repeat(1, nx, 1),
                        dt[:, None, None].repeat(1, nx, 1).to(u.device)), -1)
         

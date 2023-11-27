@@ -30,6 +30,13 @@ def parse_options(notebook = False):
     parser.add_argument("--n_splits", nargs='+', default=[160,20,20], help="Train, val, test split")
     parser.add_argument("--generators", action="store_true", help="Use generators")
 
+    parser.add_argument("--optimizer", type=str, default="adam", help="Optimizer, [adam, adamw]")
+    parser.add_argument("--lr", type=float, default=1e-3, help="Learning rate")
+    parser.add_argument("--scheduler", type=str, help="If set, scheduler = MultiStepLR")
+
+    parser.add_argument('--time_history', type=int,default=20, help="Time steps to be considered as input to the solver")
+    parser.add_argument('--time_future', type=int,default=20, help="Time steps to be considered as output of the solver")
+
     args = parser.parse_args([]) if notebook else parser.parse_args()
     return args
 
@@ -46,12 +53,25 @@ def main(args):
         persistent_workers = args.persistent_workers,
     )
 
+    # return datamodule # CHECK1
     model = setup_model(args)
+
+    datamodule.setup()
+    train_dataset = datamodule.train_dataloader().dataset
+    return dict(train_dataset=train_dataset, model=model)
+
+
+    if args.version == None:
+        generator_indicator = '1' if args.generators else '0'
+        version = f'aug{generator_indicator}_{args.pde_name}_optim{args.optimizer}_lr{args.lr}_scheduler{args.scheduler}_seed{args.seed}'
+    else:
+        version = args.version
+    print("\n\n###Version: ", version, "###\n\n")
 
     logging.getLogger('lightning').setLevel(0) # Disable lightning prints about GPU's
     trainer = pl.Trainer(
         logger=pl.loggers.TensorBoardLogger(
-            args.log_dir, name=args.net, version=args.version
+            args.log_dir, name=args.net, version=version
         ),
         max_epochs=args.max_epochs,
         accelerator="gpu" if torch.cuda.is_available() else "cpu",
