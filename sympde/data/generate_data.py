@@ -11,16 +11,12 @@ class GeneratePDEData:
         https://github.com/brandstetter-johannes/LPSDA/blob/master/notebooks/data_generation.ipynb
     """
 
-    def __init__(self, L, T, Nx, Nt, tol = 1e-6):
-        self.L = L
+    def __init__(self, Lmax, Tmax, Nx, Nt, tol = 1e-6):
+        self.Lmax = Lmax
+        self.Tmax = Tmax
         self.Nx = Nx
         self.Nt = Nt
-        self.x = np.linspace(0, (1-1.0/Nx)*L, Nx)
-        self.t = np.linspace(0, T, Nt)
         self.tol = tol
-
-        self.dx = L/Nx
-        self.dt = T/(Nt-1)
 
     def generate_params(self) -> (int, np.ndarray, np.ndarray, np.ndarray):
         """
@@ -57,8 +53,20 @@ class GeneratePDEData:
 
     def solve_pde(self, pde_func):
 
-        u0 = self.get_init_cond(self.x, self.L)
-        t = self.t
+        # l1, l2 = self.Lmax - self.Lmax/10, self.Lmax + self.Lmax/10
+        # t1, t2 = self.Tmax - self.Tmax/10, self.Tmax + self.Tmax/10
+        # L = np.random.uniform(l1, l2)
+        # T = np.random.uniform(t1, t2)
+        L = self.Lmax
+        T = self.Tmax
+
+        x = np.linspace(0, (1-1.0/self.Nx)*L, self.Nx)
+        t = np.linspace(0, T, self.Nt)
+        dx = L/self.Nx
+        dt = T/(self.Nt-1)
+
+
+        u0 = self.get_init_cond(x, L)
 
         sol = solve_ivp(fun=pde_func, 
                     t_span=[t[0], t[-1]], 
@@ -68,7 +76,7 @@ class GeneratePDEData:
                     atol=self.tol, 
                     rtol=self.tol)
         
-        return sol.y.T, (self.dx, self.dt)
+        return sol.y.T, (dx, dt)
 
     def generate_data(self, pde_func, N_samples: int = 1, tqdm_desc: str = 'Generating data pde_func!'):
         us = np.full((N_samples, self.Nt, self.Nx), np.nan)
@@ -86,5 +94,5 @@ class GeneratePDEData:
 
         dxs = np.array(dxs)
         dts = np.array(dts)
-        return us, dx, dt
+        return us, dxs, dts
     

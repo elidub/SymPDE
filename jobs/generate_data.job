@@ -15,4 +15,4 @@ module load Anaconda3/2022.05
 cd $HOME/thesis/SymPDE/sympde
 source activate sympde
 
-srun python -u generate_data.py --pde_names KdV --n_splits 160 20 20
+srun python -u generate_data.py --pde_names pde1 --n_splits 1000 200 200

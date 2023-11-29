@@ -19,8 +19,8 @@ def parse_options(notebook = False):
 
     parser.add_argument("--data_dir", type=str, default="../data", help="Path to data directory")
 
-    parser.add_argument("--L", type = int, default = 64, help = "Length of spatial domain")
-    parser.add_argument("--T", type = int, default = 40, help = "Length of temporal domain")
+    parser.add_argument("--Lmax", type = int, default = 64, help = "Length of spatial domain")
+    parser.add_argument("--Tmax", type = int, default = 40, help = "Length of temporal domain")
     parser.add_argument("--Nx", type = int, default = 256, help = "Number of spatial grid points")
     parser.add_argument("--Nt", type = int, default = 40, help = "Number of temporal grid points")
     parser.add_argument("--tol", type = float, default = 1e-6, help = "Tolerance for ODE solver")
@@ -33,8 +33,8 @@ def parse_options(notebook = False):
 
 def main(args):
 
-    pde_collection = CollectionPDE_Pseudospectral(L = args.L).collection
-    pde_data = GeneratePDEData(L=args.L, T=args.T, Nx=args.Nx, Nt=args.Nt, tol=args.tol)
+    pde_collection = CollectionPDE_Pseudospectral(L = args.Lmax).collection
+    pde_data = GeneratePDEData(Lmax=args.Lmax, Tmax=args.Tmax, Nx=args.Nx, Nt=args.Nt, tol=args.tol)
 
     n_train, n_val, n_test = [int(n_split) for n_split in args.n_splits]
     splits = {'train':{'n_samples':n_train}, 'val':{'n_samples':n_val}, 'test':{'n_samples':n_test}}

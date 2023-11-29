@@ -58,6 +58,7 @@ def main(args):
         logger=pl.loggers.TensorBoardLogger(
             args.log_dir, name=args.net, version=args.version
         ),
+        log_every_n_steps = 1,
         max_epochs=args.max_epochs,
         accelerator="gpu" if torch.cuda.is_available() else "cpu",
         deterministic=True,

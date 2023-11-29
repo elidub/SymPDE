@@ -19,9 +19,9 @@ source activate sympde
 
 srun python -u run.py \
     --train \
-    --pde_name KdV \
-    --batch_size 64 \
-    --max_epochs 10 \
-    --num_workers 20 \
+    --pde_name pde1 \
+    --batch_size 32 \
+    --max_epochs 1000 \
+    --num_workers 18 \
     --persistent_workers \
     $(head -$SLURM_ARRAY_TASK_ID $ARRAY_FILE | tail -1)
