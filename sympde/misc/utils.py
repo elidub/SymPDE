@@ -6,10 +6,13 @@ def get_dict_item(dict, idx = 0):
     return key, value
 
 def read_lines(file):
-    """Read a pickle object."""
     with open(file, 'r') as f:
         lines = f.readlines()
     return lines
+
+def write_lines(file, lines):
+    with open(file, 'w') as f:
+        f.writelines(lines)
 
 def save_obj(obj, name):
     with open(name + '.pkl', 'wb') as f:

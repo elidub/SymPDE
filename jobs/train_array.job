@@ -9,7 +9,12 @@
 #SBATCH --array=1-10%10
 #SBATCH --output=jobs/slurm_output/train_array_%A_%a.out
 
-ARRAY_FILE=$HOME/thesis/SymPDE/jobs/arrays/train.txt
+# default_array="train"
+# array="${1:-$default_array}"
+
+array="aug_noaug"
+
+ARRAY_FILE=$HOME/thesis/SymPDE/jobs/arrays/$array.txt
 cd $HOME/thesis/SymPDE/sympde
 
 module purge
@@ -19,7 +24,9 @@ source activate sympde
 
 srun python -u run.py \
     --train \
-    --pde_name pde1 \
+    --pde_name KdV \
+    --data_dir ../data/medium \
+    --n_splits 160 20 20 \
     --batch_size 32 \
     --max_epochs 1000 \
     --num_workers 18 \
