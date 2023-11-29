@@ -35,6 +35,9 @@ def parse_options(notebook = False):
 def main(args):
     pl.seed_everything(args.seed, workers=True)
 
+    args.epsilons = [float(eps) for eps in args.epsilons]
+    args.n_splits = [int(n_split) for n_split in args.n_splits]
+
     if args.version == None:
         epsilons = '-'.join([str(eps) for eps in args.epsilons]) if len(args.epsilons) > 0 else '0'
         data_dir = args.data_dir.split('/')[-1]
@@ -46,7 +49,7 @@ def main(args):
         data_dir = args.data_dir, 
         batch_size = args.batch_size, 
         num_workers = args.num_workers,
-        n_splits = [int(n_split) for n_split in args.n_splits],
+        n_splits = args.n_splits,
         epsilons = args.epsilons,
         persistent_workers = args.persistent_workers,
     )

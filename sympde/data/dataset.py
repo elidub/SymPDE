@@ -30,8 +30,8 @@ class PDEDataset(torch.utils.data.Dataset):
         self.us = self.us[:n_samples]
 
         if self.epsilons:
+            print(f'Augmenting {pde_name} with epsilons {self.epsilons}!')
             assert self.pde.n_augments == len(self.epsilons), f'Number of epsilons ({len(self.epsilons)}) must match number of augmentations ({self.pde.n_augments})'
-            print(f'Augmenting {pde_name}!')
 
     def __len__(self):
         return len(self.us)
@@ -93,7 +93,6 @@ class PDEDataModule(pl.LightningDataModule):
         self.persistent_workers = persistent_workers
 
     def setup(self, stage=None):
-        print('stage', stage)
         self.dataset = { 
             split : 
                 PDEDataset(
