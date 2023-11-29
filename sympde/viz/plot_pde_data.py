@@ -1,10 +1,10 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
-
-from data.utils import d_to_LT
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+
+from data.utils import d_to_LT
 
 def plot_pred(input, output, dx, dt, x_start, x_end, y_start, y_end):
     L, T = d_to_LT(input, dx, dt)

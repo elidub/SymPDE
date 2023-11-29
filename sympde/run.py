@@ -7,12 +7,11 @@ import logging
 
 from data.dataset import PDEDataset, PDEDataModule
 from model.setup import setup_model
-from data.lpda_data_aug import SpaceTranslate, Scale, Galileo
 
 def parse_options(notebook = False):
     parser = argparse.ArgumentParser(description='SymPDE')
 
-    parser.add_argument("--data_dir", type=str, default="../data", help="Path to data directory")
+    parser.add_argument("--data_dir", type=str, default="../data/small", help="Path to data directory")
     parser.add_argument("--seed", type=int, default=42, help="Seed for reproducibility")
     parser.add_argument("--pde_name", type=str, default="pde1", help="Name of the PDE")
     parser.add_argument("--net", type=str, default='FNO1d', help="Name of the network")
@@ -28,7 +27,7 @@ def parse_options(notebook = False):
     parser.add_argument("--do_return", action="store_true", help="Return model, trainer, datamodule")
 
     parser.add_argument("--n_splits", nargs='+', default=[-1,-1,-1], help="Train, val, test split")
-    parser.add_argument("--generators", action="store_true", help="Use generators")
+    parser.add_argument("--epsilons", nargs='+', default=[], help="Epsilons for the generators")
 
     args = parser.parse_args([]) if notebook else parser.parse_args()
     return args
@@ -37,9 +36,10 @@ def main(args):
     pl.seed_everything(args.seed, workers=True)
 
     if args.version == None:
-        generator_indicator = '1' if args.generators else '0'
-        args.version = f'precision_datasympde_aug{generator_indicator}_{args.pde_name}_seed{args.seed}'
-        print("\n\n###Version: ", args.version, "###\n\n")
+        epsilons = '-'.join([str(eps) for eps in args.epsilons]) if len(args.epsilons) > 0 else '0'
+        data_dir = args.data_dir.split('/')[-1]
+        args.version = f'data{data_dir}_{args.pde_name}_aug{epsilons}_seed{args.seed}'
+    print("\n\n###Version: ", args.version, "###\n\n")
 
     datamodule = PDEDataModule(
         pde_name = args.pde_name, 
@@ -47,7 +47,7 @@ def main(args):
         batch_size = args.batch_size, 
         num_workers = args.num_workers,
         n_splits = [int(n_split) for n_split in args.n_splits],
-        generators = args.generators,
+        epsilons = args.epsilons,
         persistent_workers = args.persistent_workers,
     )
 

@@ -8,15 +8,9 @@ logs/FNO1d_noprecision
 jobs/slurm_output
 jobs/slurm_output_noprecision
 
-data_org/
-data/train
-data/val
-data/test
-data_old/
-data_old2/
-data_lpsda/
-data.zip
-data_fixed/
+data/*/train
+data/*/val
+data/*/test
 
 ext_repos/LPSDA/models
 ext_repos/LPSDA/data

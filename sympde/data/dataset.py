@@ -3,24 +3,24 @@ import torch
 import numpy as np
 import pytorch_lightning as pl
 
-from data.utils import load_obj
+from misc.utils import load_obj
 from data.utils import d_to_coords
-from data.pde_data_aug import augment_pde1, augment_KdV
+from data.pdes import PDEs
 
 class PDEDataset(torch.utils.data.Dataset):
     def __init__(
         self, pde_name, data_dir, split="val", 
         transform=None, target_transform=None,
-        generators=None, n_samples = -1
+        epsilons=[], n_samples = -1
     ):
         self.split = split
-        split_dir = os.path.join(data_dir, split)
 
         self.transform = transform
         self.target_transform = target_transform
-        self.generators = generators
+        self.epsilons = epsilons
 
-        self.us, self.dxs, self.dts = load_obj(os.path.join(split_dir, f"{pde_name}"))
+        self.pde = PDEs()[pde_name]
+        self.us, self.dxs, self.dts = load_obj(os.path.join(data_dir, split, f"{pde_name}"))
         
         n_samples = len(self.us) if n_samples == -1 else n_samples
         if n_samples > len(self.us):
@@ -28,15 +28,9 @@ class PDEDataset(torch.utils.data.Dataset):
             n_samples = len(self.us)
         print(f'Selecting {n_samples} out of the {len(self.us)} {split} samples!')
         self.us = self.us[:n_samples]
-        
-        if pde_name == 'pde1':
-            self.augment_pde = augment_pde1
-        elif pde_name == 'KdV':
-            self.augment_pde = augment_KdV
-        else:
-            raise ValueError(f'Augmenting of {pde_name} not implemented!')
 
-        if self.generators is True:
+        if self.epsilons:
+            assert self.pde.n_augments == len(self.epsilons), f'Number of epsilons ({len(self.epsilons)}) must match number of augmentations ({self.pde.n_augments})'
             print(f'Augmenting {pde_name}!')
 
     def __len__(self):
@@ -46,18 +40,18 @@ class PDEDataset(torch.utils.data.Dataset):
 
         u, dx, dt = self.us[idx], self.dxs[idx], self.dts[idx]
 
+        u = torch.from_numpy(u)
+        dx = torch.tensor(dx)
+        dt = torch.tensor(dt)
+
         if self.transform:
             u = self.transform(u)
 
         if self.target_transform:
             u = self.target_transform(u)
 
-        u = torch.from_numpy(u)
-        dx = torch.tensor(dx)
-        dt = torch.tensor(dt)
-
         # torch.float64 are used for augmentation
-        if self.generators:
+        if self.epsilons:
             u, dx, dt = self.augment(u, dx, dt)
 
         # torch.float32 are passed to the model
@@ -72,7 +66,7 @@ class PDEDataset(torch.utils.data.Dataset):
         X = d_to_coords(u, dx, dt)
         x, t = X.permute(2, 0, 1)[:2]
 
-        u, x, t = self.augment_pde(u.clone(), x.clone(), t.clone())
+        u, x, t = self.pde.augment(u.clone(), x.clone(), t.clone(), epsilons=self.epsilons)
         dx = x[0,1] - x[0, 0]
         dt = t[1,0] - t[0, 0]
 
@@ -83,7 +77,7 @@ class PDEDataset(torch.utils.data.Dataset):
 class PDEDataModule(pl.LightningDataModule):
     def __init__(self, pde_name, data_dir, 
                  batch_size=1, num_workers=1,
-                 generators = None,
+                 epsilons = [],
                  n_splits = [160, 20, 20],
                  persistent_workers = False,
                 ):
@@ -94,18 +88,19 @@ class PDEDataModule(pl.LightningDataModule):
         self.num_workers = num_workers
         self.splits = ['train', 'val', 'test']
         
-        self.generators = generators
+        self.epsilons = epsilons
         self.n_splits = {'train': n_splits[0], 'val': n_splits[1], 'test': n_splits[2]}
         self.persistent_workers = persistent_workers
 
     def setup(self, stage=None):
+        print('stage', stage)
         self.dataset = { 
             split : 
                 PDEDataset(
                     pde_name=self.pde_name, 
                     data_dir=self.data_dir, 
                     split=split,
-                    generators = self.generators if split == 'train' else None,
+                    epsilons = self.epsilons if split == 'train' else None,
                     n_samples    = self.n_splits[split],
                 ) 
             for split in self.splits }

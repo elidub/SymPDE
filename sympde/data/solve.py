@@ -5,7 +5,7 @@ from math import pi
 from tqdm import tqdm
 from scipy.integrate import solve_ivp
 
-class GeneratePDEData:
+class SolvePDE:
     """
     Adapted from Brandstetter, J., Welling, M., Worrall, D.E., 2022. Lie Point Symmetry Data Augmentation for Neural PDE Solvers. https://doi.org/10.48550/arXiv.2202.07643
         https://github.com/brandstetter-johannes/LPSDA/blob/master/notebooks/data_generation.ipynb
@@ -73,10 +73,11 @@ class GeneratePDEData:
                     y0=u0, 
                     method='Radau', 
                     t_eval=t, 
+                    args=(L, ),
                     atol=self.tol, 
                     rtol=self.tol)
         
-        return sol.y.T, (dx, dt)
+        return sol.y.T, dx, dt
 
     def generate_data(self, pde_func, N_samples: int = 1, tqdm_desc: str = 'Generating data pde_func!'):
         us = np.full((N_samples, self.Nt, self.Nx), np.nan)
@@ -84,7 +85,7 @@ class GeneratePDEData:
 
 
         for i in tqdm(range(N_samples), desc = tqdm_desc):
-            u, (dx, dt) = self.solve_pde(pde_func)
+            u, dx, dt = self.solve_pde(pde_func)
             u_tf = u.shape[0]
             if u_tf < self.Nt: 
                 print(f'Warning: x_tf = {u_tf} < Nt = {self.Nt}')
