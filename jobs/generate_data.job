@@ -5,7 +5,7 @@
 #SBATCH --job-name=GenData
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=128
-#SBATCH --time=00:05:00
+#SBATCH --time=00:30:00
 #SBATCH --output=jobs/slurm_output/generate_data_%A.out
 
 module purge
@@ -15,4 +15,4 @@ module load Anaconda3/2022.05
 cd $HOME/thesis/SymPDE/sympde
 source activate sympde
 
-srun python -u generate_data.py --pde_names pde1 --n_splits 1000 200 200
+srun python -u generate_data.py --pde_names KdV --n_splits 1000 200 200

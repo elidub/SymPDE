@@ -19,7 +19,8 @@ source activate sympde
 
 srun python -u run.py \
     --train \
-    --pde_name pde1 \
+    --pde_name KdV \
+    --data_dir ../data/medium \
     --batch_size 32 \
     --max_epochs 1000 \
     --num_workers 18 \

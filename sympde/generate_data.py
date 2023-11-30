@@ -17,7 +17,7 @@ from data.lpda_data_aug import SpaceTranslate, Scale, Galileo
 def parse_options(notebook = False):
     parser = argparse.ArgumentParser(description='Generating PDE data')
 
-    parser.add_argument("--data_dir", type=str, default="../data", help="Path to data directory")
+    parser.add_argument("--data_dir", type=str, default="../data/bugfix", help="Path to data directory")
 
     parser.add_argument("--Lmax", type = int, default = 64, help = "Length of spatial domain")
     parser.add_argument("--Tmax", type = int, default = 40, help = "Length of temporal domain")

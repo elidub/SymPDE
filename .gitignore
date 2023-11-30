@@ -4,6 +4,7 @@ __pycache__
 logs/FNO1d
 logs/FNO1d_old
 logs/FNO1d_noprecision
+logs_old/
 
 jobs/slurm_output
 jobs/slurm_output_noprecision
@@ -17,6 +18,9 @@ data_old2/
 data_lpsda/
 data.zip
 data_fixed/
+data/*/train
+data/*/val
+data/*/test
 
 ext_repos/LPSDA/models
 ext_repos/LPSDA/data
