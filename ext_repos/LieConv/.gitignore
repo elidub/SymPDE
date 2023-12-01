@@ -1,0 +1,6 @@
+*.pyc
+*.pdf
+*.state
+*.tfevents*
+*.df
+*.s
