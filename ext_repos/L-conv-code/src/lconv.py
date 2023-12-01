@@ -21,8 +21,10 @@ class Lconv(nn.Module):
         # x:(batch, channel, flat_d)
         # res = x W0
         residual = torch.einsum('bcd,oc->bod', x, self.Wi[0] )
+        print('x',x.shape, 'Wi[0]', self.Wi[0].shape, 'residual', residual.shape)
         # y = Li x Wi
-        y = torch.einsum('kdf,bcf,koc->bod', self.L, x, self.Wi[1:]) 
+        y = torch.einsum('kdf,bcf,koc->bod', self.L, x, self.Wi[1:])
+        print('L',self.L.shape, 'x', x.shape, 'Wi[1:]', self.Wi[1:].shape, 'y', y.shape)
         return y + residual
     
 class Reshape(nn.Module):

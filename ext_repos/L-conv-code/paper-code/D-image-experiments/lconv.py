@@ -14,7 +14,7 @@ class L_module(Layer):
 
         
     def build(self, input_shape):
-        # print(input_shape)
+        print(input_shape)
         d = prod(input_shape[1:])
         
         space_dim, feature_dim = input_shape[-2:]
@@ -37,9 +37,13 @@ class L_module(Layer):
         
         x = inputs
         
-        for l in self.hidden_layers:
+        print(x.shape)
+        for i, l in enumerate(self.hidden_layers):
             x = l @ x
+            print(i, x.shape)
         x = self.L @ x
+        print(x.shape)
+        print('next')
         act = deserialize(self.params['activation'])
         return act(x)
     
@@ -85,19 +89,25 @@ class L_Conv(Model):
         self.activation_layer = deserialize(self.activation)
 
     def call(self, inputs):
+        # (batch, space, features) --> (batch, 1, space, features) 
+        # space = d*d (for MNIST 28*28 = 784)
+        # features = 1 (channels ?)
         x0 = inputs[:,newaxis]
 
-        # (batch, space, features) --> (batch, 1, space, features) 
-        #x = self.L @ x0
-        x = self.L(x0)
-        # (batch, 1, space, features) --> (batch, kernel_size, space/stride, features) 
 
+        #x = self.L @ x0
+        # (batch, 1, space, features) --> (batch, kernel_size-1, space/stride, features) 
+        # default kernel_size = 5
+        x = self.L(x0)
+
+        # (batch, kernel_size-1, space/stride, features) --> (batch, kernel_size, space/stride, features) 
         x = concat([x, x0], axis = 1) # add back the original 
 
-        x = x @ self.w + self.b
         # (batch, kernel_size, space, features) --> (batch, kernel_size, space, num_filters) 
+        x = x @ self.w + self.b
 
-        x = reduce_sum(x, axis = 1)
+        # (batch, kernel_size, space, num_filters) --> (batch, space, num_filters) 
+        x = reduce_sum(x, axis = 1) # sum over kernel_size, similar to torch.sum()
 
         return self.activation_layer(x)
     
