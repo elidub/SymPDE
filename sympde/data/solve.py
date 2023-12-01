@@ -53,12 +53,12 @@ class SolvePDE:
 
     def solve_pde(self, pde_func):
 
-        # l1, l2 = self.Lmax - self.Lmax/10, self.Lmax + self.Lmax/10
-        # t1, t2 = self.Tmax - self.Tmax/10, self.Tmax + self.Tmax/10
-        # L = np.random.uniform(l1, l2)
-        # T = np.random.uniform(t1, t2)
-        L = self.Lmax
-        T = self.Tmax
+        l1, l2 = self.Lmax - self.Lmax/10, self.Lmax + self.Lmax/10
+        t1, t2 = self.Tmax - self.Tmax/10, self.Tmax + self.Tmax/10
+        L = np.random.uniform(l1, l2)
+        T = np.random.uniform(t1, t2)
+        # L = self.Lmax
+        # T = self.Tmax
 
         x = np.linspace(0, (1-1.0/self.Nx)*L, self.Nx)
         t = np.linspace(0, T, self.Nt)

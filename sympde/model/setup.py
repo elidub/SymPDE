@@ -27,7 +27,7 @@ def setup_model(args):
         model = Learner(net, criterion)
         return model
     
-    ckpt_path = os.path.join(args.log_dir, args.net, args.version, "checkpoints")
+    ckpt_path = os.path.join(args.log_dir, args.name, args.version, "checkpoints")
     assert len(os.listdir(ckpt_path)) == 1, "Multiple checkpoints found"
     ckpt = os.listdir(ckpt_path)[0]
     model = Learner.load_from_checkpoint(

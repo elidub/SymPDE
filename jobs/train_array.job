@@ -25,10 +25,10 @@ source activate sympde
 srun python -u run.py \
     --train \
     --pde_name KdV \
-    --data_dir ../data/medium \
-    --n_splits 160 20 20 \
-    --batch_size 32 \
-    --max_epochs 1000 \
+    --data_dir ../data/lpsda_mimic \
+    --n_splits -1 -1 -1 \
+    --batch_size 128 \
+    --max_epochs 3000 \
     --num_workers 18 \
     --persistent_workers \
     $(head -$SLURM_ARRAY_TASK_ID $ARRAY_FILE | tail -1)

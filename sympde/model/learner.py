@@ -50,7 +50,7 @@ class Learner(pl.LightningModule):
         # Additional metrics can be calculated here
 
         # Log
-        self.log(f"{mode}_loss", loss, prog_bar=True)
+        self.log(f"{mode}_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
 
         return loss, batch, y_pred
 

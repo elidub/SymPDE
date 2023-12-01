@@ -21,6 +21,7 @@ def parse_options(notebook = False):
     parser.add_argument("--num_workers", type=int, default=1, help="Number of workers")
     parser.add_argument("--persistent_workers", action="store_true", help="Persistent workers")
     parser.add_argument("--version", type=str, default=None, help="Version of the training run")
+    parser.add_argument("--name", type=str, default=None, help="Name of the training run")
 
     parser.add_argument("--train", action="store_true", help="Train the model")
     parser.add_argument("--local", action="store_true", help="Run on local machine")
@@ -38,11 +39,11 @@ def main(args):
     args.epsilons = [float(eps) for eps in args.epsilons]
     args.n_splits = [int(n_split) for n_split in args.n_splits]
 
-    if args.version == None:
+    if args.name is None:
         epsilons = '-'.join([str(eps) for eps in args.epsilons]) if len(args.epsilons) > 0 else '0'
         data_dir = args.data_dir.split('/')[-1]
-        args.version = f'data{data_dir}_{args.pde_name}_aug{epsilons}_seed{args.seed}'
-    print("\n\n###Version: ", args.version, "###\n\n")
+        args.name = f'data{data_dir}_net{args.net}_{args.pde_name}_aug{epsilons}_seed{args.seed}'
+    print("\n\n###Version: ", args.version, "###\n###Name: ", args.name, "###\n\n")
 
     datamodule = PDEDataModule(
         pde_name = args.pde_name, 
@@ -59,7 +60,7 @@ def main(args):
     logging.getLogger('lightning').setLevel(0) # Disable lightning prints about GPU's
     trainer = pl.Trainer(
         logger=pl.loggers.TensorBoardLogger(
-            args.log_dir, name=args.net, version=args.version
+            args.log_dir, name=args.name, version=args.version
         ),
         log_every_n_steps = 1,
         max_epochs=args.max_epochs,
