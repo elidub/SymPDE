@@ -50,6 +50,7 @@ def main(args):
     datamodule = MnistDataModule(
         r = args.rot_angle,
         dim = args.dim,
+        digit = args.digit,
         data_dir = args.data_dir, 
         batch_size = args.batch_size,
         num_workers = args.num_workers,

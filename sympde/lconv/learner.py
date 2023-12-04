@@ -37,7 +37,7 @@ class LconvLearner(pl.LightningModule):
 
         # Metrics
         L_pred = self.get_Lpred(batch)
-        mse = torch.mean((L_pred - self.L_gt)**2)
+        mse = torch.mean((torch.tensor(L_pred) - self.L_gt)**2)
         self.log(f"{mode}_Lmse", mse, prog_bar=True, on_step=False, on_epoch=True)
 
         # Log
@@ -69,7 +69,7 @@ class LconvLearner(pl.LightningModule):
         L = self.net.layers[1].L.detach().cpu().squeeze(0).numpy()
         Wi = self.net.layers[1].Wi.detach().cpu().squeeze(0).numpy()
 
-        ang = np.pi / self.r
+        ang = np.pi / self.r if self.r > 0 else 1
         L_pred = L * Wi / ang
         return L_pred
 

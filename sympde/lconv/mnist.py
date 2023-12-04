@@ -53,9 +53,10 @@ class MnistDataset(Dataset):
         self.labels = data[:, -1].astype(np.int64)
 
         if digit is not None:
-            self.images = self.images[self.labels == digit]
-            self.labels = self.labels[self.labels == digit]
-            self.images_rot = self.images_rot[self.labels == digit]
+            idxs = np.where(self.labels == digit)[0]
+            self.images = self.images[idxs]
+            self.labels = self.labels[idxs]
+            self.images_rot = self.images_rot[idxs]
 
 
 
