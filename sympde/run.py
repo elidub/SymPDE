@@ -43,7 +43,7 @@ def main(args):
         epsilons = '-'.join([str(eps) for eps in args.epsilons]) if len(args.epsilons) > 0 else '0'
         data_dir = args.data_dir.split('/')[-1]
         args.name = f'data{data_dir}_net{args.net}_{args.pde_name}_aug{epsilons}_seed{args.seed}'
-    print("\n\n###Version: ", args.version, "###\n###Name: ", args.name, "###\n\n")
+    print("\n\n###\tVersion: ", args.version, "\t###\n###\tName: ", args.name, "\t###\n\n")
 
     datamodule = PDEDataModule(
         pde_name = args.pde_name, 
