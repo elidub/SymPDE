@@ -53,41 +53,50 @@ def plot_1d(t, L, T):
     plt.xticks(fontsize=28)
     plt.show()
 
-def plot_1ds(us, dx, dt, vminmax = False):
-    n_rows, n_cols = us.shape[:2]
-    fig, axs = plt.subplots(n_rows, n_cols, figsize=np.array([12*n_cols,8*n_rows]), sharex=True, sharey=True, constrained_layout=True)
+def plot_1ds(us, dxs, dts, nrows = None, ncols = None, vminmax = False, title = None, l = 1, figsize = (12,8)):
+
+    if nrows is None:
+        nrows = len(us)
+    if ncols is None:
+        ncols = 1
+
+    fig, axs = plt.subplots(nrows, ncols, figsize=np.array([figsize[0]*ncols*l,figsize[1]*nrows*l]), sharex=False, sharey=False, constrained_layout=True)
 
     if vminmax:
         vmin, vmax = us.min(), us.max()
     else:
         vmin, vmax = None, None
 
-    for i in range(n_rows):
-        for j in range(n_cols):
-            L, T = d_to_LT(us[i,j], dx, dt)
-            ax = axs[i,j] if n_rows > 1 else axs[j] if n_cols > 1 else axs
-            ax.imshow(us[i,j], origin = 'lower', extent=[0,L,0,T], cmap='PuOr_r', aspect='auto', vmin = vmin, vmax = vmax)
-            ax.tick_params(axis='both', which='major', labelsize=28)
-            ax.tick_params(axis='both', which='minor', labelsize=28)
+    axs = axs.flatten() if nrows > 1 and ncols > 1 else [axs]
+
+    for u, dx, dt, ax in zip(us, dxs, dts, axs):
+        L, T = d_to_LT(u, dx, dt)
+        im = ax.imshow(u, origin = 'lower', extent=[0,L,0,T], cmap='PuOr_r', aspect='auto', vmin = vmin, vmax = vmax)
+        ax.tick_params(axis='both', which='major', labelsize=28)
+        ax.tick_params(axis='both', which='minor', labelsize=28)
+
+        fig.colorbar(im, ax=ax, shrink = 0.9, pad = 0.08, aspect = 20)
 
     fig.supxlabel('x', fontsize=34)
     fig.supylabel('t', fontsize=34)
+    fig.suptitle(title, fontsize=34)
 
 
     plt.show()
 
 
 def plot_1d_dict(u_dict):
-    n_rows, n_cols = len(u_dict), len(list(u_dict.values())[0][0])
+    nrows, ncols = len(u_dict), len(list(u_dict.values())[0][0])
     figsize = [12, 8]
     figsize = [3, 4]
-    fig, axs = plt.subplots(n_rows, n_cols, figsize=np.array([figsize[0]*n_cols,figsize[1]*n_rows]), sharex=True, sharey=True, constrained_layout=True)
+    fig, axs = plt.subplots(nrows, ncols, figsize=np.array([figsize[0]*ncols,figsize[1]*nrows]), sharex=True, sharey=True, constrained_layout=True)
 
     for i, (pde_name, d) in enumerate(u_dict.items()):
         us, dx, dt = d
         L, T = d_to_LT(us, dx, dt)
-        for j in range(n_cols):
-            ax = axs[i, j] if n_rows > 1 and n_cols > 1 else (axs[i] if n_rows > 1 else axs[j] if n_cols > 1 else None)
+        for j in range(ncols):
+            ax = axs[i, j] if nrows > 1 and ncols > 1 else (axs[i] if nrows > 1 else axs[j] if ncols > 1 else None)
+            print(us.shape, L, T)
             ax.imshow(us[j], origin = 'lower', extent=[0,L,0,T], cmap='PuOr_r', aspect='auto')
             ax.tick_params(axis='both', which='major', labelsize=28)
             ax.tick_params(axis='both', which='minor', labelsize=28)
