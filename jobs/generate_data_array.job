@@ -1,0 +1,25 @@
+#!/bin/bash
+
+#SBATCH --partition=genoa
+#SBATCH --gpus=0
+#SBATCH --job-name=GenData
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=18
+#SBATCH --time=01:00:00
+#SBATCH --array=1-25%13
+#SBATCH --output=jobs/slurm_output/generate_data_array_%A_%a.out
+
+array="pdes"
+
+ARRAY_FILE=$HOME/thesis/SymPDE/jobs/arrays/$array.txt
+cd $HOME/thesis/SymPDE/sympde
+
+module purge
+module load 2022
+module load Anaconda3/2022.05
+source activate sympde
+
+srun python -u generate_data.py \
+    --n_splits 500 100 100 \
+    --data_dir ../data/v0 \
+    $(head -$SLURM_ARRAY_TASK_ID $ARRAY_FILE | tail -1)

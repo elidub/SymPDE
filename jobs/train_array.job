@@ -5,14 +5,15 @@
 #SBATCH --job-name=Train
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=18
-#SBATCH --time=02:00:00
-#SBATCH --array=1-39%10
+#SBATCH --time=00:59:00
+#SBATCH --array=1-10%10
 #SBATCH --output=jobs/slurm_output/train_array_%A_%a.out
 
 # default_array="train"
 # array="${1:-$default_array}"
 
-array="eps_0to1_nogrid"
+# array="eps_0to1_nogrid"
+array="aug_noaug"
 
 ARRAY_FILE=$HOME/thesis/SymPDE/jobs/arrays/$array.txt
 cd $HOME/thesis/SymPDE/sympde
@@ -25,11 +26,11 @@ source activate sympde
 srun python -u run.py \
     --train \
     --pde_name KdV \
-    --data_dir ../data/lpsda_mimic \
+    --data_dir ../data/v2 \
     --n_splits -1 -1 -1 \
     --batch_size 128 \
     --max_epochs 5000 \
     --num_workers 18 \
     --persistent_workers \
-    --version version_3 \
+    --version test \
     $(head -$SLURM_ARRAY_TASK_ID $ARRAY_FILE | tail -1)
