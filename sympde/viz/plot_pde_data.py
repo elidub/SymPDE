@@ -67,19 +67,19 @@ def plot_1ds(us, dxs, dts, nrows = None, ncols = None, vminmax = False, title = 
     else:
         vmin, vmax = None, None
 
-    axs = axs.flatten() if nrows > 1 and ncols > 1 else [axs]
+    axs = axs.flatten() if int(nrows*ncols)!=1 else [axs]
 
     for u, dx, dt, ax in zip(us, dxs, dts, axs):
         L, T = d_to_LT(u, dx, dt)
         im = ax.imshow(u, origin = 'lower', extent=[0,L,0,T], cmap='PuOr_r', aspect='auto', vmin = vmin, vmax = vmax)
-        ax.tick_params(axis='both', which='major', labelsize=28)
-        ax.tick_params(axis='both', which='minor', labelsize=28)
+        ax.tick_params(axis='both', which='major')
+        ax.tick_params(axis='both', which='minor')
 
         fig.colorbar(im, ax=ax, shrink = 0.9, pad = 0.08, aspect = 20)
 
-    fig.supxlabel('x', fontsize=34)
-    fig.supylabel('t', fontsize=34)
-    fig.suptitle(title, fontsize=34)
+    fig.supxlabel('x')
+    fig.supylabel('t')
+    fig.suptitle(title)
 
 
     plt.show()
