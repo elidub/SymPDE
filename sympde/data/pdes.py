@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 import inspect 
 
 from data.pseudospectral import PDE_Pseudospectral
@@ -7,6 +8,29 @@ from data.augment import fourier_shift
 def PDEs():
     return {
         "Pde1": Pde1(),
+        "Pde2": Pde2(),
+        "Pde3": Pde3(),
+        "Pde4": Pde4(),
+        "Pde5": Pde5(),
+        "Pde6": Pde6(),
+        "Pde7": Pde7(),
+        "Pde8": Pde8(),
+        "Pde9": Pde9(),
+        "Pde10": Pde10(),
+        "Pde11": Pde11(),
+        "Pde12": Pde12(),
+        "Pde13": Pde13(),
+        "Pde14": Pde14(),
+        "Pde15": Pde15(),
+        "Pde16": Pde16(),
+        "Pde17": Pde17(),
+        "Pde18": Pde18(),
+        "Pde19": Pde19(),
+        "Pde20": Pde20(),
+        "Pde21": Pde21(),
+        "Pde22": Pde22(),
+        "Pde23": Pde23(),
+        "Pde24": Pde24(),
         "KdV": KdV(),
     }
 
@@ -15,8 +39,14 @@ class BasePDE(PDE_Pseudospectral):
         super().__init__()
         self.n_augments = len([func_name for func_name, _ in inspect.getmembers(self, predicate=inspect.ismethod) if func_name.startswith('_u')]) + 1
 
+        self.Lmax = None
+        self.Tmax = None
+
     def __repr__(self) -> str:
         return self.__class__.__name__
+    
+    def __str__(self) -> str:
+        raise NotImplementedError
 
     def augment(self, u, x, t, epss):
         raise NotImplementedError
@@ -25,18 +55,279 @@ class BasePDE(PDE_Pseudospectral):
         raise NotImplementedError
 
 
-
 class Pde1(BasePDE):
     def __init__(self):
         super().__init__()
+        self.Tmax = 100
+
+    def __str__(self) -> str:
+        return r"$0.1 u_{xx}$"
 
     def __call__(self, t, u, L):
-        return 0.1 * self.uxx(u, L)
+        return 0.1 * self.dxx(u, L)
+    
+class Pde2(BasePDE):
+    def __init__(self):
+        super().__init__()
+        self.Tmax = 100
+
+    def __str__(self) -> str:
+        return r"$1.0 u_{xx}$"
+
+    def __call__(self, t, u, L):
+        return 1.0 * self.dxx(u, L)
+    
+class Pde3(BasePDE):
+    def __init__(self):
+        super().__init__()
+        self.Tmax = 100
+
+    def __str__(self) -> str:
+        return r"$10.0 u_{xx}$"
+
+    def __call__(self, t, u, L):
+        return 10 * self.dxx(u, L)
+    
+class Pde4(BasePDE):
+    def __init__(self):
+        super().__init__()
+        self.Tmax = 100
+
+    def __str__(self) -> str:
+        return r"$(e^{u_x} u_{x})_{x}$"
+
+    def __call__(self, t, u, L):
+        return self.dx(np.exp(u) * self.dx(u, L), L)
+    
+class Pde5(BasePDE):
+    def __init__(self):
+        super().__init__()
+        self.Tmax = 100
+
+    def __str__(self) -> str:
+        return r"$e^{u_x} u_{x x}$"
+
+    def __call__(self, t, u, L):
+        return np.exp(self.dx(u, L)) * self.dxx(u, L)
+    
+class Pde6(BasePDE):
+    def __init__(self):
+        super().__init__()
+        self.Tmax = 200
+
+    def __str__(self) -> str:
+        return r"$\frac{u_{x x}}{\left(u_x\right)^2+1} e^{3 \arctan \left(u_x\right)}$"
+
+    def __call__(self, t, u, L):
+        return (self.dxx(u, L) * np.exp(3 * np.arctan(self.dx(u, L)))) / (1 + self.dx(u, L)**2)
+
+class Pde7(BasePDE):
+    def __init__(self):
+        super().__init__()
+        self.Tmax = 200
+
+    def __str__(self) -> str:
+        return r"$\arctan \left(u_{x x}\right)$"
+
+    def __call__(self, t, u, L):
+        return np.arctan(self.dxx(u, L))
+    
+class Pde8(BasePDE):
+    def __init__(self):
+        super().__init__()
+        self.Tmax = 2
+
+    def __str__(self) -> str:
+        return r"$\left(e^u u_x\right)_x+e^{-2 u}$"
+
+    def __call__(self, t, u, L):
+        return self.dx(np.exp(u) * self.dx(u, L), L) + np.exp(-2*u)
+    
+class Pde9(BasePDE):
+    def __init__(self):
+        super().__init__()
+        self.Tmax = 2
+        
+    def __str__(self) -> str:
+        return r"$\left(e^u u_x\right)_x+e^{-u}$"
+
+    def __call__(self, t, u, L):
+        return self.dx(np.exp(u) * self.dx(u, L), L) + np.exp(-u)
+    
+class Pde10(BasePDE):
+    def __init__(self):
+        super().__init__()
+        self.Tmax = 2
+
+    def __str__(self) -> str:
+        return r"$\left(e^u u_x\right)_x-e^u$"
+
+    def __call__(self, t, u, L):
+        return self.dx(np.exp(u) * self.dx(u, L), L) - np.exp(u)
+    
+class Pde11(BasePDE):
+    def __init__(self):
+        super().__init__()
+        self.Tmax = 2
+
+    def __str__(self) -> str:
+        return r"$\left(e^u u_x\right)_x-e^{2 u}$"
+
+    def __call__(self, t, u, L):
+        return self.dx(np.exp(u) * self.dx(u, L), L) - np.exp(2*u)
+    
+class Pde12(BasePDE):
+    def __init__(self):
+        super().__init__()
+        self.Tmax = 2
+
+    def __str__(self) -> str:
+        return r"$\left(e^u u_x\right)_x+1$"
+
+    def __call__(self, t, u, L):
+        return self.dx(np.exp(u) * self.dx(u, L), L) + 1
+    
+class Pde13(BasePDE):
+    def __init__(self):
+        super().__init__()
+        self.Tmax = 2
+
+    def __str__(self) -> str:
+        return r"$\left(e^u u_x\right)_x-1$"
+
+    def __call__(self, t, u, L):
+        return self.dx(np.exp(u) * self.dx(u, L), L) - 1
+    
+class Pde14(BasePDE):
+    def __init__(self):
+        super().__init__()
+        self.Tmax = 2
+
+    def __str__(self) -> str:
+        return r"$u_{x x}-e^u$"
+
+    def __call__(self, t, u, L):
+        return self.dxx(u, L) - np.exp(u)
+    
+class Pde15(BasePDE):
+    def __init__(self):
+        super().__init__()
+        self.Tmax = 200
+
+    def __str__(self) -> str:
+        return r"$u_{x x}+u^{-1}$"
+
+    def __call__(self, t, u, L):
+        return self.dxx(u, L) + u**(-1)
+    
+class Pde16(BasePDE):
+    def __init__(self):
+        super().__init__()
+        self.Tmax = 0.1
+
+    def __str__(self) -> str:
+        return r"$u_{x x}+u^2$"
+
+    def __call__(self, t, u, L):
+        return self.dxx(u, L) + u**(2)
+    
+class Pde17(BasePDE):
+    def __init__(self):
+        super().__init__()
+        self.Tmax = 0.1
+        
+    def __str__(self) -> str:
+        return r"$u_{x x}-u^2$"
+
+    def __call__(self, t, u, L):
+        return self.dxx(u, L) - u**(2)
+    
+class Pde18(BasePDE):
+    def __init__(self):
+        super().__init__()
+        self.Tmax = 2
+
+    def __str__(self) -> str:
+        return r"$u_{x x}+u$"
+
+    def __call__(self, t, u, L):
+        return self.dxx(u, L) + u
+
+class Pde19(BasePDE):
+    def __init__(self):
+        super().__init__()
+        self.Tmax = 2
+
+    def __str__(self) -> str:
+        return r"$u_{x x}-u$"
+
+    def __call__(self, t, u, L):
+        return self.dxx(u, L) - u
+
+class Pde20(BasePDE):
+    def __init__(self):
+        super().__init__()
+        self.Tmax = 2
+
+    def __str__(self) -> str:
+        return r"$u_{x x}+1$"
+
+    def __call__(self, t, u, L):
+        return self.dxx(u, L) + 1
+    
+class Pde21(BasePDE):
+    def __init__(self):
+        super().__init__()
+        self.Tmax = 2
+        
+    def __str__(self) -> str:
+        return r"$u_{x x}-1$"
+
+    def __call__(self, t, u, L):
+        return self.dxx(u, L) - 1
+    
+class Pde22(BasePDE):
+    def __init__(self):
+        super().__init__()
+        self.Tmax = 200
+
+    def __str__(self) -> str:
+        return r"$u u_x+u_{x x}$"
+
+    def __call__(self, t, u, L):
+        return self.dxx(u, L) + u * self.dx(u, L)
+    
+class Pde23(BasePDE):
+    def __init__(self):
+        super().__init__()
+        self.Tmax = 200
+
+    def __str__(self) -> str:
+        return r"$u_{x x}+\left(u_x\right)^2$"
+
+    def __call__(self, t, u, L):
+        return self.dxx(u, L) + self.dx(u, L)**2
+    
+class Pde24(BasePDE):
+    def __init__(self):
+        super().__init__()
+        self.Tmax = 200
+        
+    def __str__(self) -> str:
+        # return r"$u u_x+u_{x x}$"
+        return r"$\left(e^u u_x\right)_x-u u_x$"
+
+    def __call__(self, t, u, L):
+        return self.dx(np.exp(u) * self.dx(u, L), L) - u * self.dx(u, L)
+
     
 class KdV(BasePDE):
     def __init__(self):
         super().__init__()
-        self.n_augments = 4
+        self.Tmax = 50
+
+    def __str__(self) -> str:  
+        return r"$- u u_x - u_{xxx}$"
 
     def _u2(self, u, x, t, eps):
         """
@@ -83,4 +374,4 @@ class KdV(BasePDE):
         return u_new, x_new, t_new
 
     def __call__(self, t, u, L):
-        return - u * self.ux(u, L) - self.uxxx(u, L)
+        return - u * self.dx(u, L) - self.dxxx(u, L)

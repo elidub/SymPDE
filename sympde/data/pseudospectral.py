@@ -7,17 +7,18 @@ class PDE_Pseudospectral:
         https://github.com/brandstetter-johannes/LPSDA/blob/master/notebooks/data_augmentation.ipynb
     """
     def __init__(self):
+        # self.L = L
         pass
 
-    def ux(self, u, L):
+    def dx(self, u, L):
         return psdiff(u, order = 1, period=L)
     
-    def uxx(self, u, L):
+    def dxx(self, u, L):
         return psdiff(u, order = 2, period=L)
     
-    def uxxx(self, u, L):
+    def dxxx(self, u, L):
         return psdiff(u, order = 3, period=L)
     
-    def uxxxx(self, u, L):
+    def dxxxx(self, u, L):
         return psdiff(u, order = 4, period=L)
     
