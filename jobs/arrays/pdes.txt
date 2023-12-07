@@ -1,25 +1,75 @@
---pde_names Pde1
---pde_names Pde2
---pde_names Pde3
---pde_names Pde4
---pde_names Pde5
---pde_names Pde6
---pde_names Pde7
---pde_names Pde8
---pde_names Pde9
---pde_names Pde10
---pde_names Pde11
---pde_names Pde12
---pde_names Pde13
---pde_names Pde14
---pde_names Pde15
---pde_names Pde16
---pde_names Pde17
---pde_names Pde18
---pde_names Pde19
---pde_names Pde20
---pde_names Pde21
---pde_names Pde22
---pde_names Pde23
---pde_names Pde24
---pde_names KdV
+--seed 1 --pde_name Pde1
+--seed 2 --pde_name Pde1
+--seed 3 --pde_name Pde1
+--seed 1 --pde_name Pde2
+--seed 2 --pde_name Pde2
+--seed 3 --pde_name Pde2
+--seed 1 --pde_name Pde3
+--seed 2 --pde_name Pde3
+--seed 3 --pde_name Pde3
+--seed 1 --pde_name Pde4
+--seed 2 --pde_name Pde4
+--seed 3 --pde_name Pde4
+--seed 1 --pde_name Pde5
+--seed 2 --pde_name Pde5
+--seed 3 --pde_name Pde5
+--seed 1 --pde_name Pde6
+--seed 2 --pde_name Pde6
+--seed 3 --pde_name Pde6
+--seed 1 --pde_name Pde7
+--seed 2 --pde_name Pde7
+--seed 3 --pde_name Pde7
+--seed 1 --pde_name Pde8
+--seed 2 --pde_name Pde8
+--seed 3 --pde_name Pde8
+--seed 1 --pde_name Pde9
+--seed 2 --pde_name Pde9
+--seed 3 --pde_name Pde9
+--seed 1 --pde_name Pde10
+--seed 2 --pde_name Pde10
+--seed 3 --pde_name Pde10
+--seed 1 --pde_name Pde11
+--seed 2 --pde_name Pde11
+--seed 3 --pde_name Pde11
+--seed 1 --pde_name Pde12
+--seed 2 --pde_name Pde12
+--seed 3 --pde_name Pde12
+--seed 1 --pde_name Pde13
+--seed 2 --pde_name Pde13
+--seed 3 --pde_name Pde13
+--seed 1 --pde_name Pde14
+--seed 2 --pde_name Pde14
+--seed 3 --pde_name Pde14
+--seed 1 --pde_name Pde15
+--seed 2 --pde_name Pde15
+--seed 3 --pde_name Pde15
+--seed 1 --pde_name Pde16
+--seed 2 --pde_name Pde16
+--seed 3 --pde_name Pde16
+--seed 1 --pde_name Pde17
+--seed 2 --pde_name Pde17
+--seed 3 --pde_name Pde17
+--seed 1 --pde_name Pde18
+--seed 2 --pde_name Pde18
+--seed 3 --pde_name Pde18
+--seed 1 --pde_name Pde19
+--seed 2 --pde_name Pde19
+--seed 3 --pde_name Pde19
+--seed 1 --pde_name Pde20
+--seed 2 --pde_name Pde20
+--seed 3 --pde_name Pde20
+--seed 1 --pde_name Pde21
+--seed 2 --pde_name Pde21
+--seed 3 --pde_name Pde21
+--seed 1 --pde_name Pde22
+--seed 2 --pde_name Pde22
+--seed 3 --pde_name Pde22
+--seed 1 --pde_name Pde23
+--seed 2 --pde_name Pde23
+--seed 3 --pde_name Pde23
+--seed 1 --pde_name Pde24
+--seed 2 --pde_name Pde24
+--seed 3 --pde_name Pde24
+--seed 1 --pde_name KdV
+--seed 2 --pde_name KdV
+--seed 3 --pde_name KdV

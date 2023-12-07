@@ -1,3 +1,8 @@
+"""
+Adapted from Brandstetter, J., Welling, M., Worrall, D.E., 2022. Lie Point Symmetry Data Augmentation for Neural PDE Solvers. https://doi.org/10.48550/arXiv.2202.07643
+    https://github.com/brandstetter-johannes/LPSDA/blob/master/experiments/models_cnn.py
+"""
+
 import sys
 import numpy as np
 import torch

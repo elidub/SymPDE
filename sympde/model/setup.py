@@ -2,31 +2,34 @@ import os
 import torch.nn as nn
 import torch
 
-from model.networks.fno import FNO1d
 from model.learner import Learner
 from model.loss import LpLoss
+
+from model.networks.fno import FNO1d
+from model.networks.cnn import CNN, ResNet, BasicBlock1d
 
 def setup_model(args):
     net = args.net
 
+    time_history = 10
+    time_future  = 5
+
     if net == "FNO1d":
-
-        time_history = 10
-        time_future  = 5
-
-        net = FNO1d(
-            time_history = time_history,
-            time_future  = time_future,
-        )
-        criterion = LpLoss()
+        net = FNO1d(time_history=time_history, time_future=time_future)
+    elif net == "CNN":
+        net = CNN(time_history=time_history, time_future=time_future)
+    elif net == "ResNet":
+        net = ResNet(BasicBlock1d, [2, 2, 2, 2], time_history=time_history, time_future=time_future)
     else:
         raise NotImplementedError
     
+    criterion = LpLoss()
 
     if args.train:
         model = Learner(net, criterion)
         return model
     
+    # Load model
     ckpt_path = os.path.join(args.log_dir, args.name, args.version, "checkpoints")
     assert len(os.listdir(ckpt_path)) == 1, "Multiple checkpoints found"
     ckpt = os.listdir(ckpt_path)[0]

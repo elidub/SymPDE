@@ -11,9 +11,9 @@ from model.setup import setup_model
 def parse_options(notebook = False):
     parser = argparse.ArgumentParser(description='SymPDE')
 
-    parser.add_argument("--data_dir", type=str, default="../data/small", help="Path to data directory")
+    parser.add_argument("--data_dir", type=str, default="../data/v1", help="Path to data directory")
     parser.add_argument("--seed", type=int, default=42, help="Seed for reproducibility")
-    parser.add_argument("--pde_name", type=str, default="pde1", help="Name of the PDE")
+    parser.add_argument("--pde_name", type=str, default="KdV", help="Name of the PDE")
     parser.add_argument("--net", type=str, default='FNO1d', help="Name of the network")
     parser.add_argument("--log_dir", type=str, default="../logs", help="Path to log directory")
     parser.add_argument("--max_epochs", type=int, default=3, help="Number of epochs")

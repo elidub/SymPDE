@@ -2,7 +2,7 @@
 Adapted from Brandstetter, J., Welling, M., Worrall, D.E., 2022. Lie Point Symmetry Data Augmentation for Neural PDE Solvers. https://doi.org/10.48550/arXiv.2202.07643
     https://github.com/brandstetter-johannes/LPSDA/blob/master/experiments/models_fno.py
 
-Which has adapted this code from Li, Z., Kovachki, N., Azizzadenesheli, K., Liu, B., Bhattacharya, K., Stuart, A., Anandkumar, A., 2021. Fourier Neural Operator for Parametric Partial Differential Equations. http://arxiv.org/abs/2010.08895
+Brandstetter et al. has adapted this code from Li, Z., Kovachki, N., Azizzadenesheli, K., Liu, B., Bhattacharya, K., Stuart, A., Anandkumar, A., 2021. Fourier Neural Operator for Parametric Partial Differential Equations. http://arxiv.org/abs/2010.08895
 """
 import sys
 import numpy as np
