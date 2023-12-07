@@ -10,7 +10,7 @@ class Generator(nn.Module):
         # Initialize 6 trainable parameters for basis coefficients:
         self.a = nn.Parameter(torch.randn(6), requires_grad=True)
         self.D = nn.Parameter(self.generate_basis(), requires_grad=False)
-        self.D_titles = ['Lx', 'xLx', 'yLx', 'Ly', 'xLy', 'yLy']
+        self.D_titles = [r'$L_x$', r'$xL_x$', r'$yL_x$', r'$L_y$', r'$xL_y$', r'$yL_y$']
         # self.G = torch.einsum('i, imn -> mn', self.a, self.D)
 
         self.Lx, self.xLx, self.yLx, self.Ly, self.xLy, self.yLy = self.D
