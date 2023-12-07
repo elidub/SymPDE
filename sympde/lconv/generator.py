@@ -21,7 +21,7 @@ class Generator(nn.Module):
                                     for p in np.arange(-d/2+1,d/2)], axis=0)
         d = self.dim
         coords = np.mgrid[:d,:d] - d/2
-        x,y = coords.reshape((2,-1))
+        y, x = coords.reshape((2,-1)) # x, y
 
         dx = (x[:,np.newaxis] - x) * (y[:,np.newaxis] == y)
         dy = (y[:,np.newaxis] - y) * (x[:,np.newaxis] == x)

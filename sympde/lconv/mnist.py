@@ -16,7 +16,8 @@ from PIL import Image
 
 class MnistDataset(Dataset):
 
-    def __init__(self, mode: str, r: float, digit: int = None, dim: int = 28, N: int = -1, data_dir = '../data/mnist'):
+    def __init__(self, mode: str, r: float, digit: int = None, dim: int = 28, N: int = -1, data_dir = '../data/mnist', return_rot: bool = True):
+        self.return_rot = return_rot
         assert mode in ['train', 'test', 'val']
 
         if mode == "train":
@@ -52,6 +53,11 @@ class MnistDataset(Dataset):
 
         self.labels = data[:, -1].astype(np.int64)
 
+        self.images = self.images[:N]
+        self.images_rot = self.images_rot[:N]
+        self.labels = self.labels[:N]
+
+
         if digit is not None:
             idxs = np.where(self.labels == digit)[0]
             self.images = self.images[idxs]
@@ -63,8 +69,10 @@ class MnistDataset(Dataset):
     def __getitem__(self, index):
         image, label, image_rot = self.images[index], self.labels[index], self.images_rot[index]
 
-        # return image, label
-        return image, image_rot
+        if self.return_rot:
+            return image, image_rot
+        else:
+            return image
 
     def __len__(self):
         return len(self.labels)
