@@ -7,6 +7,7 @@ from model.loss import LpLoss
 
 from model.networks.fno import FNO1d
 from model.networks.cnn import CNN, ResNet, BasicBlock1d
+from model.networks.mlp import MLP
 
 def setup_model(args):
     net = args.net
@@ -20,6 +21,8 @@ def setup_model(args):
         net = CNN(time_history=time_history, time_future=time_future)
     elif net == "ResNet":
         net = ResNet(BasicBlock1d, [2, 2, 2, 2], time_history=time_history, time_future=time_future)
+    elif net == "MLP":
+        net = MLP(time_history=time_history, time_future=time_future, hidden_channels=[100, 100, 100, 100])
     else:
         raise NotImplementedError
     

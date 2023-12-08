@@ -128,8 +128,10 @@ class FNO1d(nn.Module):
         x = torch.cat((u, dx[:, None, None].to(u.device).repeat(1, nx, 1),
                        dt[:, None, None].repeat(1, nx, 1).to(u.device)), -1)
         
-
+        print('fc0', self.fc0)
+        print("x.shape: ", x.shape)
         x = self.fc0(x)
+        print("x.shape: ", x.shape)
         # [b, x, c] -> [b, c, x]
         x = x.permute(0, 2, 1)
 
