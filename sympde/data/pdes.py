@@ -333,7 +333,6 @@ class KdV(BasePDE):
         """
         Space Translate
         """
-        # print(eps)
         x_new = x
         t_new = t
         # u_new = fourier_shift(u, eps = -eps, dim = -1)

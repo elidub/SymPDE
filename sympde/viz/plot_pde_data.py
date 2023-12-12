@@ -74,6 +74,7 @@ def plot_1ds(us, dxs, dts, nrows = None, ncols = None, vminmax = False, title = 
         im = ax.imshow(u, origin = 'lower', extent=[0,L,0,T], cmap='PuOr_r', aspect='auto', vmin = vmin, vmax = vmax)
         ax.tick_params(axis='both', which='major')
         ax.tick_params(axis='both', which='minor')
+        ax.set_axis_off()
 
         fig.colorbar(im, ax=ax, shrink = 0.9, pad = 0.08, aspect = 20)
 

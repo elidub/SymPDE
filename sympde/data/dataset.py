@@ -40,6 +40,9 @@ class PDEDataset(torch.utils.data.Dataset):
 
         u, dx, dt = self.us[idx], self.dxs[idx], self.dts[idx]
 
+        # i, j = 40, 40
+        # u = u[:i, :j]
+
         u = torch.from_numpy(u)
         dx = torch.tensor(dx)
         dt = torch.tensor(dt)
@@ -58,7 +61,7 @@ class PDEDataset(torch.utils.data.Dataset):
         u, dx, dt = u.float(), dx.float(), dt.float()
         return u, dx, dt
 
-    def augment(self, u, dx, dt):
+    def augment(self, u, dx, dt, epsilons = None):
         """
         Augment similar as LPSDA
         """
@@ -66,7 +69,8 @@ class PDEDataset(torch.utils.data.Dataset):
         X = d_to_coords(u, dx, dt)
         x, t = X.permute(2, 0, 1)[:2]
 
-        u, x, t = self.pde.augment(u.clone(), x.clone(), t.clone(), epsilons=self.epsilons)
+        epsilons = self.epsilons if epsilons is None else epsilons
+        u, x, t = self.pde.augment(u.clone(), x.clone(), t.clone(), epsilons=epsilons)
         dx = x[0,1] - x[0, 0]
         dt = t[1,0] - t[0, 0]
 
