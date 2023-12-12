@@ -22,7 +22,8 @@ def setup_model(args):
     elif net == "ResNet":
         net = ResNet(BasicBlock1d, [2, 2, 2, 2], time_history=time_history, time_future=time_future)
     elif net == "MLP":
-        net = MLP(time_history=time_history, time_future=time_future, hidden_channels=[100, 100, 100, 100])
+        hidden_channels = [100, 100, 100] if args.mlp_hidden_channels is None else args.mlp_hidden_channels
+        net = MLP(time_history=time_history, time_future=time_future, hidden_channels=hidden_channels)
     else:
         raise NotImplementedError
     
