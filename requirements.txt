@@ -15,3 +15,4 @@ xarray
 tensorflow
 e2cnn
 torchvision
+tabulate
