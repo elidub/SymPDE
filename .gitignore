@@ -19,6 +19,7 @@ data/mnist/
 
 ext_repos/LPSDA/models
 ext_repos/LPSDA/data
+ext_repos/Equivariant-Net/data_64
 
 ext_repos/G-FNO/results/
 ext_repos/G-FNO/data/

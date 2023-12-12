@@ -9,6 +9,7 @@ import torchvision.transforms.functional as TF
 from PIL import Image
 import torch.nn.functional as F
 from netCDF4 import Dataset
+from tqdm import tqdm
 
 ################ Data Preprocessing ################
 # read data
@@ -30,7 +31,7 @@ data_prep = torch.stack([data[:,:,:,k*64:(k+1)*64] for k in range(7)])
 
 # use sliding windows to generate 10000 samples
 # training 6000, validation 2000, test 2000
-for j in range(0, 1500):
+for j in tqdm(range(0, 1500), desc = 'RBC data preprocessing'):
     for i in range(7):
         torch.save(data_prep[i, j : j + 50].double().float(), orig_data_direc + "sample_" + str(j*7+i) + ".pt")
         
@@ -40,7 +41,7 @@ for j in range(0, 1500):
 # Magnitude Transformation
 mag_data_direc = "data_mag/"
 os.mkdir(mag_data_direc)
-for i in range(8000, 10000):
+for i in tqdm(range(8000, 10000), desc = 'Magnitude transformation'):
     # multiplied by random values sampled from U(0, 2);
     mag_transformed_img = torch.load(orig_data_direc + "sample_" + str(i) + ".pt") * torch.rand(1) * 2
     torch.save(mag_transformed_img, mag_data_direc + "sample_" + str(i) + ".pt")
@@ -48,7 +49,7 @@ for i in range(8000, 10000):
 # Uniform Motion Transformation
 um_data_direc = "data_um/"
 os.mkdir(um_data_direc)
-for i in range(8000, 10000):
+for i in tqdm(range(8000, 10000), desc = 'Uniform motion transformation'):
     # added random vectors drawn from U(−2, 2);
     um_transformed_img = torch.load(orig_data_direc + "sample_" + str(i) + ".pt") + (torch.rand(1, 2, 1, 1)*4-2)
     torch.save(um_transformed_img, um_data_direc + "sample_" + str(i) + ".pt")
@@ -104,7 +105,7 @@ rot_data_direc = "data_rot/"
 os.mkdir(rot_data_direc)
 PIL = transforms.ToPILImage()
 TTen = transforms.ToTensor()
-for i in range(8000, 10000):
+for i in tqdm(range(8000, 10000), desc = 'Rotation transformation'):
     degree = random.choice([90, 180, 270, 360])
     img = torch.load(orig_data_direc + "sample_" + str(i) + ".pt")
     rot_img = torch.cat([rotate(img[j], degree).unsqueeze(0) for j in range(img.shape[0])], dim = 0)
@@ -113,7 +114,7 @@ for i in range(8000, 10000):
 # Scale Transformation
 scale_data_direc = "data_scale/"
 os.mkdir(scale_data_direc)
-for i in range(8000, 10000):
+for i in tqdm(range(8000, 10000), desc = 'Scale transformation'):
     img = torch.load(orig_data_direc + "sample_" + str(i) + ".pt")
     factor = (torch.rand(1)*9+1)/2
     scale_transformed_img = F.interpolate(img.transpose(0,1).unsqueeze(0), scale_factor = (factor**2, factor, factor), mode="trilinear", align_corners=None)[0,:,:100].transpose(0,1)/factor
@@ -142,7 +143,7 @@ os.mkdir("ocean_train")
 os.mkdir("ocean_test")
 
 k = 0
-for t in range(500):
+for t in tqdm(range(500), desc = 'Ocean data train data'):
     for i in range(3):
         for j in range(3):
             torch.save(atlantic[t:t+50,:,64*i:64*(i+1),64*j:64*(j+1)].double().float(), "ocean_train/sample_" + str(k) + ".pt")
@@ -153,7 +154,7 @@ for t in range(500):
             k += 1
             
 k = 0
-for t in range(300):
+for t in tqdm(range(300), desc = 'Ocean data test data'):
     for i in range(3):
         for j in range(3):
             torch.save(south_pacific_test[t:t+50,:,64*i:64*(i+1),64*j:64*(j+1)].double().float(), "ocean_test/sample_" + str(k) + ".pt")

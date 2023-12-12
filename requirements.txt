@@ -16,3 +16,5 @@ tensorflow
 e2cnn
 torchvision
 tabulate
+opencv-python
+netCDF4
