@@ -66,7 +66,6 @@ def main(args):
         max_epochs=args.max_epochs,
         accelerator="gpu" if torch.cuda.is_available() else "cpu",
         deterministic=True,
-        # callbacks = [pl.callbacks.EarlyStopping(monitor='val_loss', patience=100, mode='min')],
     )  
 
     if args.do_return:
