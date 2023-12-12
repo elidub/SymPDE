@@ -30,6 +30,8 @@ def parse_options(notebook = False):
     parser.add_argument("--n_splits", nargs='+', default=[-1,-1,-1], help="Train, val, test split")
     parser.add_argument("--epsilons", nargs='+', default=[], help="Epsilons for the generators")
 
+    parser.add_argument("--mlp_hidden_channels", nargs='+', default=None, help="Hidden channels for MLP")
+
     args = parser.parse_args([]) if notebook else parser.parse_args()
     return args
 
@@ -38,11 +40,15 @@ def main(args):
 
     args.epsilons = [float(eps) for eps in args.epsilons]
     args.n_splits = [int(n_split) for n_split in args.n_splits]
+    args.mlp_hidden_channels = [int(hidden_channel) for hidden_channel in args.mlp_hidden_channels] if args.mlp_hidden_channels is not None else None
 
     if args.name is None:
         epsilons = '-'.join([str(eps) for eps in args.epsilons]) if len(args.epsilons) > 0 else '0'
         data_dir = args.data_dir.split('/')[-1]
         args.name = f'data{data_dir}_net{args.net}_{args.pde_name}_aug{epsilons}_seed{args.seed}'
+        if args.mlp_hidden_channels is not None:
+            mlp_hidden_channels = '-'.join([str(hidden_channel) for hidden_channel in args.mlp_hidden_channels])
+            args.name += f'_mlp{mlp_hidden_channels}'
     print("\n\n###\tVersion: ", args.version, "\t###\n###\tName: ", args.name, "\t###\n\n")
 
     datamodule = PDEDataModule(
