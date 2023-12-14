@@ -24,7 +24,8 @@ def deconv(input_channels, output_channels):
 
 class Unet(nn.Module):
     def __init__(self, input_channels, output_channels, kernel_size):
-        super(Unet, self).__init__()
+        # super(Unet, self).__init__()
+        super().__init__()
         self.input_channels = input_channels
         self.conv1 = conv(input_channels, 64, kernel_size=kernel_size, stride=2)
         self.conv2 = conv(64, 128, kernel_size=kernel_size, stride=2)
@@ -62,7 +63,8 @@ class Unet(nn.Module):
     
 class Resblock(nn.Module):
     def __init__(self, input_channels, hidden_dim, kernel_size):
-        super(Resblock, self).__init__()
+        # super(Resblock, self).__init__()
+        super().__init__()
         self.layer1 = nn.Sequential(
             nn.Conv2d(input_channels, hidden_dim, kernel_size = kernel_size, padding = (kernel_size-1)//2),
             nn.BatchNorm2d(hidden_dim),
@@ -89,12 +91,14 @@ class Resblock(nn.Module):
             out = self.layer2(out) + self.upscale(xx)
         else:
             out = self.layer2(out) + xx
+        # print('forward', out.shape)
         return out
     
 
 class ResNet(nn.Module):
     def __init__(self, input_channels, output_channels, kernel_size):
-        super(ResNet, self).__init__()
+        # super(ResNet, self).__init__()
+        super().__init__()
         layers = [Resblock(input_channels, 64, kernel_size), Resblock(64, 64, kernel_size)]
         layers += [Resblock(64, 128, kernel_size), Resblock(128, 128, kernel_size)]
         layers += [Resblock(128, 256, kernel_size), Resblock(256, 256, kernel_size)]
@@ -103,5 +107,8 @@ class ResNet(nn.Module):
         self.model = nn.Sequential(*layers)
              
     def forward(self, xx):
+        # print('xx', xx.shape)
         out = self.model(xx)
+        # print('out', out.shape)
+        # assert False
         return out

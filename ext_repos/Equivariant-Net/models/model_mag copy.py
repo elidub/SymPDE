@@ -8,7 +8,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    
 class mag_conv2d(nn.Module):
     def __init__(self, 
                  input_channels,
@@ -33,38 +32,61 @@ class mag_conv2d(nn.Module):
         self.input_channels = self.input_channels
         self.batchnorm = nn.BatchNorm2d(output_channels)
         self.deconv = deconv
-        self.eps = 10e-11
-        
+        self.output_channels = output_channels
+
     def unfold(self, x):
         """
         Extracts sliding local blocks from a batched input tensor.
         """
+        # print('in', x.shape)
         if not self.deconv:
             x = F.pad(x, ((self.pad_size, self.pad_size)*2), mode = 'replicate')
+            # print('padded')
         out = F.unfold(x, kernel_size = self.kernel_size)
+        out2 = F.unfold(x, kernel_size = (3,3))
+        assert (out == out2).all()
+        # print('unfolded', out.shape, 'with kernel size', self.kernel_size)
         out = out.reshape(out.shape[0], self.input_channels, self.kernel_size, self.kernel_size, out.shape[-1])
-        
+        out2 = out2.reshape(out2.shape[0], self.input_channels, self.kernel_size, self.kernel_size, int(np.sqrt(out2.shape[-1])), int(np.sqrt(out2.shape[-1])))      
+        # print('reshaped', out.shape)
         ## Batch_size x (in_channels x kernel_size x kernel_size) x 64 x 64
         out = out.reshape(out.shape[0], self.input_channels, self.kernel_size, self.kernel_size, int(np.sqrt(out.shape[-1])), int(np.sqrt(out.shape[-1])))      
+        assert (out == out2).all()
+        # print('reshaped again', out.shape)
         if self.stride > 1:
-            return out[:,:,:,:,::self.stride,::self.stride]
+            out = out[:,:,:,:,::self.stride,::self.stride]
+            # print('strided', out.shape)
+            return out
+            
         return out
     
     def transform(self, x):
         """
         Max-Min Normalization on each sliding local block.
         """   
+        # print('in', x.shape)
         # Calculates the max-min of input sliding local blocks 
         out = x.reshape(x.shape[0], self.input_channels//self.um_dim, self.um_dim, self.kernel_size, self.kernel_size, x.shape[-2], x.shape[-1])
+        # print('reshaped', out.shape)
         stds = (out.max(1).values.unsqueeze(1).max(3).values.unsqueeze(3).max(4).values.unsqueeze(4) - 
                 out.min(1).values.unsqueeze(1).min(3).values.unsqueeze(3).min(4).values.unsqueeze(4))
         
-        out = out /(stds + self.eps) 
-        out = out.reshape(out.shape[0], self.input_channels, self.kernel_size, self.kernel_size, x.shape[-2], x.shape[-1]).transpose(2,4).transpose(-1,-2)
+        # print('stds', stds.shape)
+
+        out = out /(stds + 10e-7) 
+        # print('divided', out.shape)
+        out = out.reshape(out.shape[0], self.input_channels, self.kernel_size, self.kernel_size, x.shape[-2], x.shape[-1])
+        # print('reshaped', out.shape)
+        out = out.transpose(2,4).transpose(-1,-2)
+        # print('transpose', out.shape)
+        out2 = out.reshape(out.shape[0], self.input_channels, x.shape[-2]*self.kernel_size, x.shape[-1]*self.kernel_size)
         out = out.reshape(out.shape[0], self.input_channels, x.shape[-2]*self.kernel_size, x.shape[-1], self.kernel_size)
-        
+        # print('reshaped again', out.shape)
+
         ## Batch_size x in_channels x (64 x kernel_size) x (64 x kernel_size)
         out = out.reshape(out.shape[0], self.input_channels, x.shape[-2]*self.kernel_size, x.shape[-1]*self.kernel_size)
+        # print('reshaped again again', out.shape)
+        assert (out == out2).all()
         return out, stds.squeeze(3).squeeze(3)
     
     
@@ -72,46 +94,39 @@ class mag_conv2d(nn.Module):
         """
         Inverse Max-Min Normalization.
         """   
+        # print('in', out.shape)
         out = out.reshape(out.shape[0], out.shape[1]//self.um_dim, self.um_dim, out.shape[-2], out.shape[-1])
-        out = out * (stds + self.eps)
+        # print('reshaped', out.shape)
+        out = out * (stds + 10e-7)
+        # print('scaled', out.shape)
         out = out.reshape(out.shape[0], -1, out.shape[-2], out.shape[-1])
+        # print('reshaped', out.shape)
         return out
     
     def forward(self, x):
+        # x_org = x.clone()
+        # print(x.shape)
         x = self.unfold(x)
+        # print(x.shape)
         x, stds = self.transform(x)
+        # print(x.shape, stds.shape)
         out = self.conv2d(x)
+        # i, j = stds.shape[-2:]
+        # out = x[:, :self.output_channels, :i, :j]
+        # print(out.shape)
+        # assert (out.shape == x_org.shape), (out.shape, x_org.shape)
         if self.activation:
             out = F.relu(out)
+            # print('activation', out.shape)
         out = self.inverse_transform(out, stds)
+        # print(out.shape)
         return out
 
-    
-class mag_deconv2d(nn.Module):
-    def __init__(self, input_channels, output_channels):
-        """
-        Magnitude Equivariant 2D Transposed Convolutional Layers
-        """
-        # super(mag_deconv2d, self).__init__()
-        super().__init__()
-        self.conv2d = mag_conv2d(input_channels = input_channels, output_channels = output_channels, kernel_size = 4, um_dim = 2,
-                             activation = True, stride = 1, deconv = True)
-    
-    def pad(self, x):
-        pad_x = torch.zeros(x.shape[0], x.shape[1], x.shape[2]*2, x.shape[3]*2)
-        pad_x[:,:,::2,::2].copy_(x)
-        pad_x = F.pad(pad_x, (1,2,1,2), mode='replicate')
-        return pad_x
-    
-    def forward(self, x):
-        out = self.pad(x).to(device)
-        return self.conv2d(out)
     
 # Magnitude Equivariant ResNet.   
 class mag_resblock(nn.Module):
     def __init__(self, input_channels, hidden_dim, kernel_size):
-        # super(mag_resblock, self).__init__()
-        super().__init__()
+        super(mag_resblock, self).__init__()
         self.layer1 = mag_conv2d(input_channels, hidden_dim, kernel_size)
         self.layer2 = mag_conv2d(hidden_dim, hidden_dim, kernel_size)
         self.input_channels = input_channels
@@ -127,7 +142,7 @@ class mag_resblock(nn.Module):
             out = self.layer2(out) + self.upscale(x)
         else:
             out = self.layer2(out) + x
-        
+        print('forward', out.shape)
         return out
 
 class ResNet_Mag(nn.Module):
@@ -142,15 +157,35 @@ class ResNet_Mag(nn.Module):
         self.model = nn.Sequential(*layers)
              
     def forward(self, x):
+        print('x', x.shape)
         out = self.model(x)
+        print('out', out.shape)
         return out
 
+    
+class mag_deconv2d(nn.Module):
+    def __init__(self, input_channels, output_channels):
+        """
+        Magnitude Equivariant 2D Transposed Convolutional Layers
+        """
+        super(mag_deconv2d, self).__init__()
+        self.conv2d = mag_conv2d(input_channels = input_channels, output_channels = output_channels, kernel_size = 4, um_dim = 2,
+                             activation = True, stride = 1, deconv = True)
+    
+    def pad(self, x):
+        pad_x = torch.zeros(x.shape[0], x.shape[1], x.shape[2]*2, x.shape[3]*2)
+        pad_x[:,:,::2,::2].copy_(x)
+        pad_x = F.pad(pad_x, (1,2,1,2), mode='replicate')
+        return pad_x
+    
+    def forward(self, x):
+        out = self.pad(x).to(device)
+        return self.conv2d(out)
 
 # Magnitude Equivariant U_net.   
 class Unet_Mag(nn.Module):
     def __init__(self, input_channels, output_channels, kernel_size):
-        # super(Unet_Mag, self).__init__()
-        super().__init__()
+        super(Unet_Mag, self).__init__()
         self.input_channels = input_channels
         self.conv1 = mag_conv2d(input_channels, 64, kernel_size = kernel_size, stride=2)
         self.conv1_1 = mag_conv2d(64, 64, kernel_size = kernel_size, stride=1)

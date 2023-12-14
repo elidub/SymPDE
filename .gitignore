@@ -16,10 +16,13 @@ data/*/val
 data/*/test
 
 data/mnist/
+data/mathematica/
 
 ext_repos/LPSDA/models
 ext_repos/LPSDA/data
-ext_repos/Equivariant-Net/data_64
+ext_repos/Equivariant-Net/data_*
+ext_repos/Equivariant-Net/*.nc
+ext_repos/Equivariant-Net/rbc_data.pt
 
 ext_repos/G-FNO/results/
 ext_repos/G-FNO/data/

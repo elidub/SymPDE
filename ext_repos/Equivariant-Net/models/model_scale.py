@@ -177,6 +177,7 @@ class scale_resblock(nn.Module):
             out = self.layer2(out) + self.upscale(xx)
         else:
             out = self.layer2(out) + xx 
+        print('forward', out.shape)
         return out
 
 class ResNet_Scale(nn.Module):
@@ -192,8 +193,11 @@ class ResNet_Scale(nn.Module):
         self.model = nn.Sequential(*layers)
         
     def forward(self, xx):
+        print('xx', xx.shape)
         out = self.model(xx)
+        print('out', out.shape)
         out = out.squeeze(1)
+        assert False
         return out
     
     

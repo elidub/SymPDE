@@ -19,7 +19,8 @@ class rot_resblock(torch.nn.Module):
                  kernel_size, 
                  N # Group size 
                 ): 
-        super(rot_resblock, self).__init__()
+        # super(rot_resblock, self).__init__()
+        super().__init__()
         
         # Specify symmetry transformation
         r2_act = gspaces.Rot2dOnR2(N = N)
@@ -55,13 +56,16 @@ class rot_resblock(torch.nn.Module):
         else:
             out = self.layer2(out) + x
             
+        print('forward', out.shape)
         return out
     
     
 ##### Rotational Equivariant ResNet #####
 class ResNet_Rot(torch.nn.Module):
     def __init__(self, input_frames, output_frames, kernel_size, N):
-        super(ResNet_Rot, self).__init__()
+        # super(ResNet_Rot, self).__init__()
+        super().__init__()
+        print('Setting up ResNet_Rot')
         r2_act = gspaces.Rot2dOnR2(N = N)
         # we use rho_1 representation since the input is velocity fields 
         self.feat_type_in = nn.FieldType(r2_act, input_frames*[r2_act.irrep(1)])
@@ -85,8 +89,12 @@ class ResNet_Rot(torch.nn.Module):
     
     def forward(self, x):
         #BxCxHxW
+        print('x.shape', x.shape)
         x = nn.GeometricTensor(x, self.feat_type_in)
+        print('x.shape', x.shape)
         out = self.model(x)
+        print('out', out.shape)
+        assert False
         return out.tensor
     
     

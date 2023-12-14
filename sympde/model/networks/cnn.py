@@ -18,6 +18,7 @@ class CNN(nn.Module):
     def __init__(self,
                  time_history: int,
                  time_future: int,
+                 embed_spacetime: bool,
                  width: int = 128,
                  padding_mode: str = f'circular'):
         """
@@ -34,30 +35,39 @@ class CNN(nn.Module):
         super().__init__()
         self.time_history = time_history
         self.time_future = time_future
+        self.embed_spacetime = embed_spacetime
         self.width = width
         self.padding_mode = padding_mode
 
-        self.fc0 = nn.Linear(self.time_history + 2, self.width)
+        spacetime_dims = 2 if self.embed_spacetime else 0
+        self.fc0 = nn.Linear(self.time_history + spacetime_dims, self.width)
+
         self.fc1 = nn.Linear(self.width, 128)
         self.fc2 = nn.Linear(128, self.time_future)
 
+        kernel_sizes = [3, 5, 5, 7, 7, 9, 9, 15]
+
         conv_layers = []
-        conv_layers.append(nn.Conv1d(in_channels=self.width, out_channels=self.width, kernel_size=3, padding=1,
-                                     padding_mode=self.padding_mode, bias=True))
-        conv_layers.append(nn.Conv1d(in_channels=self.width, out_channels=self.width, kernel_size=5, padding=2,
-                                     padding_mode=self.padding_mode, bias=True))
-        conv_layers.append(nn.Conv1d(in_channels=self.width, out_channels=self.width, kernel_size=5, padding=2,
-                                     padding_mode=self.padding_mode, bias=True))
-        conv_layers.append(nn.Conv1d(in_channels=self.width, out_channels=self.width, kernel_size=7, padding=3,
-                                     padding_mode=self.padding_mode, bias=True))
-        conv_layers.append(nn.Conv1d(in_channels=self.width, out_channels=self.width, kernel_size=7, padding=3,
-                                     padding_mode=self.padding_mode, bias=True))
-        conv_layers.append(nn.Conv1d(in_channels=self.width, out_channels=self.width, kernel_size=9, padding=4,
-                                     padding_mode=self.padding_mode, bias=True))
-        conv_layers.append(nn.Conv1d(in_channels=self.width, out_channels=self.width, kernel_size=9, padding=4,
-                                     padding_mode=self.padding_mode, bias=True))
-        conv_layers.append(nn.Conv1d(in_channels=self.width, out_channels=self.width, kernel_size=15, padding=7,
-                                     padding_mode=self.padding_mode, bias=True))
+        for kernel_size in kernel_sizes:
+            print(kernel_size)
+            conv_layers.append(nn.Conv1d(in_channels=self.width, out_channels=self.width, kernel_size=kernel_size,
+                                         padding=(kernel_size - 1) // 2, padding_mode=self.padding_mode, bias=True))
+        # conv_layers.append(nn.Conv1d(in_channels=self.width, out_channels=self.width, kernel_size=3, padding=1,
+        #                              padding_mode=self.padding_mode, bias=True))
+        # conv_layers.append(nn.Conv1d(in_channels=self.width, out_channels=self.width, kernel_size=5, padding=2,
+        #                              padding_mode=self.padding_mode, bias=True))
+        # conv_layers.append(nn.Conv1d(in_channels=self.width, out_channels=self.width, kernel_size=5, padding=2,
+        #                              padding_mode=self.padding_mode, bias=True))
+        # conv_layers.append(nn.Conv1d(in_channels=self.width, out_channels=self.width, kernel_size=7, padding=3,
+        #                              padding_mode=self.padding_mode, bias=True))
+        # conv_layers.append(nn.Conv1d(in_channels=self.width, out_channels=self.width, kernel_size=7, padding=3,
+        #                              padding_mode=self.padding_mode, bias=True))
+        # conv_layers.append(nn.Conv1d(in_channels=self.width, out_channels=self.width, kernel_size=9, padding=4,
+        #                              padding_mode=self.padding_mode, bias=True))
+        # conv_layers.append(nn.Conv1d(in_channels=self.width, out_channels=self.width, kernel_size=9, padding=4,
+        #                              padding_mode=self.padding_mode, bias=True))
+        # conv_layers.append(nn.Conv1d(in_channels=self.width, out_channels=self.width, kernel_size=15, padding=7,
+        #                              padding_mode=self.padding_mode, bias=True))
 
         self.conv_layers = nn.ModuleList(conv_layers)
         for layer in self.conv_layers:
@@ -88,7 +98,7 @@ class CNN(nn.Module):
 
         # todo: rewrite training method and forward pass without permutation
         x = torch.cat((u, dx[:, None, None].to(u.device).repeat(1, nx, 1),
-                       dt[:, None, None].repeat(1, nx, 1).to(u.device)), -1)
+                    dt[:, None, None].repeat(1, nx, 1).to(u.device)), -1) if self.embed_spacetime else u
         x = self.fc0(x)
         x = x.permute(0, 2, 1)
 
@@ -145,13 +155,14 @@ class BasicBlock1d(nn.Module):
         return out
 
 
-class ResNet(nn.Module):
+class ResNet_conv(nn.Module):
     def __init__(self,
-                 block: nn.Module,
-                 num_blocks: list,
-                 time_history: int,
-                 time_future: int,
-                 width: int = 256):
+                block: nn.Module,
+                num_blocks: list,
+                time_history: int,
+                time_future: int,
+                embed_spacetime: bool,
+                width: int = 128):
         """
         Initialize the 1D ResNet architecture. It contains 4 1D basic blocks.
         In contrast to standard ResNet architectues, the spatial dimension is not decreasing.
@@ -169,7 +180,110 @@ class ResNet(nn.Module):
         self.in_channels = width
         self.time_history = time_history
         self.time_future = time_future
-        self.conv1 = nn.Conv1d(time_history+2, width, kernel_size=1, bias=True)
+        self.embed_spacetime = embed_spacetime
+
+        spacetime_dims = 2 if self.embed_spacetime else 0
+        self.conv1 = nn.Conv1d(time_history+spacetime_dims, width, kernel_size=1, bias=True)
+
+        self.layer1 = self._make_layer(block, width, num_blocks[0], stride=1)
+        self.layer2 = self._make_layer(block, width, num_blocks[1], stride=1)
+        self.layer3 = self._make_layer(block, width, num_blocks[2], stride=1)
+        self.layer4 = self._make_layer(block, width, num_blocks[3], stride=1)
+        # self.fc1 = nn.Linear(width, time_future)
+
+        self.conv_out = nn.Conv1d(width, time_future, kernel_size=1, bias=True)
+
+    def _make_layer(self, block: nn.Module, channels: int, num_blocks: int, stride: int) -> nn.Sequential:
+        """
+        Building basic ResNet layers out for basic 1D building blocks.
+        Args:
+             block (nn.Module): Basic 1D building blocks
+             channels (int): output channels
+             num_blocks (int): how many building blocks does one ResNet layer contain
+             stride (int): stride
+        Returns:
+            nn.Sequential: the basic ResNet layer
+        """
+        strides = [stride] + [1]*(num_blocks-1)
+        layers = []
+        for stride in strides:
+            layers.append(block(self.in_channels, channels, stride))
+            self.in_channels = channels * block.expansion
+        return nn.Sequential(*layers)
+
+    def __repr__(self):
+        return f'ResNet'
+
+    def forward(self, u: torch.Tensor, dx: torch.Tensor, dt: torch.Tensor) -> torch.Tensor:
+        """
+        Forward pass of a 1D ResNet.
+        The input to the forward pass has the shape [batch, time_history, x].
+        1. Add dx and dt as channel dimension to the time_history, repeat for every x
+        2. Lift the input to the desired channel dimension by self.fc0
+        3. 4 basic ResNet layers with flexible number of basic building blocks
+        4. Project from the channel space to the output space by self.fc1.
+        The output has the shape [batch, time_future, x].
+        Args:
+            u (torch.Tensor): input tensor of shape [batch, time_history, x]
+            dx (torch.Tensor): spatial distances
+            dt (torch.Tensor): temporal distances
+        Returns:
+            torch.Tensor: output has the shape [batch, time_future, x]
+        """
+
+        # ADAPTION: use nx = u.shape[1] instead of nx = self.pde.nx
+        nx = u.shape[1] 
+
+        # [b, x, c] = [b, x, t+2]
+        x = torch.cat((u, dx[:, None, None].to(u.device).repeat(1, nx, 1),
+            dt[:, None, None].repeat(1, nx, 1).to(u.device)), -1) if self.embed_spacetime else u
+
+        # [b, x, c] -> [b, c, x]
+        x = x.permute(0, 2, 1)
+        # x = F.relu(self.bn1(self.conv1(x)))
+        x = F.gelu(self.conv1(x))
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = self.layer4(x)
+
+        x = self.conv_out(x)
+        x = x.permute(0, 2, 1)
+        # x = self.fc1(x)
+        return x
+    
+
+
+class ResNet(nn.Module):
+    def __init__(self,
+                block: nn.Module,
+                num_blocks: list,
+                time_history: int,
+                time_future: int,
+                embed_spacetime: bool,
+                width: int = 256):
+        """
+        Initialize the 1D ResNet architecture. It contains 4 1D basic blocks.
+        In contrast to standard ResNet architectues, the spatial dimension is not decreasing.
+        The input to the forward pass has the shape [batch, time_history, x].
+        The output has the shape [batch, time_future, x].
+        Args:
+            block (nn.Module): basic block for ResNet
+            num_blocks (list): number of layers used in each basic block
+            time_history (int): input timesteps of the trajectory
+            time_future (int): output timesteps of the trajectory
+            width (int): hidden channel dimension
+        """
+        # super(ResNet, self).__init__()
+        super().__init__()
+        self.in_channels = width
+        self.time_history = time_history
+        self.time_future = time_future
+        self.embed_spacetime = embed_spacetime
+
+        spacetime_dims = 2 if self.embed_spacetime else 0
+        self.conv1 = nn.Conv1d(time_history+spacetime_dims, width, kernel_size=1, bias=True)
+
         self.layer1 = self._make_layer(block, width, num_blocks[0], stride=1)
         self.layer2 = self._make_layer(block, width, num_blocks[1], stride=1)
         self.layer3 = self._make_layer(block, width, num_blocks[2], stride=1)
@@ -219,7 +333,7 @@ class ResNet(nn.Module):
 
         # [b, x, c] = [b, x, t+2]
         x = torch.cat((u, dx[:, None, None].to(u.device).repeat(1, nx, 1),
-            dt[:, None, None].repeat(1, nx, 1).to(u.device)), -1)
+            dt[:, None, None].repeat(1, nx, 1).to(u.device)), -1) if self.embed_spacetime else u
 
         # [b, x, c] -> [b, c, x]
         x = x.permute(0, 2, 1)
