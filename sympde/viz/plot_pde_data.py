@@ -69,12 +69,19 @@ def plot_1ds(us, dxs, dts, nrows = None, ncols = None, vminmax = False, title = 
 
     axs = axs.flatten() if int(nrows*ncols)!=1 else [axs]
 
-    for u, dx, dt, ax in zip(us, dxs, dts, axs):
+    for i, (u, dx, dt, ax) in enumerate(zip(us, dxs, dts, axs)):
         L, T = d_to_LT(u, dx, dt)
         im = ax.imshow(u, origin = 'lower', extent=[0,L,0,T], cmap='PuOr_r', aspect='auto', vmin = vmin, vmax = vmax)
         ax.tick_params(axis='both', which='major')
         ax.tick_params(axis='both', which='minor')
-        ax.set_axis_off()
+        # ax.set_axis_off()
+
+        if i == 0:
+            ax.set_ylabel('SymPDE')#, fontsize=34)
+        if i == 3:
+            ax.set_ylabel('Mathematica')#, fontsize=34)
+
+
 
         fig.colorbar(im, ax=ax, shrink = 0.9, pad = 0.08, aspect = 20)
 
