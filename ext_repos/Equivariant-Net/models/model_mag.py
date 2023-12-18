@@ -81,9 +81,9 @@ class mag_conv2d(nn.Module):
         x = self.unfold(x)
         x, stds = self.transform(x)
         out = self.conv2d(x)
+        out = self.inverse_transform(out, stds)
         if self.activation:
             out = F.relu(out)
-        out = self.inverse_transform(out, stds)
         return out
 
     
@@ -124,9 +124,17 @@ class mag_resblock(nn.Module):
         out = self.layer1(x)
         
         if self.input_channels != self.hidden_dim:
+            print('residual upscale add')
+            print(out.shape, out.mean())
+            print(x.shape, x.mean())
             out = self.layer2(out) + self.upscale(x)
+            print(out.shape, out.mean())
         else:
+            print('residual add')
+            print(out.shape, out.mean())
+            print(x.shape, x.mean())
             out = self.layer2(out) + x
+            print(out.shape, out.mean())
         
         return out
 

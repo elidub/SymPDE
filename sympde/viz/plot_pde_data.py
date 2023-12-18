@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+import os
 
 from data.utils import d_to_LT
 
@@ -88,6 +89,11 @@ def plot_1ds(us, dxs, dts, nrows = None, ncols = None, vminmax = False, title = 
     fig.supxlabel('x')
     fig.supylabel('t')
     fig.suptitle(title)
+
+    fig_dir = '../assets/figs/mathematica_data_comparison/'
+    save_title = title.split(':')[0]
+    fig_file = os.path.join(fig_dir, save_title + '.png')
+    fig.savefig(fig_file, dpi = 300)
 
 
     plt.show()

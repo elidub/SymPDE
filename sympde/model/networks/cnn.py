@@ -11,6 +11,8 @@ from typing import Tuple
 from torch import nn
 from torch.nn import functional as F
 
+from model.networks.single_sym.magnitude import Conv1dMag, Conv2dMag
+
 class CNN(nn.Module):
     '''
     A simple baseline 1D Res CNN approach, the time dimension is stacked in the channels
@@ -112,9 +114,24 @@ class CNN(nn.Module):
         return x
 
 
+def get_nn_modules(equiv: str) -> Tuple[nn.Module, nn.Module]:
+        print('equiv', equiv)
+        if equiv == 'mag':
+            Conv1d = Conv1dMag
+            # BatchNorm1d = nn.Identity
+            # Conv1d = nn.Conv1d
+            BatchNorm1d = nn.BatchNorm1d
+        elif equiv == 'none':
+            Conv1d = nn.Conv1d
+            BatchNorm1d = nn.BatchNorm1d
+        else:
+            raise NotImplementedError(f'Unknown equiv {equiv}')
+        return Conv1d, BatchNorm1d
+        
+
 class BasicBlock1d(nn.Module):
     expansion = 1
-    def __init__(self, in_channels: int, out_channels: int, stride: int=1):
+    def __init__(self, in_channels: int, out_channels: int, equiv: str, stride: int=1):
         """
         Initializes the 1D basic ResNet block.
         Args:
@@ -124,19 +141,25 @@ class BasicBlock1d(nn.Module):
         """
         # super(BasicBlock1d, self).__init__()
         super().__init__()
-        self.conv1 = nn.Conv1d(
+
+        self.Conv1d, self.BatchNorm1d = get_nn_modules(equiv)
+
+        self.relu = F.relu
+
+        self.conv1 = self.Conv1d(
             in_channels, out_channels, kernel_size=3, stride=stride, padding=1, bias=False)
-        self.bn1 = nn.BatchNorm1d(out_channels)
-        self.conv2 = nn.Conv1d(out_channels, out_channels, kernel_size=3,
+        self.bn1 = self.BatchNorm1d(out_channels)
+        self.conv2 = self.Conv1d(out_channels, out_channels, kernel_size=3,
                                stride=1, padding=1, bias=False)
-        self.bn2 = nn.BatchNorm1d(out_channels)
+        self.bn2 = self.BatchNorm1d(out_channels)
 
         self.shortcut = nn.Sequential()
         if stride != 1 or in_channels != self.expansion*out_channels:
+            print('shortcut')
             self.shortcut = nn.Sequential(
-                nn.Conv1d(in_channels, self.expansion*out_channels,
+                self.Conv1d(in_channels, self.expansion*out_channels,
                           kernel_size=1, stride=stride, bias=False),
-                nn.BatchNorm1d(self.expansion*out_channels)
+                self.BatchNorm1d(self.expansion*out_channels)
             )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -148,12 +171,12 @@ class BasicBlock1d(nn.Module):
         Returns:
             torch.Tensor: output of shape [batch, out_channel, x]
         """
-        out = F.relu(self.bn1(self.conv1(x)))
+        out = self.relu(self.bn1(self.conv1(x)))
         out = self.bn2(self.conv2(out))
         out += self.shortcut(x)
-        out = F.relu(out)
+        out = self.relu(out)
         return out
-
+    
 
 class ResNet_conv(nn.Module):
     def __init__(self,
@@ -162,6 +185,7 @@ class ResNet_conv(nn.Module):
                 time_history: int,
                 time_future: int,
                 embed_spacetime: bool,
+                equiv: str,
                 width: int = 128):
         """
         Initialize the 1D ResNet architecture. It contains 4 1D basic blocks.
@@ -181,17 +205,20 @@ class ResNet_conv(nn.Module):
         self.time_history = time_history
         self.time_future = time_future
         self.embed_spacetime = embed_spacetime
+        self.equiv = equiv
+
+        self.Conv1d, self.BatchNorm1d = get_nn_modules(equiv)
 
         spacetime_dims = 2 if self.embed_spacetime else 0
-        self.conv1 = nn.Conv1d(time_history+spacetime_dims, width, kernel_size=1, bias=True)
+        self.conv1 = self.Conv1d(time_history+spacetime_dims, width, kernel_size=1, bias=True)
 
         self.layer1 = self._make_layer(block, width, num_blocks[0], stride=1)
         self.layer2 = self._make_layer(block, width, num_blocks[1], stride=1)
         self.layer3 = self._make_layer(block, width, num_blocks[2], stride=1)
         self.layer4 = self._make_layer(block, width, num_blocks[3], stride=1)
-        # self.fc1 = nn.Linear(width, time_future)
 
-        self.conv_out = nn.Conv1d(width, time_future, kernel_size=1, bias=True)
+        # self.fc1 = nn.Linear(width, time_future)
+        self.conv_out = self.Conv1d(width, time_future, kernel_size=1, bias=True)
 
     def _make_layer(self, block: nn.Module, channels: int, num_blocks: int, stride: int) -> nn.Sequential:
         """
@@ -207,14 +234,14 @@ class ResNet_conv(nn.Module):
         strides = [stride] + [1]*(num_blocks-1)
         layers = []
         for stride in strides:
-            layers.append(block(self.in_channels, channels, stride))
+            layers.append(block(self.in_channels, channels, self.equiv, stride))
             self.in_channels = channels * block.expansion
         return nn.Sequential(*layers)
 
     def __repr__(self):
         return f'ResNet'
 
-    def forward(self, u: torch.Tensor, dx: torch.Tensor, dt: torch.Tensor) -> torch.Tensor:
+    def forward(self, u: torch.Tensor, dx: torch.Tensor = 0, dt: torch.Tensor = 0) -> torch.Tensor:
         """
         Forward pass of a 1D ResNet.
         The input to the forward pass has the shape [batch, time_history, x].
@@ -239,7 +266,7 @@ class ResNet_conv(nn.Module):
             dt[:, None, None].repeat(1, nx, 1).to(u.device)), -1) if self.embed_spacetime else u
 
         # [b, x, c] -> [b, c, x]
-        x = x.permute(0, 2, 1)
+        # x = x.permute(0, 2, 1)
         # x = F.relu(self.bn1(self.conv1(x)))
         x = F.gelu(self.conv1(x))
         x = self.layer1(x)
@@ -248,7 +275,7 @@ class ResNet_conv(nn.Module):
         x = self.layer4(x)
 
         x = self.conv_out(x)
-        x = x.permute(0, 2, 1)
+        # x = x.permute(0, 2, 1)
         # x = self.fc1(x)
         return x
     

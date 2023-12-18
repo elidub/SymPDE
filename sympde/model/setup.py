@@ -12,21 +12,22 @@ from model.networks.mlp import MLP
 def setup_model(args):
     net = args.net
 
-    time_history = 10
-    time_future  = 5
-    embed_spacetime = False
+    # time_history = 10
+    # time_future  = 5
+    # embed_spacetime = False
+    # equiv = 'mag'
 
     if net == "FNO1d":
-        net = FNO1d(time_history=time_history, time_future=time_future)
+        net = FNO1d(time_history=args.time_history, time_future=args.time_future)
     elif net == "CNN":
-        net = CNN(time_history=time_history, time_future=time_future, embed_spacetime=embed_spacetime)
+        net = CNN(time_history=args.time_history, time_future=args.time_future, embed_spacetime=args.embed_spacetime)
     elif net == "ResNet":
-        net = ResNet(BasicBlock1d, [2, 2, 2, 2], time_history=time_history, time_future=time_future, embed_spacetime=embed_spacetime)
+        net = ResNet(BasicBlock1d, [2, 2, 2, 2], time_history=args.time_history, time_future=args.time_future, embed_spacetime=args.embed_spacetime)
     elif net == "ResNet_conv":
-        net = ResNet_conv(BasicBlock1d, [2, 2, 2, 2], time_history=time_history, time_future=time_future, embed_spacetime=embed_spacetime)
+        net = ResNet_conv(BasicBlock1d, [2, 2, 2, 2], time_history=args.time_history, time_future=args.time_future, embed_spacetime=args.embed_spacetime, equiv = args.equiv)
     elif net == "MLP":
         hidden_channels = [100, 100, 100] if args.mlp_hidden_channels is None else args.mlp_hidden_channels
-        net = MLP(time_history=time_history, time_future=time_future, hidden_channels=hidden_channels)
+        net = MLP(time_history=args.time_history, time_future=args.time_future, hidden_channels=hidden_channels)
     else:
         raise NotImplementedError
     

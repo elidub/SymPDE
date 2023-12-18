@@ -8,8 +8,10 @@ class Conv1dMag(nn.Module):
                  input_channels,
                  output_channels, 
                  kernel_size, 
-                 activation = True, # whether to use activation functions
                  stride = 1, 
+                 padding = None,
+                 bias = True,
+                #  activation = True, # whether to use activation functions
                  deconv = False, # Whether this is used as a deconvolutional layer
                  padding_mode='circular',
         ):
@@ -18,13 +20,15 @@ class Conv1dMag(nn.Module):
         """
         # super(mag_conv2d, self).__init__()
         super().__init__()
-        self.activation = activation
+        # self.activation = activation
         self.input_channels = input_channels
         self.kernel_size = kernel_size
         self.stride = stride
         self.padding_mode = padding_mode
-        self.conv1d = nn.Conv1d(input_channels, output_channels, kernel_size, stride = kernel_size, padding_mode=self.padding_mode, bias = True)
+        self.conv1d = nn.Conv1d(input_channels, output_channels, kernel_size, stride = kernel_size, padding_mode=self.padding_mode, bias = bias)
         self.pad_size = (kernel_size - 1)//2
+        if padding is not None:
+            assert padding == self.pad_size, (padding, self.pad_size)
         self.input_channels = self.input_channels
         self.deconv = deconv
         self.output_channels = output_channels
@@ -35,7 +39,7 @@ class Conv1dMag(nn.Module):
         Extracts sliding local blocks from a batched input tensor.
         """
         batch_size, time, space = x.shape
-        assert self.input_channels == time
+        assert self.input_channels == time, (self.input_channels, time)
 
         if not self.deconv:
             x = F.pad(x, ((self.pad_size,)*2), mode = self.padding_mode)
@@ -81,16 +85,16 @@ class Conv1dMag(nn.Module):
     
     def forward(self, x):
         
-        x = self.unfold(x)
-        x, stds = self.transform(x)
+        # x = self.unfold(x)
+        # x, stds = self.transform(x)
         x = self.conv1d(x)
         
-        if self.activation:
-            x = F.relu(x)
+        ## if self.activation:
+        ##     x = F.relu(x)
         
-        x = self.inverse_transform(x, stds)
+        # x = self.inverse_transform(x, stds)
         return x
-
+    
 
 
 class Conv2dMag(nn.Module):
