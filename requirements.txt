@@ -18,3 +18,4 @@ torchvision
 tabulate
 opencv-python
 netCDF4
+rich

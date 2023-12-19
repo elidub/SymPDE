@@ -367,9 +367,13 @@ class KdV(BasePDE):
 
     def augment(self, u, x, t, epsilons):
         u_new, x_new, t_new = u, x, t
-        u_new, x_new, t_new = self._u2(u_new, x_new, t_new, eps = (torch.rand(()) - 0.5) * epsilons[1]) #  space translate
-        u_new, x_new, t_new = self._u3(u_new, x_new, t_new, eps = (torch.rand(()) - 0.5) * epsilons[2]) # scaling
-        u_new, x_new, t_new = self._u4(u_new, x_new, t_new, eps = (torch.rand(()) - 0.5) * 2. * epsilons[3]) # galileo
+        # u_new, x_new, t_new = self._u2(u_new, x_new, t_new, eps = (torch.rand(()) - 0.5) * epsilons[1]) #  space translate
+        # u_new, x_new, t_new = self._u3(u_new, x_new, t_new, eps = (torch.rand(()) - 0.5) * epsilons[2]) # scaling
+        # u_new, x_new, t_new = self._u4(u_new, x_new, t_new, eps = (torch.rand(()) - 0.5) * 2. * epsilons[3]) # galileo
+        u_new, x_new, t_new = self._u2(u_new, x_new, t_new, eps = torch.tensor(epsilons[1])) #  space translate
+        u_new, x_new, t_new = self._u3(u_new, x_new, t_new, eps = torch.tensor(epsilons[2])) # galileo 
+        u_new, x_new, t_new = self._u4(u_new, x_new, t_new, eps = torch.tensor(2. * epsilons[3])) # scaling
+ 
         return u_new, x_new, t_new
 
     def __call__(self, t, u, L):

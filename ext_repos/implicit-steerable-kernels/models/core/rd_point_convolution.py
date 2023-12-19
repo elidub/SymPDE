@@ -325,6 +325,7 @@ class _RdPointConv(torch_geometric.nn.MessagePassing, EquivariantModule, ABC):
             output feature field transforming according to ``out_type``
 
         """
+        # assert False, 'test'
         if isinstance(x, GeometricTensor):
             x: OptPairTensor = (x, x)
         

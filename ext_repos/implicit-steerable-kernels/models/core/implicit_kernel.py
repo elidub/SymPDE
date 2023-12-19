@@ -76,16 +76,26 @@ class ImplicitKernelSON(torch.nn.Module):
             edge_attr (torch.Tensor): edge attributes.
             init (bool): whether to re-scale the filter (corresponds to He initialization).
         """
+        # print('coords', coords.shape)
         x = self.transform_coords(coords)
+        # print('transformed coords', x.shape)
         if edge_attr is not None:
+            # print(x.tensor.shape, edge_attr.shape, self.mlp.in_type)
             x = nn.GeometricTensor(torch.cat([x.tensor, edge_attr], 1), self.mlp.in_type)
+            # print('GeometricTensorm, edge_attr is not None')
         else:
-            x = nn.GeometricTensor(x.tensor, self.mlp.in_type) 
+            x = nn.GeometricTensor(x.tensor, self.mlp.in_type)
+            # print('GeometricTensorm, edge_attr is None') 
+        # print('GeometricTensor', x.shape)
         # compute c_in * delta_in * c_out * delta_out filter based on input features
         x = self.mlp(x)
+        # print('mlp, init', x.shape, init)
         x = self.transform_mlp(x, coords, init)
+        # print('transform_mlp', x.shape)
         # reshape the vector to d_out x d_in filter at last
-        return x.reshape((-1, self.c_out * self.delta_out, self.c_in * self.delta_in))
+        x = x.reshape((-1, self.c_out * self.delta_out, self.c_in * self.delta_in))
+        # print('reshaped', x.shape)
+        return x
     
     def transform_coords(self, coords: torch.Tensor):
         """

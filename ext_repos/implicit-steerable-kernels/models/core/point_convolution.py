@@ -36,12 +36,19 @@ class ImplicitPointConv(_RdPointConv):
         pass
 
     def message(self, x_j: torch.Tensor, edge_delta: torch.Tensor, edge_attr: torch.Tensor) -> torch.Tensor:
-        _filter = self.implicit_kernel(edge_delta, edge_attr)
-        return torch.einsum('noi,ni->no', _filter, x_j)
+        # x_j: [n_edges, c_in]
+        # print('message!')
+        torch.save(x_j, 'x_j.pt')
+        _filter = self.implicit_kernel(edge_delta, edge_attr) # shape: [n_edges, c_out, c_in]
+        out = torch.einsum('noi,ni->no', _filter, x_j) # shape: [n_edges, c_out]
+        # print(f'(_filter, x_j, out):  ({_filter.shape}, {x_j.shape}, {out.shape})')
+        return out
     
     def forward(self, x: GeometricTensor, idx_downsampled: torch.Tensor, edge_index: torch.Tensor, 
                 edge_delta: OptTensor, edge_attr: OptTensor = None, size: Size = None):
                 
+        # print('forward!')
+
         assert isinstance(x, GeometricTensor)
         assert x.type == self.in_type
 
@@ -49,11 +56,15 @@ class ImplicitPointConv(_RdPointConv):
         assert edge_index.shape[0] == 2
 
         if idx_downsampled is not None:
+            # print('idx_downsampled is not None')
+            assert False
             coords = x.coords[idx_downsampled]
             x = (x.tensor, x.tensor[idx_downsampled])
         else:
             coords = x.coords          
             x = (x.tensor, x.tensor)
+
+        # print('coorded and xed')
 
         out = self.propagate(
             edge_index, 
@@ -62,6 +73,8 @@ class ImplicitPointConv(_RdPointConv):
             edge_attr=edge_attr, 
             size=size
         )
+
+        # print('propagated')
 
         if not self.training:
             _bias = self.expanded_bias
@@ -73,6 +86,8 @@ class ImplicitPointConv(_RdPointConv):
             out += _bias
 
         out = GeometricTensor(out, self.out_type, coords=coords)
+
+        # print('forward out!')
         
         return out
     

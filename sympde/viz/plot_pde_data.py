@@ -77,23 +77,23 @@ def plot_1ds(us, dxs, dts, nrows = None, ncols = None, vminmax = False, title = 
         ax.tick_params(axis='both', which='minor')
         # ax.set_axis_off()
 
-        if i == 0:
-            ax.set_ylabel('SymPDE')#, fontsize=34)
-        if i == 3:
-            ax.set_ylabel('Mathematica')#, fontsize=34)
+        # if i == 0:
+        #     ax.set_ylabel('SymPDE')#, fontsize=34)
+        # if i == 3:
+        #     ax.set_ylabel('Mathematica')#, fontsize=34)
 
 
 
-        fig.colorbar(im, ax=ax, shrink = 0.9, pad = 0.08, aspect = 20)
+        # fig.colorbar(im, ax=ax, shrink = 0.9, pad = 0.08, aspect = 20)
 
     fig.supxlabel('x')
     fig.supylabel('t')
     fig.suptitle(title)
 
-    fig_dir = '../assets/figs/mathematica_data_comparison/'
-    save_title = title.split(':')[0]
-    fig_file = os.path.join(fig_dir, save_title + '.png')
-    fig.savefig(fig_file, dpi = 300)
+    # fig_dir = '../assets/figs/mathematica_data_comparison/'
+    # save_title = title.split(':')[0]
+    # fig_file = os.path.join(fig_dir, save_title + '.png')
+    # fig.savefig(fig_file, dpi = 300)
 
 
     plt.show()

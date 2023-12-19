@@ -115,7 +115,6 @@ class CNN(nn.Module):
 
 
 def get_nn_modules(equiv: str) -> Tuple[nn.Module, nn.Module]:
-        print('equiv', equiv)
         if equiv == 'mag':
             Conv1d = Conv1dMag
             # BatchNorm1d = nn.Identity
@@ -331,7 +330,7 @@ class ResNet(nn.Module):
         strides = [stride] + [1]*(num_blocks-1)
         layers = []
         for stride in strides:
-            layers.append(block(self.in_channels, channels, stride))
+            layers.append(block(self.in_channels, channels, 'none', stride))
             self.in_channels = channels * block.expansion
         return nn.Sequential(*layers)
 
@@ -366,9 +365,13 @@ class ResNet(nn.Module):
         x = x.permute(0, 2, 1)
         # x = F.relu(self.bn1(self.conv1(x)))
         x = F.gelu(self.conv1(x))
+        print(x.shape)
         x = self.layer1(x)
+        print(x.shape)
         x = self.layer2(x)
+        print(x.shape)
         x = self.layer3(x)
+        print(x.shape)
         x = self.layer4(x)
 
         x = x.permute(0, 2, 1)

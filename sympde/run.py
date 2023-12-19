@@ -52,7 +52,7 @@ def main(args):
     if args.name is None:
         epsilons = '-'.join([str(eps) for eps in args.epsilons]) if len(args.epsilons) > 0 else '0'
         data_dir = args.data_dir.split('/')[-1]
-        args.name = f'data{data_dir}_net{args.net}_{args.equiv}_{args.pde_name}_aug{epsilons}_seed{args.seed}'
+        args.name = f'data{data_dir}_net{args.net}_equiv{args.equiv}_{args.pde_name}_aug{epsilons}_seed{args.seed}'
         if args.mlp_hidden_channels is not None:
             mlp_hidden_channels = '-'.join([str(hidden_channel) for hidden_channel in args.mlp_hidden_channels])
             args.name += f'_mlp{mlp_hidden_channels}'
