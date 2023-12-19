@@ -30,6 +30,7 @@ class Linear(nn.Linear):
     """ Basic equivariant Linear layer from repin to repout."""
     def __init__(self, repin, repout):
         nin,nout = repin.size(),repout.size()
+        self.repin, self.repout = repin, repout
         super().__init__(nin,nout)
         self.b = TrainVar(objax.random.uniform((nout,))/jnp.sqrt(nout))
         self.w = TrainVar(orthogonal((nout, nin)))
@@ -70,8 +71,10 @@ def gated(ch_rep:Rep) -> Rep:
         reps in the input. To be used as the output for linear (and or bilinear) layers directly
         before a :func:`GatedNonlinearity` to produce its scalar gates. """
     if isinstance(ch_rep,SumRep):
+        logging.info(f"Adding gates to {ch_rep}, chrep is SumRep")
         return ch_rep+sum([Scalar(rep.G) for rep in ch_rep if rep!=Scalar and not rep.is_permutation])
     else:
+        logging.info(f"Adding gates to {ch_rep}, chrep is not SumRep")
         return ch_rep+Scalar(ch_rep.G) if not ch_rep.is_permutation else ch_rep
 
 @export
@@ -93,6 +96,8 @@ class EMLPBlock(Module):
         and gated nonlinearity. """
     def __init__(self,rep_in,rep_out):
         super().__init__()
+        self.rep_in = rep_in
+        self.rep_out = rep_out
         self.linear = Linear(rep_in,gated(rep_out))
         self.bilinear = BiLinear(gated(rep_out),gated(rep_out))
         self.nonlinearity = GatedNonlinearity(rep_out)
@@ -193,6 +198,7 @@ class EMLP(Module,metaclass=Named):
         else: middle_layers = [(c(group) if isinstance(c,Rep) else uniform_rep(c,group)) for c in ch]
         #assert all((not rep.G is None) for rep in middle_layers[0].reps)
         reps = [self.rep_in]+middle_layers
+        self.reps = reps
         logging.info(f"Reps: {reps}")
         self.network = Sequential(
             *[EMLPBlock(rin,rout) for rin,rout in zip(reps,reps[1:])],
@@ -223,7 +229,9 @@ class MLP(Module,metaclass=Named):
             nn.Linear(chs[-1],cout)
         )
     def __call__(self,x,training=True):
+        print(x.shape)
         y = self.net(x)
+        print(y.shape)
         return y
 
 @export

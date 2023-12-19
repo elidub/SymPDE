@@ -473,6 +473,7 @@ def vis(repin,repout,cluster=True):
         v = KMeans(n_clusters=Q.shape[-1]).fit(v.reshape(-1,1)).labels_
     plt.imshow(v.reshape(repout.size(),repin.size()))
     plt.axis('off')
+    return v.reshape(repout.size(),repin.size())
 
 
 def scale_adjusted_rel_error(t1,t2,g):

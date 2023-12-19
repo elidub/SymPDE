@@ -22,6 +22,7 @@ class Inertia(object):
         inertia = (mi[:,:,None,None]*(r2*I - ri[...,None]*ri[...,None,:])).sum(1)
         self.Y = inertia.reshape(-1,9)
         self.rep_in = k*Scalar+k*Vector
+        print(self.rep_in)
         self.rep_out = T(2)
         self.symmetry = O(3)
         # One has to be careful computing offset and scale in a way so that standardizing

@@ -19,3 +19,8 @@ tabulate
 opencv-python
 netCDF4
 rich
+jax
+objax
+optax
+plum-py
+plum-dispatch
