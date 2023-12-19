@@ -31,7 +31,7 @@ class PDEDataset(torch.utils.data.Dataset):
 
         if self.epsilons:
             print(f'Augmenting {pde_name} with epsilons {self.epsilons}!')
-            assert self.pde.n_augments == len(self.epsilons), f'Number of epsilons ({len(self.epsilons)}) must match number of augmentations ({self.pde.n_augments})'
+            assert len(self.pde.aug_methods) == len(self.epsilons), f'Number of epsilons ({len(self.epsilons)}) must match number of augmentations ({self.pde.aug_methods})'
 
     def __len__(self):
         return len(self.us)
@@ -61,7 +61,7 @@ class PDEDataset(torch.utils.data.Dataset):
         u, dx, dt = u.float(), dx.float(), dt.float()
         return u, dx, dt
 
-    def augment(self, u, dx, dt, epsilons = None):
+    def augment(self, u, dx, dt, epsilons = None, rand = True):
         """
         Augment similar as LPSDA
         """
@@ -70,7 +70,15 @@ class PDEDataset(torch.utils.data.Dataset):
         x, t = X.permute(2, 0, 1)[:2]
 
         epsilons = self.epsilons if epsilons is None else epsilons
-        u, x, t = self.pde.augment(u.clone(), x.clone(), t.clone(), epsilons=epsilons)
+
+        # Augment
+        # u, x, t = self.pde.augment(u.clone(), x.clone(), t.clone(), epsilons=epsilons)
+        for aug_method, epsilon in zip(self.pde.aug_methods, epsilons):
+            if epsilon > 0:
+                eps = epsilon * (torch.rand(()) - 0.5) if rand else torch.tensor([epsilon])
+                # print(f'Augmenting with {aug_method} with epsilon = {eps}')
+                u, x, t = aug_method(u.clone(), x.clone(), t.clone(), eps)
+
         dx = x[0,1] - x[0, 0]
         dt = t[1,0] - t[0, 0]
 

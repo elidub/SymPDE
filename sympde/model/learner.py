@@ -16,7 +16,7 @@ class Learner(pl.LightningModule):
         self.y_start = self.x_end = self.net.time_history
         self.y_end = self.net.time_history+self.net.time_future
 
-    def forward(self, batch):
+    def forward(self, batch, return_pred = True):
         """
         (x, y) refer to (input, target), not to space coordinates
         """
@@ -26,7 +26,7 @@ class Learner(pl.LightningModule):
         # [batch, time, space] -> [batch, space, time]
         us = us.permute(0, 2, 1) 
 
-        # Select the time history and future for input and target
+        #  elect the time history and future for input and target
         x = us[:, :, :self.x_end]        
         y = us[:, :, self.y_start:self.y_end] 
 
@@ -37,7 +37,14 @@ class Learner(pl.LightningModule):
         y_pred = y_pred.permute(0, 2, 1)
         y     = y.permute(0, 2, 1)
 
-        return y_pred, y
+        return y_pred, dxs, dts
+
+
+        if return_pred:
+            return y_pred, y
+        else:
+            return y, dxs, dts
+
 
     def step(self, batch, mode="train"):
         # Forward pass

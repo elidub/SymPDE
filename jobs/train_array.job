@@ -5,8 +5,8 @@
 #SBATCH --job-name=Train
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=18
-#SBATCH --time=00:59:00
-#SBATCH --array=1-150%10
+#SBATCH --time=02:00:00
+#SBATCH --array=1-75%10
 #SBATCH --output=jobs/slurm_output/train_array_%A_%a.out
 
 # default_array="train"
@@ -15,6 +15,7 @@
 # array="eps_0to1_nogrid"
 # array="pdes"
 array="equiv_mag_none"
+array="mlp_hidden_channels_flat"
 
 ARRAY_FILE=$HOME/thesis/SymPDE/jobs/arrays/$array.txt
 cd $HOME/thesis/SymPDE/sympde
@@ -26,12 +27,11 @@ source activate sympde
 
 srun python -u run.py \
     --train \
-    --net ResNet_conv \
+    --net MLPFlat \
     --batch_size 128 \
     --max_epochs 1000 \
     --num_workers 18 \
     --persistent_workers \
-    --version mag_conv_fake_test \
     $(head -$SLURM_ARRAY_TASK_ID $ARRAY_FILE | tail -1)
     
     

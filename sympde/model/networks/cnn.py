@@ -10,6 +10,7 @@ from collections import OrderedDict
 from typing import Tuple
 from torch import nn
 from torch.nn import functional as F
+import logging
 
 from model.networks.single_sym.magnitude import Conv1dMag, Conv2dMag
 
@@ -51,7 +52,6 @@ class CNN(nn.Module):
 
         conv_layers = []
         for kernel_size in kernel_sizes:
-            print(kernel_size)
             conv_layers.append(nn.Conv1d(in_channels=self.width, out_channels=self.width, kernel_size=kernel_size,
                                          padding=(kernel_size - 1) // 2, padding_mode=self.padding_mode, bias=True))
         # conv_layers.append(nn.Conv1d(in_channels=self.width, out_channels=self.width, kernel_size=3, padding=1,
@@ -101,16 +101,23 @@ class CNN(nn.Module):
         # todo: rewrite training method and forward pass without permutation
         x = torch.cat((u, dx[:, None, None].to(u.device).repeat(1, nx, 1),
                     dt[:, None, None].repeat(1, nx, 1).to(u.device)), -1) if self.embed_spacetime else u
-        x = self.fc0(x)
-        x = x.permute(0, 2, 1)
+        logging.debug(f'embed spacetime: {x.shape}')
+        x = self.fc0(x) # batch, space, time_history
+        logging.debug(f'fc0: {x.shape}')
+        x = x.permute(0, 2, 1) # -> batch, c, space
+        logging.debug(f'permute: {x.shape}')
 
         for layer in self.conv_layers:
             x = F.elu(x + layer(x))
+        logging.debug(f'conv_layers: {x.shape}')
 
-        x = x.permute(0, 2, 1)
-        x = self.fc1(x)
+        x = x.permute(0, 2, 1) # -> batch, space, c
+        logging.debug(f'permute: {x.shape}')
+        x = self.fc1(x) # batch, space, c
+        logging.debug(f'fc1: {x.shape}')
         x = F.elu(x)
-        x = self.fc2(x)
+        x = self.fc2(x) # batch, space, time_future
+        logging.debug(f'fc2: {x.shape}')
         return x
 
 
@@ -185,7 +192,7 @@ class ResNet_conv(nn.Module):
                 time_future: int,
                 embed_spacetime: bool,
                 equiv: str,
-                width: int = 128):
+                width: int = 256):
         """
         Initialize the 1D ResNet architecture. It contains 4 1D basic blocks.
         In contrast to standard ResNet architectues, the spatial dimension is not decreasing.
@@ -363,17 +370,21 @@ class ResNet(nn.Module):
 
         # [b, x, c] -> [b, c, x]
         x = x.permute(0, 2, 1)
+        # print(1, x.shape)
         # x = F.relu(self.bn1(self.conv1(x)))
         x = F.gelu(self.conv1(x))
-        print(x.shape)
+        # print(2, x.shape)
         x = self.layer1(x)
-        print(x.shape)
+        # print(3, x.shape)
         x = self.layer2(x)
-        print(x.shape)
-        x = self.layer3(x)
-        print(x.shape)
-        x = self.layer4(x)
+        # print(4, x.shape)
+        x = self.layer3(x) # batch, time_channel, space
+        # print(5, x.shape)
+        x = self.layer4(x) # batch, time_channel, space
+        # print(4, x.shape)
 
         x = x.permute(0, 2, 1)
-        x = self.fc1(x)
+        # print('permute', x.shape)
+        x = self.fc1(x) # batch, space, time_future
+        # print('fc1', x.shape)
         return x

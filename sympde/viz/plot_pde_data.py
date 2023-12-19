@@ -82,9 +82,7 @@ def plot_1ds(us, dxs, dts, nrows = None, ncols = None, vminmax = False, title = 
         # if i == 3:
         #     ax.set_ylabel('Mathematica')#, fontsize=34)
 
-
-
-        # fig.colorbar(im, ax=ax, shrink = 0.9, pad = 0.08, aspect = 20)
+        # fig.colorbar(im, ax=ax, shrink = 0.6, pad = 0.08, aspect = 20, location='bottom')
 
     fig.supxlabel('x')
     fig.supylabel('t')

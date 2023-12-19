@@ -37,7 +37,7 @@ def PDEs():
 class BasePDE(PDE_Pseudospectral):
     def __init__(self):
         super().__init__()
-        self.n_augments = len([func_name for func_name, _ in inspect.getmembers(self, predicate=inspect.ismethod) if func_name.startswith('_u')]) + 1
+        self.aug_methods = [method for method_name, method in inspect.getmembers(self, predicate=inspect.ismethod) if method_name.startswith('_u')]
 
         self.Lmax = None
         self.Tmax = None
@@ -48,9 +48,6 @@ class BasePDE(PDE_Pseudospectral):
     def __str__(self) -> str:
         raise NotImplementedError
 
-    def augment(self, u, x, t, epss):
-        raise NotImplementedError
-    
     def __call__(self, t, u, L):
         raise NotImplementedError
 
@@ -62,6 +59,55 @@ class Pde1(BasePDE):
 
     def __str__(self) -> str:
         return r"$0.1 u_{xx}$"
+    
+    def _u1(self, u, x, t, eps):
+        return u, x, t
+
+    def _u2(self, u, x, t, eps):
+        """
+        Space Translate
+        """
+        x_new = x
+        t_new = t
+        # u_new = fourier_shift(u, eps = -eps, dim = -1)
+        u_new = (fourier_shift(u.unsqueeze(0), eps, dim = -1)).squeeze(0)
+        return u_new, x_new, t_new
+
+    # def _u3(self, u, x, t, eps):
+    #     """
+    #     Galileo
+    #     """
+
+    #     dx = x[0,1] - x[0, 0]
+    #     Nt, Nx = u.shape
+    #     L = dx * Nx
+
+    #     d = - eps * (t[:, 0] / L) # minus, t, L are all necessary
+    #     eps_u = - eps
+    #     x_new = x
+    #     t_new = t
+    #     u_new = (fourier_shift(u, eps=d[:, None], dim=-1) + eps_u).squeeze(0) # minus is necassary
+    #     return u_new, x_new, t_new
+
+    def _u3(self, u, x, t, eps):
+        """
+        Scaling
+        """
+        eps_u = - eps
+        x_new = x * torch.exp(-eps)
+        t_new = t * torch.exp(-2 * eps)
+        u_new = u 
+        return u_new, x_new, t_new
+    
+    def _u6(self, u, x, t, eps):
+        """
+        Scaling (6)
+        """
+        eps_u = - eps
+        x_new = x
+        t_new = t
+        u_new = u * torch.exp(eps_u)
+        return u_new, x_new, t_new
 
     def __call__(self, t, u, L):
         return 0.1 * self.dxx(u, L)
@@ -328,6 +374,9 @@ class KdV(BasePDE):
 
     def __str__(self) -> str:  
         return r"$- u u_x - u_{xxx}$"
+    
+    def _u1(self, u, x, t, eps):
+        return u, x, t
 
     def _u2(self, u, x, t, eps):
         """
@@ -359,22 +408,23 @@ class KdV(BasePDE):
         """
         Scaling
         """
+        eps = 2 * eps
         eps_u = - eps
         x_new = x * torch.exp(-eps)
         t_new = t * torch.exp(-3 * eps)
         u_new = u * torch.exp(- 2 * eps_u)
         return u_new, x_new, t_new
 
-    def augment(self, u, x, t, epsilons):
-        u_new, x_new, t_new = u, x, t
-        # u_new, x_new, t_new = self._u2(u_new, x_new, t_new, eps = (torch.rand(()) - 0.5) * epsilons[1]) #  space translate
-        # u_new, x_new, t_new = self._u3(u_new, x_new, t_new, eps = (torch.rand(()) - 0.5) * epsilons[2]) # scaling
-        # u_new, x_new, t_new = self._u4(u_new, x_new, t_new, eps = (torch.rand(()) - 0.5) * 2. * epsilons[3]) # galileo
-        u_new, x_new, t_new = self._u2(u_new, x_new, t_new, eps = torch.tensor(epsilons[1])) #  space translate
-        u_new, x_new, t_new = self._u3(u_new, x_new, t_new, eps = torch.tensor(epsilons[2])) # galileo 
-        u_new, x_new, t_new = self._u4(u_new, x_new, t_new, eps = torch.tensor(2. * epsilons[3])) # scaling
+    # def augment(self, u, x, t, epsilons):
+    #     u_new, x_new, t_new = u, x, t
+    #     # u_new, x_new, t_new = self._u2(u_new, x_new, t_new, eps = (torch.rand(()) - 0.5) * epsilons[1]) #  space translate
+    #     # u_new, x_new, t_new = self._u3(u_new, x_new, t_new, eps = (torch.rand(()) - 0.5) * epsilons[2]) # scaling
+    #     # u_new, x_new, t_new = self._u4(u_new, x_new, t_new, eps = (torch.rand(()) - 0.5) * 2. * epsilons[3]) # galileo
+    #     u_new, x_new, t_new = self._u2(u_new, x_new, t_new, eps = torch.tensor(epsilons[1])) #  space translate
+    #     u_new, x_new, t_new = self._u3(u_new, x_new, t_new, eps = torch.tensor(epsilons[2])) # galileo 
+    #     u_new, x_new, t_new = self._u4(u_new, x_new, t_new, eps = torch.tensor(2. * epsilons[3])) # scaling
  
-        return u_new, x_new, t_new
+    #     return u_new, x_new, t_new
 
     def __call__(self, t, u, L):
         return - u * self.dx(u, L) - self.dxxx(u, L)
