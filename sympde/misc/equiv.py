@@ -21,7 +21,7 @@ def assert_equiv(x, f, g, postprocess = None, rtol = 1e-5, atol = 1e-8, print_on
         print(message_success) if check is True else print(message_fail)
     else:
         assert check, message_fail
-    return y1, y1
+    return y1, y2
 
 def allclose_flat(a, b):
     return torch.allclose(a.flatten(), b.flatten(), atol=1e-6, rtol=1e-6), (a - b)

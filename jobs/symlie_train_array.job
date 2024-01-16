@@ -21,7 +21,6 @@ source activate sympde
 
 srun python -u run.py \
     --train \
-    --net MLP \
     --num_workers 18 \
     --persistent_workers \
     $(head -$SLURM_ARRAY_TASK_ID $ARRAY_FILE | tail -1)

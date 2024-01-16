@@ -2,12 +2,16 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
 import numpy as np
 
-def imshows(plots, titles = None, vminmaxs = None, suptitle = None, colorbar = True, axis_off = False, plot_labels = False, l =1, imshow_kwargs = {}):
+def imshows(plots, titles = None, vminmaxs = None, suptitle = None, colorbar = False, axis_off = False, plot_labels = False, l =1, imshow_kwargs = {}, rows = True, text_vals = None):
     n_plots = len(plots)
 
-    fig, axs = plt.subplots(1, n_plots, figsize=(3*n_plots*l, 4*l), tight_layout=True)
+    (nrows, ncols) = (1, n_plots) if rows else (n_plots, 1)
+    fig, axs = plt.subplots(nrows, ncols, figsize=(4*nrows*l, 3*ncols*l), tight_layout=True)
 
     vminmax_absmax = np.abs([np.abs(plot).max() for plot in plots]).max()
+
+    if not isinstance(text_vals, list):
+        text_vals = [text_vals] * n_plots
 
     for i in range(n_plots):
         ax = axs if n_plots == 1 else axs[i]
@@ -33,6 +37,9 @@ def imshows(plots, titles = None, vminmaxs = None, suptitle = None, colorbar = T
 
         ax.set_title(titles[i] if titles is not None else None)
 
+        if text_vals[i]:
+            plot_vals(plots[i], ax)
+
         if axis_off:
             ax.set_axis_off()
 
@@ -46,7 +53,30 @@ def imshows(plots, titles = None, vminmaxs = None, suptitle = None, colorbar = T
                 fig.colorbar(im, ax=ax)
     
     if suptitle is not None:
-        fig.suptitle(suptitle, y = .85, fontsize=16)
+        # fig.suptitle(suptitle, y = .85, fontsize=16)
+        fig.suptitle(suptitle, y = 1., fontsize=16)
 
 
+    plt.show()
+
+def plot_vals(x, ax):
+    for i in range(x.shape[0]):
+        for j in range(x.shape[1]):
+            ax.text(j, i, f'{x[i, j]:.2f}', ha='center', va='center', color='white')
+
+def simple_imshow(x, l = 1, print_values = True, precision = 2):
+    fig, ax = plt.subplots(1, 1, figsize=np.array(x.shape)*l)
+    ax.imshow(x)
+
+    if print_values:
+        for i in range(x.shape[0]):
+            for j in range(x.shape[1]):
+                ax.text(j, i, f'{x[i, j]:.{precision}f}', ha='center', va='center', color='white')
+
+    ax.axis('off')
+    plt.show()
+
+def imshow(x, figsize = (3,3)):
+    plt.figure(figsize = figsize)
+    plt.imshow(x)
     plt.show()
