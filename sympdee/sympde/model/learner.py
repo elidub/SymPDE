@@ -37,8 +37,7 @@ class Learner(pl.LightningModule):
         y_pred = y_pred.permute(0, 2, 1)
         y     = y.permute(0, 2, 1)
 
-        return y_pred, dxs, dts
-
+        # return y_pred, dxs, dts
 
         if return_pred:
             return y_pred, y

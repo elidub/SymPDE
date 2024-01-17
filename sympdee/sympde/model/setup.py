@@ -12,6 +12,7 @@ from model.networks.mlp_flat import MLPFlat
 
 def setup_model(args):
     net = args.net
+    assert False
 
     space_length = 256
 

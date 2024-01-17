@@ -76,6 +76,7 @@ def main(args):
             args.log_dir, name=args.name, version=args.version
         ),
         log_every_n_steps = 1,
+        enable_checkpointing = False, # Don't save checkpoints, for debugging only
         max_epochs=args.max_epochs,
         accelerator="gpu" if torch.cuda.is_available() else "cpu",
         deterministic=True,
