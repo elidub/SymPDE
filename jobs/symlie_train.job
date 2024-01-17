@@ -1,0 +1,24 @@
+#!/bin/bash
+
+#SBATCH --partition=gpu
+#SBATCH --gpus=1
+#SBATCH --job-name=Train
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=18
+#SBATCH --time=00:10:00
+#SBATCH --output=jobs/slurm_output/symlie_train_array_%A.out
+
+cd $HOME/thesis/SymPDE/symlie
+
+module purge
+module load 2022
+module load Anaconda3/2022.05
+source activate sympde
+
+srun python -u run.py \
+    --net Predict-NoneP \
+    --data_dir ../data/flower \
+    --data_kwargs {"space_length":"16","noise_std":"0.0","y_low":"0","y_high":"3" \
+    --max_epochs 10 \
+    --num_workers 18 \
+    --persistent_workers 

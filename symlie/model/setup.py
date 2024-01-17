@@ -23,7 +23,10 @@ def setup_model(args):
             train_P = True,
         )
         learner = TransformationLearner
-        transf_kwargs = {'augment' : 'space_translation'}
+
+        # TODO: Automatize this, also in the learner
+        # transf_kwargs = {'augment' : 'space_translation'}
+        transf_kwargs = {'augment' : 'rotation'}
     elif net.startswith("Predict-"):
         if net == "Predict-NoneP":
             net = MLP(

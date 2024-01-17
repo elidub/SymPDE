@@ -66,13 +66,21 @@ class TransformationLearner(BaseLearner):
         for x_i, shift_i in zip(x, shift)])
 
         return x_prime
+    
+    def rotation(self, x, eps):
+        """
+        Automatize this
+        """
+
+
 
     def forward(self, batch):
 
         x, y_, eps = batch
 
-        # Hardcoded transformation
-        transf = self.space_translation
+        # Hardcoded transformation # TODO: Automatize this
+        # transf = self.space_translation
+        transf = self.rotation
 
         # Reset the weights and biases as training P should not be dependent on the weight initailization
         if self.net.train_P:

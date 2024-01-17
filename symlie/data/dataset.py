@@ -45,6 +45,8 @@ class FlatDataset(Dataset):
             eps = torch.tensor([0.])
         elif self.augment == 'space_translation':
             eps = torch.rand((1,))
+        elif self.augment == 'rotation':
+            eps = torch.rand((1,))
         else:
             raise NotImplementedError
         

@@ -4,6 +4,7 @@ import pytorch_lightning as pl
 import argparse
 import logging
 import math
+import json
 
 from model.setup import setup_model
 
@@ -16,12 +17,12 @@ def parse_options(notebook = False):
     # parser.add_argument("--linearmodules", nargs='+', default=['MyLinearPw', 'nn.Linear'], help="Linearmodules")
     parser.add_argument("--bias", action="store_true", help="Bias")
 
-    parser.add_argument("--data_kwargs", type=dict, default = {
+    parser.add_argument("--data_kwargs", default = {
                             'space_length': 7,
                             'noise_std': 0.5,
                             'y_low': 1,
                             'y_high': 3,
-                        }, help="Data kwargs")
+                        }, help="Data kwargs", type=json.loads)
 
     parser.add_argument("--data_dir", type=str, default="../data/flat", help="Path to data directory")
     parser.add_argument("--log_dir", type=str, default="../logs", help="Path to log directory")
@@ -38,8 +39,8 @@ def parse_options(notebook = False):
     parser.add_argument("--persistent_workers", default=True)
     # parser.add_argument("--train", action="store_true", help="Train the model")
     parser.add_argument("--train", default=True)
-    parser.add_argument("--predict", default=False)
-    parser.add_argument("--test", default=True)
+    parser.add_argument("--predict", default=True)
+    parser.add_argument("--test", default=False)
     
     parser.add_argument("--do_return", action="store_true", help="Return model, trainer, datamodule")
     parser.add_argument("--do_return_model", action="store_true", help="Return model, None, None")
@@ -50,6 +51,11 @@ def parse_options(notebook = False):
     return args
 
 def main(args):
+    args.data_kwargs = {k : float(v) for k, v in args.data_kwargs.items()}
+    # data_kwargs = json.loads(args.data_kwargs)
+    # print(data_kwargs)
+    print(args.data_kwargs)
+    return None, None, None, None
     pl.seed_everything(args.seed, workers=True)
 
     args.n_splits = [int(n_split) for n_split in args.n_splits]
@@ -103,4 +109,4 @@ def main(args):
 if __name__ == '__main__':
     args = parse_options()
     print(args)
-    model, trainer, datamodule = main(args)
+    main(args)
