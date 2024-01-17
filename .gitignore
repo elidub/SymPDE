@@ -7,6 +7,7 @@ logs/FNO1d_noprecision
 logs/
 
 logs_old/
+logs_symlie/
 
 jobs/slurm_output
 jobs/slurm_output_noprecision

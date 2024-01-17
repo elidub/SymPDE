@@ -25,7 +25,7 @@ def parse_options(notebook = False):
                         }, help="Data kwargs", type=json.loads)
 
     parser.add_argument("--data_dir", type=str, default="../data/flat", help="Path to data directory")
-    parser.add_argument("--log_dir", type=str, default="../logs", help="Path to log directory")
+    parser.add_argument("--log_dir", type=str, default="../logs_symlie", help="Path to log directory")
     parser.add_argument("--max_epochs", type=int, default=40, help="Number of epochs")
     parser.add_argument("--batch_size", type=int, default=2, help="Batch size")
     parser.add_argument("--lr", type=float, default=1e-3, help="Learning rate")
@@ -40,31 +40,40 @@ def parse_options(notebook = False):
     # parser.add_argument("--train", action="store_true", help="Train the model")
     parser.add_argument("--train", default=True)
     parser.add_argument("--predict", default=True)
-    parser.add_argument("--test", default=False)
+    parser.add_argument("--test", default=True)
     
     parser.add_argument("--do_return", action="store_true", help="Return model, trainer, datamodule")
     parser.add_argument("--do_return_model", action="store_true", help="Return model, None, None")
 
-    parser.add_argument("--n_splits", nargs='+', default=[400,1000,1000], help="Train, val, test split")
+    parser.add_argument("--n_splits", nargs='+', default=[10_000,1000,1000], help="Train, val, test split")
 
     args = parser.parse_args([]) if notebook else parser.parse_args()
     return args
 
-def main(args):
-    args.data_kwargs = {k : float(v) for k, v in args.data_kwargs.items()}
-    # data_kwargs = json.loads(args.data_kwargs)
-    # print(data_kwargs)
-    print(args.data_kwargs)
-    return None, None, None, None
-    pl.seed_everything(args.seed, workers=True)
+def process_args(args):
+    def set_dtype(k, v):
+        if k in ['space_length', 'y_low', 'y_high']:
+            return int(v)
+        return float(v)
+    args.data_kwargs = {k : set_dtype(k, v) for k, v in args.data_kwargs.items()}
 
     args.n_splits = [int(n_split) for n_split in args.n_splits]
 
-    if args.name is None:
-        data_dir = args.data_dir.split('/')[-1]
-        bias = str(args.bias).lower()
-        args.name = f'symlieflat_data{data_dir}_net{args.net}_lr{math.log10(args.lr):.2f}_seed{args.seed}'
+    # Check if name is in args
+
+    if hasattr(args, 'name'): 
+        if args.name is None:
+            data_dir = args.data_dir.split('/')[-1]
+            bias = str(args.bias).lower()
+            args.name = f'symlieflat_data{data_dir}_net{args.net}_lr{math.log10(args.lr):.2f}_seed{args.seed}'
+    return args
+
+def main(args):
+    pl.seed_everything(args.seed, workers=True)
+    args = process_args(args)
+
     print("\n\n###\tVersion: ", args.version, "\t###\n###\tName: ", args.name, "\t###\n\n")
+    args.device = "cuda" if torch.cuda.is_available() else "cpu"
 
     model, datamodule = setup_model(args)
 
@@ -82,7 +91,7 @@ def main(args):
         ),
         log_every_n_steps = 1,
         max_epochs=args.max_epochs,
-        accelerator="gpu" if torch.cuda.is_available() else "cpu",
+        accelerator=args.device,
         deterministic=True,
         enable_model_summary=args.model_summary,
     )  
@@ -100,6 +109,11 @@ def main(args):
     if args.predict:
         print("Predicting...")
         preds = trainer.predict(model, datamodule=datamodule)
+
+        y_trues, y_preds = zip(*preds)        
+        y_trues, y_preds = torch.cat(y_trues), torch.cat(y_preds)
+        torch.save(y_trues, os.path.join(args.log_dir, args.name, args.version, 'y_trues.pt'))
+        torch.save(y_preds, os.path.join(args.log_dir, args.name, args.version, 'y_preds.pt'))
         return model, trainer, datamodule, preds
 
     raise NotImplementedError("No action specified")

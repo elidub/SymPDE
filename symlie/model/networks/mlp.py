@@ -9,6 +9,7 @@ class MLP(torch.nn.Module):
     def __init__(self, 
             space_length: int,
             bias: bool,
+            device: str,
             activation = torch.nn.ReLU,
             linearmodules: List[Union[LinearP, nn.Linear]] = [LinearP, nn.Linear],
             P_init: Union[torch.Tensor, str] = 'none',
@@ -20,7 +21,7 @@ class MLP(torch.nn.Module):
 
         self.mlp = torch.nn.Sequential(
             linearmodules[0](
-                in_features=space_length, out_features=space_length, bias=bias, 
+                in_features=space_length, out_features=space_length, bias=bias, device=device,
                 P_init = P_init, train_weights=train_weights, train_P=train_P
             ),
             activation(),

@@ -9,7 +9,7 @@ from typing import List, Union
 
 class LinearP(nn.Module):
     def __init__( 
-            self, in_features, out_features, bias, 
+            self, in_features, out_features, bias, device,
             P_init: Union[torch.Tensor, str] = 'none',
             train_weights = True, train_P = False,
         ):
@@ -43,6 +43,7 @@ class LinearP(nn.Module):
             # self.bias = nn.Parameter(self.bias)
         else:
             self.P = nn.Parameter(self.P)
+        self.P = self.P.to(device)
 
     def reset_parameters(self) -> None:
         """

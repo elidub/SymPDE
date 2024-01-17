@@ -18,6 +18,7 @@ def setup_model(args):
             in_features = space_length,
             out_features = space_length,
             bias = False,
+            device = args.device,
             P_init = 'randn',
             train_weights = False,
             train_P = True,
@@ -32,18 +33,21 @@ def setup_model(args):
             net = MLP(
                 space_length = space_length, 
                 bias = args.bias,
+                device = args.device,
                 P_init = 'none',
             )
         elif net == "Predict-CalculatedP":
             net = MLP(
                 space_length = space_length, 
                 bias = args.bias,
+                device = args.device,
                 P_init = 'space_translation',
             )
         elif net == "Predict-TrainedP":
             net = MLP(
                 space_length = space_length, 
                 bias = args.bias,
+                device = args.device,
                 P_init = args.P_pred,
             )
         else:
