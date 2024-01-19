@@ -9,7 +9,8 @@ from typing import List, Union
 
 class LinearP(nn.Module):
     def __init__( 
-            self, in_features, out_features, bias, device,
+            self, in_features, out_features, bias, 
+            device = 'cpu',
             P_init: Union[torch.Tensor, str] = 'none',
             train_weights = True, train_P = False,
         ):
@@ -36,6 +37,8 @@ class LinearP(nn.Module):
         # Initialize weights and bias
         self.weight = torch.randn(out_features, in_features)
         # self.bias   = torch.randn(out_features)
+
+        # self.weight = 
 
         if train_weights:
             assert P_init not in ['randn']

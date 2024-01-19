@@ -5,41 +5,41 @@ import torch
 from itertools import product
 from tqdm import tqdm
 import pickle
-
 from typing import Callable
 from PIL import Image
 
-from torchvision.transforms import Compose, RandomRotation, CenterCrop, Pad, ToTensor, Resize, RandomCrop
-from torchvision.transforms import RandomAffine, InterpolationMode
+from data.transforms import Transform
 
-from data.transforms import ToArray, Slice, SqueezeTransform, BaseTransform, SpaceTranslate, RandomPad, RandomScale, CustomRandomRotation, CustomCompose, UnsqueezeTransform, MyPad, MyPrint
+# from torchvision.transforms import Compose, RandomRotation, CenterCrop, Pad, ToTensor, Resize, RandomCrop
+# from torchvision.transforms import RandomAffine, InterpolationMode
 
-def transform(x, augment_kwargs, epsilons = [1., 1., 1., 1.], sample = True, antialias= False):
-    _, w, h = x.shape
-    assert w == h
-    space_length = w
-    return CustomCompose(
-        [
-            # Scaling
-            RandomScale(eps=epsilons[0], sample=sample),
+# from data.transforms import ToArray, Slice, SqueezeTransform, BaseTransform, SpaceTranslate, RandomPad, RandomScale, CustomRandomRotation, UnsqueezeTransform, MyPad, MyPrint
+
+# def transform(x, centers, epsilons = [1., 1., 1., 1.], sample = True, antialias= False):
+#     _, w, h = x.shape
+#     assert w == h
+#     space_length = w
+#     return CustomCompose(
+#         [
+#             # Scaling
+#             RandomScale(eps=epsilons[0], sample=sample),
             
-            # Rotation, scaling to supress aliasing
-            Resize(space_length*3, antialias=antialias),
-            CustomRandomRotation(eps=epsilons[1], sample=sample, interpolation=InterpolationMode.BILINEAR),
-            Resize(space_length, antialias=antialias),
+#             # Rotation, scaling to supress aliasing
+#             Resize(space_length*3, antialias=antialias),
+#             CustomRandomRotation(eps=epsilons[1], sample=sample, interpolation=InterpolationMode.BILINEAR),
+#             Resize(space_length, antialias=antialias),
             
-            # Space translation
-            SpaceTranslate(eps=epsilons[2], dim = 1, sample=sample), # x translation
-            SpaceTranslate(eps=epsilons[3], dim = 2, sample=sample), # y translation
-        ], 
-        augment_kwargs = augment_kwargs
-    )(x)
+#             # Space translation
+#             SpaceTranslate(eps=epsilons[2], dim = 1, sample=sample), # x translation
+#             SpaceTranslate(eps=epsilons[3], dim = 2, sample=sample), # y translation
+#         ], 
+#         centers = centers
+#     )(x)
 
-def transform_batch(x, augment_kwargs, epsilons=[1.,1.,1.,1.], sample=True):
-    xs, augment_kwargs = zip(*[transform(x_i, augment_kwargs = augment_kwarg, epsilons=epsilons, sample=sample) for x_i, augment_kwarg in tqdm(zip(x.unsqueeze(1), augment_kwargs), total = len(x), leave=False)])
-    x = torch.cat(xs)
-    augment_kwargs = list(augment_kwargs)
-    return x, augment_kwargs
+# def transform_batch(x, centers, epsilons=[1.,1.,1.,1.], sample=True):
+#     xs, centers = zip(*[transform(x_i, centers=centers_i, epsilons=epsilons, sample=sample) for x_i, centers_i in tqdm(zip(x.unsqueeze(1), centers), total = len(x), leave=False)])
+#     x, centers = torch.cat(xs), torch.cat(centers)
+#     return x, centers
 
 def create_flower(N: int, space_length: int, noise_std: float, y_low: int, y_high: int):
     
@@ -48,7 +48,6 @@ def create_flower(N: int, space_length: int, noise_std: float, y_low: int, y_hig
     assert space_length == sqrt
 
     size = 3
-    augment_kwargs0 = {'SpaceTranslate_1' : 0.0, 'SpaceTranslate_2': 0.0}
 
     # Define the dimensions of the grid
     x = np.linspace(-size, size, space_length)
@@ -69,13 +68,29 @@ def create_flower(N: int, space_length: int, noise_std: float, y_low: int, y_hig
     # Flower shape formula with varying extent
     z = (r <= varying_radius).T
 
-    z, augment_kwargs = transform_batch(torch.from_numpy(z), augment_kwargs = [augment_kwargs0]*N)
-    z = z.numpy()
+    # z = torch.from_numpy(z)
+    # return z, centers_0
 
+    # Transform
+    transform = Transform()
+    centers_0 = torch.zeros(N, 2)
+    z, centers = transform(torch.from_numpy(z), centers = centers_0,  transform_individual_bool=True)
+    z, centers = z.numpy(), centers.numpy()
+
+    # Add noise
     noise = np.random.normal(0, noise_std, size = (z.shape))
-
     z_noise = z + noise
-
     z_noise = z_noise.reshape(N, space_length**2)
 
-    return {'x': z_noise, 'y':n_leaves, 'augment_kwargs': augment_kwargs}
+    return {'x': z_noise, 'y':n_leaves, 'centers': centers}
+
+def plot_flower(x, y = None, l = 1, set_axis_off = True):
+    N_plot = len(x)
+    fig, axs = plt.subplots(1, N_plot, figsize = (N_plot*l, l), sharey=True, sharex=True)
+    if N_plot == 1:
+        axs = [axs]
+    for i, ax in enumerate(axs):
+        ax.imshow(x[i], aspect='auto')
+        if set_axis_off: ax.set_axis_off()
+        if y is not None: axs[i].set_title(f'y = {y[i]}')
+    plt.show()
