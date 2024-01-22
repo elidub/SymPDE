@@ -5,10 +5,12 @@ import torch
 from itertools import product
 from tqdm import tqdm
 import pickle
-from typing import Callable
+from typing import Callable, List
 from PIL import Image
 
 from data.transforms import Transform
+
+# from numpy import Array
 
 # from torchvision.transforms import Compose, RandomRotation, CenterCrop, Pad, ToTensor, Resize, RandomCrop
 # from torchvision.transforms import RandomAffine, InterpolationMode
@@ -41,24 +43,16 @@ from data.transforms import Transform
 #     x, centers = torch.cat(xs), torch.cat(centers)
 #     return x, centers
 
-def create_flower(N: int, space_length: int, noise_std: float, y_low: int, y_high: int):
-    
-    sqrt = np.sqrt(space_length)
-    space_length = int(sqrt)
-    assert space_length == sqrt
-
-    size = 3
-
+def flower_grid(space_length: int, size: float = 3):
     # Define the dimensions of the grid
     x = np.linspace(-size, size, space_length)
     xx, yy = np.meshgrid(x, x)
-
-    # s = np.random.uniform(0.5, 1.5, size = (N,))
+    xx, yy = np.expand_dims(xx, -1), np.expand_dims(yy, -1)
+    return xx, yy
+def flower(xx, yy, N: int, y_low: int, y_high: int):
     s = 1
     n_leaves = np.random.randint(y_low, y_high, size = (N,))
 
-    # Convert Cartesian to polar coordinates
-    xx, yy = np.expand_dims(xx, -1), np.expand_dims(yy, -1)
     r = np.sqrt(xx**2 + yy**2)
     theta = np.arctan2(yy, xx)
 
@@ -68,21 +62,71 @@ def create_flower(N: int, space_length: int, noise_std: float, y_low: int, y_hig
     # Flower shape formula with varying extent
     z = (r <= varying_radius).T
 
-    # z = torch.from_numpy(z)
-    # return z, centers_0
+    return z, n_leaves
 
-    # Transform
-    transform = Transform()
-    centers_0 = torch.zeros(N, 2)
-    z, centers = transform(torch.from_numpy(z), centers = centers_0,  transform_individual_bool=True)
-    z, centers = z.numpy(), centers.numpy()
+# def sine_grid(space_length: int, size: float = 1):
+#     x = np.linspace(0, 1, space_length).reshape(-1, 1)
+#     xx, yy = np.meshgrid(x, x)
+#     xx, yy = np.expand_dims(xx, -1), np.expand_dims(yy, -1)
+#     return xx, yy    
+# def sine(xx, yy, N: int, y_low: int, y_high: int):
+#     k = np.random.randint(y_low, y_high, size = (N,))
+
+#     # kx, ky = k, k
+#     kx, ky = 0, 0
+
+#     sins = np.sin(2*np.pi*(kx*xx+ky*yy)).T
+#     return sins, k
+
+def sine_grid(space_length: int, size: float = 1):
+    x = np.linspace(0, 1, space_length).reshape(-1, 1)
+    xx, yy = np.meshgrid(x, x)
+    xx, yy = np.expand_dims(xx, -1), np.expand_dims(yy, -1)
+    return xx, yy    
+def sine(xx, yy, N: int, y_low: int, y_high: int):
+    # k = np.random.randint(y_low, y_high, size = (N,))
+    # sins = np.sin(2*np.pi*k*(xx+yy)).T
+
+    k = np.random.randint(y_low, y_high, size = (N,))
+    x_mult, y_mult = 0, 1
+
+    sins = np.sin(2*np.pi*k*(xx*x_mult+yy*y_mult)).T
+
+    return sins, k
+
+
+def create_flower(N: int, space_length: int, noise_std: float, y_low: int, y_high: int, eps_mult: List[float], only_flip: bool):
+
+    
+    # Flower
+    # xx, yy = flower_grid(space_length)
+    # z, target = flower(xx, yy, N, y_low, y_high)
+  
+    # Sine v2
+    xx, yy = sine_grid(space_length)
+    z, target = sine(xx, yy, N, y_low, y_high)
 
     # Add noise
     noise = np.random.normal(0, noise_std, size = (z.shape))
-    z_noise = z + noise
-    z_noise = z_noise.reshape(N, space_length**2)
+    z = z + noise
 
-    return {'x': z_noise, 'y':n_leaves, 'centers': centers}
+    # Transform
+    transform = Transform(only_flip=only_flip)
+    centers_0 = torch.zeros(N, 2)
+    epsilons  = torch.rand(N, 4)
+    epsilons = epsilons * torch.tensor(eps_mult)
+    z = torch.from_numpy(z).reshape(N, space_length**2)
+    z, centers = transform(z, centers=centers_0, epsilons=epsilons, transform_individual_bool=True)
+    z = z.reshape(N, space_length, space_length)
+    z, centers = z.numpy(), centers.numpy()
+
+    z = z.reshape(N, space_length**2)
+
+    # z = z.reshape(N, space_length, space_length)
+    # z = z[:, 0, :]
+    # z = z.reshape(N, space_length)
+
+    return {'x': z, 'y':target, 'centers': centers}
 
 def plot_flower(x, y = None, l = 1, set_axis_off = True):
     N_plot = len(x)

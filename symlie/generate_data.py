@@ -22,7 +22,7 @@ def save_splits(create_sample_func: Callable, data_kwargs: dict, data_dir: str, 
         data_dir: Directory to save the splits.
     """
     for split, n_samples in zip(['train', 'val', 'test'], n_splits):
-        print(f"Creating {split} split...")
+        print(f"Creating {n_samples} for {split}.")
 
         outs = create_sample_func(N = n_samples, **data_kwargs)
 
@@ -47,7 +47,7 @@ def parse_options(notebook = False):
     parser.add_argument("--data_name", type=str, default="flower", help="Name of dataset")
     parser.add_argument("--data_kwargs", help="Data kwargs", type=json.loads)
 
-    parser.add_argument("--n_splits", default=[10_000,10_000,10_000], nargs='+', help="Train, val, test split")
+    parser.add_argument("--n_splits", default=[400,1_000,1_000], nargs='+', help="Train, val, test split")
 
     args = parser.parse_args([]) if notebook else parser.parse_args()
     return args

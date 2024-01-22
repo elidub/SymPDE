@@ -7,7 +7,7 @@ from model.networks.linear import LinearP
 
 class MLP(torch.nn.Module):
     def __init__(self, 
-            space_length: int,
+            features: int,
             bias: bool,
             device: str,
             activation = torch.nn.ReLU,
@@ -18,14 +18,13 @@ class MLP(torch.nn.Module):
         ):
         super().__init__()
 
-
         self.mlp = torch.nn.Sequential(
             linearmodules[0](
-                in_features=space_length, out_features=space_length, bias=bias, device=device,
+                in_features=features, out_features=features, bias=bias, device=device,
                 P_init = P_init, train_weights=train_weights, train_P=train_P
             ),
             activation(),
-            linearmodules[1](in_features=space_length, out_features=1, bias = bias),
+            linearmodules[1](in_features=features, out_features=1, bias = bias),
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:

@@ -4,6 +4,8 @@ import pytorch_lightning as pl
 import numpy as np
 import matplotlib.pyplot as plt
 
+from data.transforms import Transform
+
 class BaseLearner(pl.LightningModule):
     def __init__(self, net, criterion, lr):
         super().__init__()
@@ -67,20 +69,12 @@ class TransformationLearner(BaseLearner):
 
         return x_prime
     
-    def rotation(self, x, eps):
-        """
-        Automatize this
-        """
-
-
-
     def forward(self, batch):
 
         x, y_, eps = batch
 
         # Hardcoded transformation # TODO: Automatize this
-        # transf = self.space_translation
-        transf = self.rotation
+        transf = self.space_translation
 
         # Reset the weights and biases as training P should not be dependent on the weight initailization
         if self.net.train_P:
@@ -103,4 +97,38 @@ class TransformationLearner(BaseLearner):
         return out_a_prime, out_b_prime
     
 
+class FlowerTransformationLearner(BaseLearner, Transform):
+    def __init__(self, net, criterion, lr, transform_kwargs):
+        BaseLearner.__init__(self, net, criterion, lr)
+        Transform.__init__(self, only_flip=transform_kwargs['only_flip'])
+        self.eps_mult = transform_kwargs['eps_mult']
+
+    def forward(self, batch):
+
+        x, y_, eps_, centers = batch
+
+        batch_size = len(x)
+        eps = torch.randn((4,))
+        eps = eps * torch.tensor(self.eps_mult)
+
+        # Reset the weights and biases as training P should not be dependent on the weight initailization
+        if self.net.train_P:
+            self.net.reset_parameters()
+
+        # Route a: Forward pass, transformation
+        x_a = x
+        out_a = self.net(x_a.unsqueeze(1)).squeeze(1)
+        out_a_prime, centers_a = self.transform(out_a, centers, eps)
+
+        # Route b: Transformation, forward pass
+        x_b = x
+        x_b_prime, centers_b = self.transform(x_b, centers, eps)
+        out_b_prime = self.net(x_b_prime.unsqueeze(1)).squeeze(1)
+
+        assert (centers_a == centers_b).all()
+        assert out_a.shape == x_b.shape
+        assert out_a_prime.shape == out_b_prime.shape
+        assert out_a_prime.shape == x_b_prime.shape
+
+        return out_a_prime, out_b_prime
     

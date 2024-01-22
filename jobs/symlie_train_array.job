@@ -5,11 +5,11 @@
 #SBATCH --job-name=Train
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=18
-#SBATCH --time=00:10:00
-#SBATCH --array=1-200%20
+#SBATCH --time=01:00:00
+#SBATCH --array=1-60%20
 #SBATCH --output=jobs/slurm_output/symlie_train_array_%A_%a.out
 
-array="transform_types"
+array="sine2d"
 
 ARRAY_FILE=$HOME/thesis/SymPDE/jobs/arrays/$array.txt
 cd $HOME/thesis/SymPDE/symlie
@@ -20,7 +20,5 @@ module load Anaconda3/2022.05
 source activate sympde
 
 srun python -u run.py \
-    --train \
     --num_workers 18 \
-    --persistent_workers \
     $(head -$SLURM_ARRAY_TASK_ID $ARRAY_FILE | tail -1)

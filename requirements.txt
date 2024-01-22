@@ -25,3 +25,4 @@ optax
 plum-py
 plum-dispatch
 torchsummary
+icecream

@@ -39,6 +39,7 @@ class MyPrint:
     
 class RandomPad:
     def __init__(self, pad_width):
+        raise NotImplementedError
         self.pad_width = pad_width
     
     def __call__(self, x):
@@ -50,63 +51,17 @@ class RandomPad:
         x = torch.nn.functional.pad(x, pad = (self.pad_width,self.pad_width,self.pad_width,self.pad_width), mode = 'constant', value = 0)
         # print(x.shape)
         return x
-
-    # def __init__(self, pad_width, mode):
-    #     self.pad_width = pad_width
-    #     self.mode = mode
-    
-    # def __call__(self, x):
-    #     pad_width = np.random.randint(1, self.pad_width)
-    #     print(pad_width)
-    #     x = x.numpy()
-    #     x = np.pad(x, pad_width = pad_width, mode = self.mode)
-    #     x = torch.from_numpy(x)
-    #     return x
-    
-class ToArray:
-    def __init__(self):
-        pass
-
-    def __call__(self, x):
-        return x.numpy()
-    
-class Slice:
-    def __init__(self, slice_):
-        self.slice_ = slice_
-
-    def __call__(self, x):
-        # print('slice')
-        # print(x.shape)
-        # print(self.slice_)
-        x = x[:, :self.slice_, :self.slice_]
-        # print(x.shape)
-        return x
-    
         
-class BaseTransform:
-    def __init__(self, sample):
-        self.sample = sample
-
-    def get_eps(self, eps):
-        if self.sample:
-            eps = torch.rand((1,))*eps
-        else:
-            eps = torch.ones((1,))*eps
-        return eps.item()
-
         
-class SpaceTranslate(BaseTransform):
-    def __init__(self, dim, max_eps = 1, sample = True, return_shift = True):
-        super().__init__(sample)
-        self.max_eps = max_eps
+class SpaceTranslate():
+    def __init__(self, dim, return_shift = True):
         self.dim = dim
         self.return_shift = return_shift
 
     def __repr__(self) -> str:
         return f'SpaceTranslate_{self.dim}'
 
-    def __call__(self, x):
-        eps = self.get_eps(self.max_eps)
+    def __call__(self, x, eps):
         grid_size = x.shape[self.dim]
         shift = int(grid_size*eps)
         x = torch.roll(x, shifts = shift, dims = self.dim)
@@ -116,59 +71,40 @@ class SpaceTranslate(BaseTransform):
         else:
             return x
     
-class RandomScale(BaseTransform):
-    def __init__(self, max_eps = 1, sample = True):
-        super().__init__(sample)
-        # self.mult = 1 + self.eps - 0.5
+class RandomScale():
+    def __init__(self, l = 2):
+        self.l = l
 
-    def __call__(self, x):
-        # return x*self.mult
-        return x
+    def __call__(self, x, eps):
+        mult = self.l ** eps
+        return x*mult
 
-    # def __call__(self, x):
-    #     _, h, w = x.shape
-    #     assert h == w
-    #     pads = tuple([int(w//2*self.eps) for _ in range(4)])
-    #     x = torch.nn.functional.pad(x, pad = pads, mode = 'constant', value = 0)
-    #     return x
-    
-class CustomRandomRotation(BaseTransform):
-    def __init__(self, max_eps = 1, sample = True):
-        super().__init__(sample)
-        self.max_eps = max_eps
-
-        # if sample:
-        #     r = eps*180
-        #     self.rotate = RandomRotation(degrees = (-r, r), fill = 0., interpolation=interpolation)
-        # else:
-        #     r = eps*360
-        #     self.rotate = RandomRotation(degrees = (r, r), fill = 0., interpolation=interpolation)
-
-
-
+class CustomRandomRotation():
+    def __init__(self, only_flip: bool):
+        self.only_flip = only_flip
+        
     def __str__(self) -> str:
         return super().__str__()
 
-    def __call__(self, x):
-        eps = self.get_eps(self.max_eps)
+    def __call__(self, x, eps):
         k = int(eps*4)
+        
+        if self.only_flip:
+            k=k*2 # make it even to prevent 90deg rotation
+
         x = torch.rot90(x, k=k, dims=(1,2))
-        # x = self.rotate(x)
-        # x = torch.nn.functional.rotate(x, angle = angle, mode = 'Image.BILINEAR')
         return x
     
     
 
 class Transform:
-    def __init__(self, epsilons = [1., 1., 1., 1.], sample = True, antialias= False):
-        self.scale = RandomScale(max_eps=epsilons[0], sample=sample)
+    def __init__(self, only_flip: bool = False):
+        self.scale = RandomScale()
 
-        self.rotate = Compose([
-            CustomRandomRotation(max_eps=epsilons[1], sample=sample),
-        ])
+        self.rotate = CustomRandomRotation(only_flip = only_flip)
 
-        self.space_translate_x = SpaceTranslate(max_eps=epsilons[2], dim = 1, sample=sample)
-        self.space_translate_y = SpaceTranslate(max_eps=epsilons[3], dim = 2, sample=sample)
+        self.space_translate_x = SpaceTranslate(dim = 2)
+        self.space_translate_y = SpaceTranslate(dim = 1)
 
     def batch_space_translate(self, x: torch.Tensor, shifts: torch.Tensor, shift_dir: str) -> torch.Tensor:
         """Translate a batch of images by a specified number of pixels.
@@ -183,19 +119,21 @@ class Transform:
         batch_size, height, width = x.shape
         assert height == width
 
+    
         # Create an index tensor
         indices = torch.arange(height).unsqueeze(0).expand(len(shifts), -1)
 
         # Use broadcasting to create tensor b
         b = indices < shifts.unsqueeze(1)
-        b2 = torch.where(b, torch.tensor(1), torch.tensor(0)).unsqueeze(2)
-
         if shift_dir == 'x': x = torch.transpose(x, 1, 2)
-        i1, i2 = 1, torch.nan
+        assert (x == 0.).sum() == 0, x
+        # i1, i2 = 1, torch.nan
+        i1, i2 = torch.tensor(1.), torch.tensor(0.)
         b21 = torch.where(b, i1, i2).unsqueeze(2)
         b22 = torch.where(b, i2, i1).unsqueeze(2)
         x = torch.cat([x * b22, x * b21], dim = 1)
-        indices2 = torch.where(~torch.isnan(x))
+        # indices2 = torch.where(~torch.isnan(x))
+        indices2 = torch.where(x != 0.)
         x = x[[*indices2]].view(batch_size, height, width)
         if shift_dir == 'x': x = torch.transpose(x, 1, 2)
 
@@ -207,85 +145,37 @@ class Transform:
         x = self.batch_space_translate(x, centers_y, shift_dir = 'y')
         return x
     
-    
-    def transform(self, x, centers):
-        x = self.recenter(x, centers)
+    def transform(self, x, centers, epsilons):
+        batch_size, features = x.shape
 
-        x = self.scale(x)
+        grid_size = int(np.sqrt(features))
+        x = x.reshape(batch_size, grid_size, grid_size)
+        # x = x.unsqueeze(1)
 
-        x = self.rotate(x)
+        # x = self.recenter(x, centers)
 
-        x, centers_x = self.space_translate_x(x)
-        x, centers_y = self.space_translate_y(x)
+        # x = self.scale(x, epsilons[0])
+
+        # x = self.rotate(x, epsilons[1])
+
+
+        x, centers_x = self.space_translate_x(x, epsilons[2])
+        x, centers_y = self.space_translate_y(x, epsilons[3])
+
+        x = x.reshape(batch_size, features)
 
         centers_new = torch.stack([centers_x, centers_y], dim = 1)
         return x, centers_new
-    
-    def transform_individual(self, x, centers):
-        xs, centers = zip(*[self.transform(x_i, centers=centers_i) for x_i, centers_i in tqdm(zip(x.unsqueeze(1), centers.unsqueeze(1)), total = len(x), leave=False, disable = True)])
+
+    def transform_individual(self, x, centers, epsilons):
+        xs, centers = zip(*[self.transform(x_i, centers_i, epsilons_i) for x_i, centers_i, epsilons_i in tqdm(zip(x.unsqueeze(1), centers.unsqueeze(1), epsilons), total = len(x), leave=False, disable = True)])
         x, centers = torch.cat(xs), torch.cat(centers)
         return x, centers
 
-    def __call__(self, x, centers, transform_individual_bool = False):
+    def __call__(self, x, centers, epsilons, transform_individual_bool = False):
         if transform_individual_bool:
-            return self.transform_individual(x, centers)
+            return self.transform_individual(x, centers, epsilons)
         else:
-            return self.transform(x, centers)
+            return self.transform(x, centers, epsilons)
 
 
-
-
-# class CustomCompose:
-#     def __init__(self, transforms, centers):
-#         self.transforms = transforms
-#         self.centers = centers
-
-#     def recenter(self, x, augment_kwargs):
-#         transform = Compose([
-#             # Space translation
-#             SpaceTranslate(eps=-augment_kwargs['SpaceTranslate_1'], dim = 1, sample=False, return_eps=False), # x translation
-#             SpaceTranslate(eps=-augment_kwargs['SpaceTranslate_2'], dim = 2, sample=False, return_eps=False), # y translation
-#         ])
-#         return transform(x)
-
-
-#     def __call__(self, x):
-#         augment_kwargs_out = {}
-#         x = self.recenter(x, self.centers)
-#         for transform, in zip(self.transforms,):
-#             transform_key = transform.__repr__()
-#             out = transform(x)
-#             if isinstance(out, tuple):
-#                 x, augment_kwarg_out = out
-#                 assert transform_key not in augment_kwargs_out
-#                 augment_kwargs_out[transform_key] = augment_kwarg_out
-#             else:
-#                 x = out
-#         return x, augment_kwargs_out
-    
-# class CustomCompose:
-#     def __init__(self, epsilons, sample, antialias):
-#         pass
-
-#     def recenter(self, x, augment_kwargs):
-#         transform = Compose([
-#             # Space translation
-#             SpaceTranslate(eps=-augment_kwargs['SpaceTranslate_1'], dim = 1, sample=False, return_eps=False), # x translation
-#             SpaceTranslate(eps=-augment_kwargs['SpaceTranslate_2'], dim = 2, sample=False, return_eps=False), # y translation
-#         ])
-#         return transform(x)
-
-
-#     def __call__(self, x):
-#         augment_kwargs_out = {}
-#         x = self.recenter(x, self.centers)
-#         for transform, in zip(self.transforms,):
-#             transform_key = transform.__repr__()
-#             out = transform(x)
-#             if isinstance(out, tuple):
-#                 x, augment_kwarg_out = out
-#                 assert transform_key not in augment_kwargs_out
-#                 augment_kwargs_out[transform_key] = augment_kwarg_out
-#             else:
-#                 x = out
-#         return x, augment_kwargs_out

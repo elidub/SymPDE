@@ -7,7 +7,7 @@ class BaseDataset(Dataset):
             self,
             mode: str,
             data_kwargs: dict = {},
-            transf_kwargs: dict = {},
+            transform_kwargs: dict = {},
             data_dir: str = '../data',
             N: int = -1,
     ):
@@ -26,7 +26,7 @@ class BaseDataModule(pl.LightningDataModule):
             self,
             dataset: BaseDataset,
             data_kwargs: dict = {},
-            transf_kwargs: dict = {},
+            transform_kwargs: dict = {},
             data_dir: str = '../data',
             batch_size: int = 1,
             num_workers: int = 1,
@@ -36,7 +36,7 @@ class BaseDataModule(pl.LightningDataModule):
         super().__init__()
         self.dataset = dataset
         self.data_kwargs = data_kwargs
-        self.transf_kwargs = transf_kwargs
+        self.transform_kwargs = transform_kwargs
         self.data_dir = data_dir
         self.batch_size = batch_size
         self.num_workers = num_workers
@@ -50,7 +50,7 @@ class BaseDataModule(pl.LightningDataModule):
                 self.dataset(
                     mode=split,
                     data_kwargs=self.data_kwargs,
-                    transf_kwargs = self.transf_kwargs,
+                    transform_kwargs = self.transform_kwargs,
                     data_dir=self.data_dir,
                     N=n_split,
                 )
