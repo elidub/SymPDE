@@ -24,7 +24,7 @@ def parse_options(notebook = False):
 
     parser.add_argument("--data_dir", type=str, default="../data/sinev2", help="Path to data directory")
     parser.add_argument("--log_dir", type=str, default="../logs_symlie", help="Path to log directory")
-    parser.add_argument("--max_epochs", type=int, default=30, help="Number of epochs")
+    parser.add_argument("--max_epochs", type=int, default=20, help="Number of epochs")
     parser.add_argument("--batch_size", type=int, default=2, help="Batch size")
     parser.add_argument("--lr", type=float, default=1e-3, help="Learning rate")
     parser.add_argument("--num_workers", type=int, default=7, help="Number of workers")
@@ -33,7 +33,7 @@ def parse_options(notebook = False):
     parser.add_argument("--model_summary", type=bool, default=False, help="Weights summary")
 
     # Data kwargs
-    parser.add_argument("--space_length", type=int, default = 4) # 7    7
+    parser.add_argument("--space_length", type=int, default = 7) # 7    7
     parser.add_argument("--noise_std", type=float, default= 0.01)  # 0.5  0.01
     parser.add_argument("--y_low", type=int, default = 1)
     parser.add_argument("--y_high", type=int, default = 3)
@@ -73,7 +73,7 @@ def process_args(args):
         if args.name is None:
             data_dir = args.data_dir.split('/')[-1]
             bias = str(args.bias).lower()
-            args.name = f'symlieflat_data{data_dir}_net{args.net}_lr{math.log10(args.lr):.2f}_seed{args.seed}_ntrain{args.n_splits[0]}'
+            args.name = f'symlieflat_data{data_dir}_net{args.net}_lr{math.log10(args.lr):.2f}_seed{args.seed}_ntrain{args.n_splits[0]}_noise{args.noise_std}'
 
     args.args_processed = True
 

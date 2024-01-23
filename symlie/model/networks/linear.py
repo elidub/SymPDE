@@ -18,6 +18,7 @@ class LinearP(nn.Module):
 
         self.in_features = in_features
         self.out_features = out_features
+        self.device = device
         assert self.out_features == self.in_features
         assert bias == False
         assert train_weights is not train_P
@@ -35,18 +36,24 @@ class LinearP(nn.Module):
             self.P = P_init
 
         # Initialize weights and bias
-        self.weight = torch.randn(out_features, in_features)
+        # self.weight = torch.randn(out_features, in_features)
+        # self.weight.to(device)
+        # print(self.weight.device)
+
         # self.bias   = torch.randn(out_features)
 
         # self.weight = 
+            
+        # self.reset_parameters()
 
         if train_weights:
             assert P_init not in ['randn']
             self.weight = nn.Parameter(self.weight)
             # self.bias = nn.Parameter(self.bias)
         else:
-            self.P = nn.Parameter(self.P)
-        self.P = self.P.to(device)
+            # self.P = nn.Parameter(self.P)
+            self.P = nn.Parameter(torch.tensor(self.P, device = device))
+        # self.P = self.P.to('cuda')
 
     def reset_parameters(self) -> None:
         """
@@ -59,8 +66,10 @@ class LinearP(nn.Module):
         #     bound = 1 / math.sqrt(fan_in) if fan_in > 0 else 0
         #     nn.init.uniform_(self.bias, -bound, bound)
 
-        self.weight = torch.randn(self.out_features, self.in_features)
-        self.bias   = torch.randn(self.out_features)
+        # self.register_buffer('weight', torch.randn(self.out_features, self.in_features))
+        
+        self.weight = torch.randn(self.out_features, self.in_features, device = self.device)
+        # self.bias   = torch.randn(self.out_features)
 
     def normalize_P(self, P):
         # P = torch.abs(P)
