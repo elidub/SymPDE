@@ -3,8 +3,10 @@ import torch.nn as nn
 import pytorch_lightning as pl
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
 from data.transforms import Transform
+from misc.utils import NumpyUtils
 
 class BaseLearner(pl.LightningModule):
     def __init__(self, net, criterion, lr):
@@ -12,9 +14,16 @@ class BaseLearner(pl.LightningModule):
         self.net = net
         self.criterion = criterion
         self.lr = lr
+        self.test_step_outs = []
+
+        self.forward_keys = []
+
 
     def forward(self, batch):
         raise NotImplementedError
+    
+    def test_logs_method(self):
+        return {}
     
     def step(self, batch, mode):
         out = self.forward(batch)
@@ -33,15 +42,32 @@ class BaseLearner(pl.LightningModule):
         loss, batch, _ = self.step(batch, "val")
 
     def test_step(self, batch, batch_idx=0, dataloader_idx=0):
-        loss, batch, _ = self.step(batch, "test")
+        loss, batch, out = self.step(batch, "test")
+        self.test_step_outs.append(out)
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
         return optimizer
     
+    def on_test_end(self):
+
+        save =  NumpyUtils(dir=self.trainer.logger.log_dir).save
+
+        pred_outs = zip(*self.test_step_outs)
+        for forward_key, pred_out in zip(self.forward_keys, pred_outs):
+            save(forward_key, torch.cat(pred_out).cpu().numpy())
+
+        for key, value in self.trainer.logged_metrics.items():
+            save(key, value.numpy())
+
+        for key, value in self.test_logs_method().items():
+            save(key, value.cpu().numpy())
+    
 class PredictionLearner(BaseLearner):
     def __init__(self, net, criterion, lr):
         super().__init__(net, criterion, lr)
+
+        self.forward_keys = ['y_true', 'y_pred']
 
     def forward(self, batch):
 
@@ -50,8 +76,7 @@ class PredictionLearner(BaseLearner):
         y_pred = self.net(x.unsqueeze(1)).squeeze(1).squeeze(1)
 
         return y_true, y_pred
-
-
+    
 class TransformationLearner(BaseLearner):
     def __init__(self, net, criterion, lr):
         super().__init__(net, criterion, lr)
@@ -103,6 +128,8 @@ class FlowerTransformationLearner(BaseLearner, Transform):
         Transform.__init__(self, only_flip=transform_kwargs['only_flip'])
         self.eps_mult = transform_kwargs['eps_mult']
 
+        self.forward_keys = ['out_a_prime', 'out_b_prime']
+
     def forward(self, batch):
 
         x, y_, eps_, centers = batch
@@ -132,3 +159,5 @@ class FlowerTransformationLearner(BaseLearner, Transform):
 
         return out_a_prime, out_b_prime
     
+    def test_logs_method(self):
+        return {'P': self.net.P}
