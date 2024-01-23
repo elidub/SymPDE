@@ -121,6 +121,7 @@ def main(args):
     
     if args.test:
         trainer.test(model, datamodule=datamodule)
+        return model, trainer, datamodule, None
 
     if args.predict:
         print("Predicting...")
