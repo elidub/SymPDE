@@ -20,6 +20,6 @@ module load Anaconda3/2022.05
 source activate sympde
 
 srun python -u run.py \
-    --tags v1 \
+    --tags v5 \
     --num_workers 18 \
     $(head -$SLURM_ARRAY_TASK_ID $ARRAY_FILE | tail -1)

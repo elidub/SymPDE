@@ -57,13 +57,13 @@ class BaseLearner(pl.LightningModule):
 
         save =  NumpyUtils(dir=self.trainer.logger.experiment.dir).save
 
-        pred_outs = zip(*self.test_step_outs)
-        for forward_key, pred_out in zip(self.forward_keys, pred_outs):
-            save(forward_key, torch.cat(pred_out).cpu().numpy())
+        # pred_outs = zip(*self.test_step_outs)
+        # for forward_key, pred_out in zip(self.forward_keys, pred_outs):
+        #     save(forward_key, torch.cat(pred_out).cpu().numpy())
 
         for key, value in self.test_logs_method().items():
             print(f'Logging {key}')
-            save(key, value.cpu().numpy())
+            save(key, value)
             
     
 class PredictionLearner(BaseLearner):
