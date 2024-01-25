@@ -4,7 +4,8 @@ __pycache__
 logs/FNO1d
 logs/FNO1d_old
 logs/FNO1d_noprecision
-logs/
+logs/symlie
+logs/wandb
 
 logs_org/
 logs_old/
