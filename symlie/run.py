@@ -6,11 +6,12 @@ import argparse
 import logging
 import math
 import json
+import wandb
 
 install()
 
 from model.setup import setup_model
-from data.generate_flower import create_flower
+from data.generate_2d import sine2d
 from data.generate_data import save_splits
 
 def parse_options(notebook = False):
@@ -23,8 +24,8 @@ def parse_options(notebook = False):
     parser.add_argument("--bias", action="store_true", help="Bias")
 
     parser.add_argument("--data_dir", type=str, default="../data/sinev2", help="Path to data directory")
-    parser.add_argument("--log_dir", type=str, default="../logs_symlie", help="Path to log directory")
-    parser.add_argument("--max_epochs", type=int, default=20, help="Number of epochs")
+    parser.add_argument("--log_dir", type=str, default="../logs", help="Path to log directory")
+    parser.add_argument("--max_epochs", type=int, default=3, help="Number of epochs")
     parser.add_argument("--batch_size", type=int, default=2, help="Batch size")
     parser.add_argument("--lr", type=float, default=1e-3, help="Learning rate")
     parser.add_argument("--num_workers", type=int, default=7, help="Number of workers")
@@ -47,14 +48,15 @@ def parse_options(notebook = False):
 
     parser.add_argument("--generate_data", action="store_true", help="Generate data")
     # parser.add_argument("--train", action="store_true", help="Train the model")
+    parser.add_argument("--run_id", type=str, default=None, help="Id of the training run")
     parser.add_argument("--train", default=True)
-    parser.add_argument("--predict", default=True)
+    parser.add_argument("--predict", default=False)
     parser.add_argument("--test", default=True)
     
     parser.add_argument("--do_return", action="store_true", help="Return model, trainer, datamodule")
     parser.add_argument("--do_return_model", action="store_true", help="Return model, None, None")
 
-    parser.add_argument("--n_splits", nargs='+', default=[100_000,5_000,5_000], help="Train, val, test split")
+    parser.add_argument("--n_splits", nargs='+', default=[10_000,5_000,5_000], help="Train, val, test split")
 
     args = parser.parse_args([]) if notebook else parser.parse_args()
     return args
@@ -68,12 +70,12 @@ def process_args(args):
 
     args.n_splits = [int(n_split) for n_split in args.n_splits]
 
-    # Check if name is in args
-    if hasattr(args, 'name'): 
-        if args.name is None:
-            data_dir = args.data_dir.split('/')[-1]
-            bias = str(args.bias).lower()
-            args.name = f'symlieflat_data{data_dir}_net{args.net}_lr{math.log10(args.lr):.2f}_seed{args.seed}_ntrain{args.n_splits[0]}_noise{args.noise_std}'
+    # # Check if name is in args
+    # if hasattr(args, 'name'): 
+    #     if args.name is None:
+    #         data_dir = args.data_dir.split('/')[-1]
+    #         bias = str(args.bias).lower()
+    #         args.name = f'symlieflat_data{data_dir}_net{args.net}_lr{math.log10(args.lr):.2f}_seed{args.seed}_ntrain{args.n_splits[0]}'
 
     args.args_processed = True
 
@@ -87,24 +89,34 @@ def check_args_processed(args):
 def main(args):
     check_args_processed(args)    
     pl.seed_everything(args.seed, workers=True)
+    
 
-    logger = pl.loggers.TensorBoardLogger(args.log_dir, name=args.name, version=args.version)
-    args.version = logger.version
-
-    print("\n\n###\tVersion: ", args.version, "\t###\n###\tName: ", args.name, "\t###\n\n")
     args.device = "cuda" if torch.cuda.is_available() else "cpu"
 
     model, datamodule = setup_model(args)
 
     if args.do_return_model:
         return model, None, None, None
+    
+    if args.run_id is None:
+        wandb.init(project="symlie", dir=args.log_dir, config=args, entity="eliasdubbeldam")
+        logger = pl.loggers.WandbLogger(version=args.version, save_dir=args.log_dir, project = "symlie")
+        enable_checkpointing = None
+        print(f"Running {logger.experiment.name} with id {logger.version}")
+    else:
+        assert args.train is False, "Continue training not implemented"
+        logger = False
+        enable_checkpointing = False
+        print(f"Loading {args.run_id}")
 
     # Disable lightning prints about GPU's 
     logging.getLogger("pytorch_lightning.utilities.rank_zero").setLevel(logging.WARNING)
     logging.getLogger("pytorch_lightning.accelerators.cuda").setLevel(logging.WARNING)
-    
+    os.environ["WANDB_SILENT"] = "true"
+
     trainer = pl.Trainer(
         logger=logger,
+        enable_checkpointing=enable_checkpointing,
         log_every_n_steps = 1,
         max_epochs=args.max_epochs,
         accelerator=args.device,
@@ -113,44 +125,33 @@ def main(args):
     )  
 
     if args.do_return:
+        args.train, args.test = False, False
         datamodule.setup()
-        return model, trainer, datamodule, None
 
     if args.train:
         trainer.fit(model, datamodule=datamodule)
     
     if args.test:
         trainer.test(model, datamodule=datamodule)
-        return model, trainer, datamodule, None
 
-    if args.predict:
-        print("Predicting...")
-        preds = trainer.predict(model, datamodule=datamodule)
-
-        y_trues, y_preds = zip(*preds)        
-        y_trues, y_preds = torch.cat(y_trues), torch.cat(y_preds)
-        torch.save(y_trues, os.path.join(logger.log_dir, 'y_trues.pt'))
-        torch.save(y_preds, os.path.join(logger.log_dir, 'y_preds.pt'))
-        return model, trainer, datamodule, preds
-
-    raise NotImplementedError("No action specified")
-
+    wandb.finish()
     return model, trainer, datamodule, None
 
 def generate_data(args):
-    check_args_processed(args)    
-    create_sample_func_dict = {
-        'flower': create_flower
-    }
+    check_args_processed(args)   
+     
+    # create_sample_func_dict = {
+    #     'flower': flower,
+    # }
 
     save_splits(
-        # create_sample_func=create_sample_func_dict[args.data_name],
-        create_sample_func = create_flower,
+        create_sample_func = sine2d,
         data_kwargs=args.data_kwargs,
         transform_kwargs=args.transform_kwargs,
         data_dir=args.data_dir,
         n_splits=args.n_splits
     )
+    
 if __name__ == '__main__':
     args = parse_options()
     args = process_args(args)
