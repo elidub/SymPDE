@@ -30,7 +30,7 @@ class BaseLearner(pl.LightningModule):
         loss = self.criterion(*out)
 
         # Log Metrics
-        self.log(f"{mode}_loss", loss, prog_bar=True)
+        self.log(f"{mode}_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
 
         return loss, batch, out
     
@@ -51,17 +51,20 @@ class BaseLearner(pl.LightningModule):
     
     def on_test_end(self):
 
-        save =  NumpyUtils(dir=self.trainer.logger.log_dir).save
+        if self.trainer.logger == None:
+            print("No logger found. Skipping logging")
+            return
+
+        save =  NumpyUtils(dir=self.trainer.logger.experiment.dir).save
 
         pred_outs = zip(*self.test_step_outs)
         for forward_key, pred_out in zip(self.forward_keys, pred_outs):
             save(forward_key, torch.cat(pred_out).cpu().numpy())
 
-        for key, value in self.trainer.logged_metrics.items():
-            save(key, value.numpy())
-
         for key, value in self.test_logs_method().items():
+            print(f'Logging {key}')
             save(key, value.cpu().numpy())
+            
     
 class PredictionLearner(BaseLearner):
     def __init__(self, net, criterion, lr):
@@ -76,6 +79,10 @@ class PredictionLearner(BaseLearner):
         y_pred = self.net(x.unsqueeze(1)).squeeze(1).squeeze(1)
 
         return y_true, y_pred
+    
+    def test_logs_method(self):
+        return {'P': self.net.mlp[0].P}
+
     
 class TransformationLearner(BaseLearner):
     def __init__(self, net, criterion, lr):

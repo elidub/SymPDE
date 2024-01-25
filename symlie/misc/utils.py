@@ -4,6 +4,7 @@ import os
 class NumpyUtils:
     def __init__(self, dir):
         self.dir = dir
+        self.listdir = os.listdir(self.dir)
 
     def load(self, filename):
         return np.load(os.path.join(self.dir, filename + '.npy'))

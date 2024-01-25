@@ -78,31 +78,31 @@ def setup_model(args):
     
     criterion = nn.MSELoss()
 
-    if args.train:
+    # Load model
+    if args.run_id is not None:
+        assert args.version != None, "Version not specified!"
+        # ckpt_path = os.path.join(args.log_dir, args.name, args.version, "checkpoints")
+        ckpt_path = os.path.join(args.log_dir, 'symlie', args.run_id, "checkpoints")
+        assert len(os.listdir(ckpt_path)) == 1, "Multiple checkpoints found!"
+        ckpt = os.listdir(ckpt_path)[0]
+        if learner == FlowerTransformationLearner:
+            model = learner.load_from_checkpoint(
+                os.path.join(ckpt_path, ckpt), net=net, criterion=criterion, lr=args.lr, transform_kwargs=args.transform_kwargs,
+                map_location=torch.device('cpu')
+            )
+        if learner == PredictionLearner:
+            model = learner.load_from_checkpoint(
+                os.path.join(ckpt_path, ckpt), net=net, criterion=criterion, lr=args.lr,
+                map_location=torch.device('cpu')
+            )
+        print(f"Loaded model from {ckpt_path}")
+
+    else:
         if learner == FlowerTransformationLearner:
             model = learner(net, criterion, lr=args.lr, transform_kwargs=args.transform_kwargs)
         elif learner == PredictionLearner:
             model = learner(net, criterion, lr=args.lr)
         else:
             raise NotImplementedError(f"Network {net} not implemented")
-        return model, datamodule
-    
-    # Load model
-    assert args.version != None, "Version not specified!"
-    ckpt_path = os.path.join(args.log_dir, args.name, args.version, "checkpoints")
-    assert len(os.listdir(ckpt_path)) == 1, "Multiple checkpoints found!"
-    ckpt = os.listdir(ckpt_path)[0]
-    if learner == FlowerTransformationLearner:
-        model = learner.load_from_checkpoint(
-            os.path.join(ckpt_path, ckpt), net=net, criterion=criterion, lr=args.lr, transform_kwargs=args.transform_kwargs,
-            map_location=torch.device('cpu')
-        )
-    if learner == PredictionLearner:
-        model = learner.load_from_checkpoint(
-            os.path.join(ckpt_path, ckpt), net=net, criterion=criterion, lr=args.lr,
-            map_location=torch.device('cpu')
-        )
-
-    print(f"Loaded model from {ckpt_path}")
 
     return model, datamodule

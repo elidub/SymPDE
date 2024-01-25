@@ -154,10 +154,9 @@ class Transform:
 
         # x = self.recenter(x, centers)
 
-        # x = self.scale(x, epsilons[0])
+        x = self.scale(x, epsilons[0])
 
-        # x = self.rotate(x, epsilons[1])
-
+        x = self.rotate(x, epsilons[1])
 
         x, centers_x = self.space_translate_x(x, epsilons[2])
         x, centers_y = self.space_translate_y(x, epsilons[3])

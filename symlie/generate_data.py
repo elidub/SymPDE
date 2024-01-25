@@ -10,7 +10,7 @@ import json
 from typing import Callable
 from PIL import Image
 
-from data.generate_flower import create_flower
+from symlie.data.generate_2d import create_flower
 from run import process_args
 
 def save_splits(create_sample_func: Callable, data_kwargs: dict, data_dir: str, n_splits: dict = {'train': 400,'val': 1_000,'test': 1_000}) -> None:

@@ -26,3 +26,4 @@ plum-py
 plum-dispatch
 torchsummary
 icecream
+wandb
