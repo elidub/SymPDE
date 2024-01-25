@@ -6,8 +6,10 @@ logs/FNO1d_old
 logs/FNO1d_noprecision
 logs/
 
+logs_org/
 logs_old/
 logs_symlie/
+logs_symlie_copy/
 
 jobs/slurm_output
 jobs/slurm_output_noprecision

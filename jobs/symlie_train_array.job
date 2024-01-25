@@ -1,12 +1,12 @@
 #!/bin/bash
 
-#SBATCH --partition=gpu_mig
+#SBATCH --partition=gpu
 #SBATCH --gpus=1
 #SBATCH --job-name=Train
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=18
 #SBATCH --time=01:00:00
-#SBATCH --array=1-60%20
+#SBATCH --array=1-40%20
 #SBATCH --output=jobs/slurm_output/symlie_train_array_%A_%a.out
 
 array="sine2d"
@@ -20,5 +20,6 @@ module load Anaconda3/2022.05
 source activate sympde
 
 srun python -u run.py \
+    --tags v1 \
     --num_workers 18 \
     $(head -$SLURM_ARRAY_TASK_ID $ARRAY_FILE | tail -1)

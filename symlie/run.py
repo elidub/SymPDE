@@ -25,7 +25,7 @@ def parse_options(notebook = False):
 
     parser.add_argument("--data_dir", type=str, default="../data/sinev2", help="Path to data directory")
     parser.add_argument("--log_dir", type=str, default="../logs", help="Path to log directory")
-    parser.add_argument("--max_epochs", type=int, default=3, help="Number of epochs")
+    parser.add_argument("--max_epochs", type=int, default=30, help="Number of epochs")
     parser.add_argument("--batch_size", type=int, default=2, help="Batch size")
     parser.add_argument("--lr", type=float, default=1e-3, help="Learning rate")
     parser.add_argument("--num_workers", type=int, default=7, help="Number of workers")
@@ -49,6 +49,7 @@ def parse_options(notebook = False):
     parser.add_argument("--generate_data", action="store_true", help="Generate data")
     # parser.add_argument("--train", action="store_true", help="Train the model")
     parser.add_argument("--run_id", type=str, default=None, help="Id of the training run")
+    parser.add_argument("--tags", nargs='+', default=[], help="Tags for wandb")
     parser.add_argument("--train", default=True)
     parser.add_argument("--predict", default=False)
     parser.add_argument("--test", default=True)
@@ -56,7 +57,10 @@ def parse_options(notebook = False):
     parser.add_argument("--do_return", action="store_true", help="Return model, trainer, datamodule")
     parser.add_argument("--do_return_model", action="store_true", help="Return model, None, None")
 
-    parser.add_argument("--n_splits", nargs='+', default=[10_000,5_000,5_000], help="Train, val, test split")
+    # parser.add_argument("--n_splits", nargs='+', default=[10_000,5_000,5_000], help="Train, val, test split")
+    parser.add_argument("--n_train", type=int, default=400, help="Train split")
+    parser.add_argument("--n_val", type=int, default=100, help="Val split")
+    parser.add_argument("--n_test", type=int, default=100, help="Test split")
 
     args = parser.parse_args([]) if notebook else parser.parse_args()
     return args
@@ -68,7 +72,7 @@ def process_args(args):
     transform_kwargs_keys = ['eps_mult', 'only_flip']
     args.transform_kwargs = {k : getattr(args, k) for k in transform_kwargs_keys} 
 
-    args.n_splits = [int(n_split) for n_split in args.n_splits]
+    args.n_splits = [n_split for n_split in [args.n_train, args.n_val, args.n_test]]
 
     # # Check if name is in args
     # if hasattr(args, 'name'): 
@@ -99,7 +103,7 @@ def main(args):
         return model, None, None, None
     
     if args.run_id is None:
-        wandb.init(project="symlie", dir=args.log_dir, config=args, entity="eliasdubbeldam")
+        wandb.init(project="symlie", dir=args.log_dir, config=args, entity="eliasdubbeldam", tags=args.tags)
         logger = pl.loggers.WandbLogger(version=args.version, save_dir=args.log_dir, project = "symlie")
         enable_checkpointing = None
         print(f"Running {logger.experiment.name} with id {logger.version}")
