@@ -1,14 +1,38 @@
-import os
+import os, sys
 import torch.nn as nn
 import torch
 import numpy as np
+import pandas as pd
 
 from model.learner import PredictionLearner, TransformationLearner
-
 from model.networks.mlp import MLP
 from model.networks.linear import  LinearP
 from data.dataset import FlatDataset
 from data.datamodule import BaseDataModule
+
+def load_P_pred(run_id, P_dir = '../logs/store/P/'):
+    P = np.load(P_dir + run_id + '.npy')
+    P = torch.from_numpy(P).float()
+    P = LinearP.normalize_P(P)
+    return P
+def find_id_for_P(args):
+    df = pd.read_pickle('../logs/store/results_df.pkl')
+    args.data_kwargs['grid_size'] = tuple(args.data_kwargs['grid_size'])
+
+    for row in df['data_kwargs']:
+        if 'grid_size' in row:
+            row['grid_size'] = tuple(row['grid_size'])
+
+    df_selected = df[(df.data_kwargs == args.data_kwargs) & (df.transform_kwargs == args.transform_kwargs) & (df.seed == args.seed)]
+
+    if len(df_selected) == 0:
+        raise ValueError('No results found for the given arguments')
+    elif len(df_selected) > 1:
+        raise ValueError('Multiple results found for the given arguments')
+    else:
+        run_id = df_selected.iloc[0]['run_id']
+        print(f"Found run_id {run_id}")
+        return run_id
 
 def setup_model(args):
     net = args.net
@@ -47,8 +71,11 @@ def setup_model(args):
                 features = features, 
                 bias = args.bias,
                 device = args.device,
-                P_init = args.P_pred,
+                P_init = load_P_pred(find_id_for_P(args)),
             )
+        elif net == "Predict-TrainedP-check":
+            find_id_for_P(args)
+            sys.exit()
         else:
             raise NotImplementedError(f"Network {net} not implemented")
         learner = PredictionLearner

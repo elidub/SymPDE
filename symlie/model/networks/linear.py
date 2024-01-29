@@ -43,8 +43,9 @@ class LinearP(nn.Module):
         # self.bias   = torch.randn(out_features)
 
         # self.weight = 
-            
-        # self.reset_parameters()
+
+        if not train_P:
+            self.reset_parameters()
 
         if train_weights:
             assert P_init not in ['randn']
