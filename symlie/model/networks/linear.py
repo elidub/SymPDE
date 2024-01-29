@@ -29,9 +29,9 @@ class LinearP(nn.Module):
         self.train_P = train_P
 
         # Initalize P
-        self.calculated_p = CalculatedP(size = self.out_features)
+        self.calculated_p = CalculatedP(size = self.out_features, device = self.device)
         if type(P_init) == str:
-            self.P = self.calculated_p.transform_funcs[P_init]()
+            self.P = self.calculated_p.transform_funcs[P_init]
         else:
             self.P = P_init
 
@@ -51,8 +51,8 @@ class LinearP(nn.Module):
             self.weight = nn.Parameter(self.weight)
             # self.bias = nn.Parameter(self.bias)
         else:
-            # self.P = nn.Parameter(self.P)
-            self.P = nn.Parameter(torch.tensor(self.P, device = device))
+            self.P = nn.Parameter(self.P)
+            # self.P = nn.Parameter(torch.tensor(self.P, device = device))
         # self.P = self.P.to('cuda')
 
     def reset_parameters(self) -> None:
@@ -71,7 +71,8 @@ class LinearP(nn.Module):
         self.weight = torch.randn(self.out_features, self.in_features, device = self.device)
         # self.bias   = torch.randn(self.out_features)
 
-    def normalize_P(self, P):
+    @staticmethod
+    def normalize_P(P):
         # P = torch.abs(P)
         # P = torch.exp(P)
         P = P / torch.linalg.norm(P, ord = 1, dim = 1).reshape(-1, 1)
@@ -95,15 +96,18 @@ class LinearP(nn.Module):
     
 
 class CalculatedP:
-    def __init__(self, size):
+    def __init__(self, size, device = 'cpu'):
         self.size = size
+        self.device = device
 
-        self.transform_funcs = {
+        transform_funcs = {
             'none': self.get_none,
             'randn': self.get_randn,
             'space_translation': self.get_space_translation,
             'kernelconv': self.get_kernelconv,
         }
+
+        self.transform_funcs = {k : v().to(device) for k, v in transform_funcs.items()}
 
     def get_none(self):
         out = torch.eye(self.size**2).reshape(self.size**2, self.size**2)

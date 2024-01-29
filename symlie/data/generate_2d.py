@@ -5,16 +5,51 @@ import torch
 from itertools import product
 from tqdm import tqdm
 import pickle
-from typing import Callable, List
+from typing import Callable, List, Union, Tuple
 from PIL import Image
 
 from data.transforms import Transform
 
-def grid_2d(grid_size: int, x_min: float = 0., x_max: float = 0.):
-    x = np.linspace(x_min, x_max, grid_size)
+def grid_1d(grid_size: int, x_min: float = 0., x_max: float = 1.):
+    if isinstance(grid_size, tuple):
+        grid_size_x, grid_size_y = grid_size
+        assert grid_size_x == 1
+        grid_size = grid_size_y
+
+    x = np.linspace(x_min, x_max, grid_size, endpoint=False).reshape(-1, 1)
+    return x
+def grid_2d(grid_size: Union[int, tuple[int, int]], x_min: float = 0., x_max: float = 1.):
+
+    if isinstance(grid_size, tuple):
+        grid_size_x, grid_size_y = grid_size
+        assert grid_size_x == grid_size_y
+        grid_size = grid_size_x
+
+    x = np.linspace(x_min, x_max, grid_size, endpoint=False)
     xx, yy = np.meshgrid(x, x)
     xx, yy = np.expand_dims(xx, -1), np.expand_dims(yy, -1)
     return xx, yy
+
+def sine1d(N: int, y_low: int, y_high: int, grid_size: int):
+
+    x = grid_1d(grid_size=grid_size, x_min=0, x_max=1)
+
+    k = np.random.randint(y_low, y_high, size = (N,))
+
+    sins = np.sin(2*np.pi*k*x).T
+
+    return sins, k
+
+def sine2d(N: int, y_low: int, y_high: int, grid_size: Union[int, tuple[int, int]]):
+
+    xx, yy = grid_2d(grid_size=grid_size, x_min=0, x_max=1)
+
+    k = np.random.randint(y_low, y_high, size = (N,))
+    x_mult, y_mult = 0, 1
+
+    sins = np.sin(2*np.pi*k*(xx*x_mult+yy*y_mult)).T
+
+    return sins, k
 
 def flower(N: int, y_low: int, y_high: int, grid_size: int, size: float = 3.):
 
@@ -34,21 +69,11 @@ def flower(N: int, y_low: int, y_high: int, grid_size: int, size: float = 3.):
 
     return z, n_leaves
 
-def sine2d(N: int, y_low: int, y_high: int, grid_size: int):
-
-    xx, yy = grid_2d(grid_size=grid_size, x_min=0, x_max=1)
-
-    k = np.random.randint(y_low, y_high, size = (N,))
-    x_mult, y_mult = 0, 1
-
-    sins = np.sin(2*np.pi*k*(xx*x_mult+yy*y_mult)).T
-
-    return sins, k
 
 class Create2dData:
-    def __init__(self, create_sample_func: str, space_length: int, noise_std: float, y_low: int, y_high: int, eps_mult: List[float], only_flip: bool):
+    def __init__(self, create_sample_func: str, grid_size: tuple[int, ...], noise_std: float, y_low: int, y_high: int, eps_mult: List[float], only_flip: bool):
         self.create_sample_func = create_sample_func
-        self.grid_size = space_length #TODO: make naming consistent
+        self.grid_size = grid_size #TODO: make naming consistent
         self.noise_std = noise_std
         self.y_low = y_low
         self.y_high = y_high
@@ -61,13 +86,12 @@ class Create2dData:
         return x
     
     def transform_data(self, x, N):
-        transform = Transform(only_flip=self.only_flip)
+        transform = Transform(grid_size=self.grid_size, eps_mult=self.eps_mult, only_flip=self.only_flip)
         centers_0 = torch.zeros(N, 2)
         epsilons  = torch.rand(N, 4)
-        epsilons = epsilons * torch.tensor(self.eps_mult)
-        x = torch.from_numpy(x).reshape(N, self.grid_size**2)
+        x = torch.from_numpy(x).reshape(N, np.prod(self.grid_size))
         x, centers = transform(x, centers=centers_0, epsilons=epsilons, transform_individual_bool=True)
-        x = x.reshape(N, self.grid_size, self.grid_size)
+        x = x.reshape(N, *self.grid_size)
         x, centers = x.numpy(), centers.numpy()
         return x, centers
 
@@ -78,42 +102,7 @@ class Create2dData:
 
         x, centers = self.transform_data(x, N)
 
-        x = x.reshape(N, self.grid_size**2)
-
-        # z = z.reshape(N, self.grid_size, self.grid_size)
-        # z = z[:, 0, :]
-        # z = z.reshape(N, self.grid_size) 
+        x = x.reshape(N, np.prod(self.grid_size))
 
         return {'x': x, 'y':y, 'centers': centers}
-
-# def create_flower(N: int, space_length: int, noise_std: float, y_low: int, y_high: int, eps_mult: List[float], only_flip: bool):
-
-    
-#     # Flower
-#     z, target = flower(N, y_low, y_high, grid_size=space_length, size=3)
-  
-#     # Sine v2
-#     z, target = sine(N, y_low, y_high,grid_size=space_length)
-
-#     # Add noise
-#     noise = np.random.normal(0, noise_std, size = (z.shape))
-#     z = z + noise
-
-#     # Transform
-#     transform = Transform(only_flip=only_flip)
-#     centers_0 = torch.zeros(N, 2)
-#     epsilons  = torch.rand(N, 4)
-#     epsilons = epsilons * torch.tensor(eps_mult)
-#     z = torch.from_numpy(z).reshape(N, space_length**2)
-#     z, centers = transform(z, centers=centers_0, epsilons=epsilons, transform_individual_bool=True)
-#     z = z.reshape(N, space_length, space_length)
-#     z, centers = z.numpy(), centers.numpy()
-
-#     z = z.reshape(N, space_length**2)
-
-#     # z = z.reshape(N, space_length, space_length)
-#     # z = z[:, 0, :]
-#     # z = z.reshape(N, space_length)
-
-#     return {'x': z, 'y':target, 'centers': centers}
 

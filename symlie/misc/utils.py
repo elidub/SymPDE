@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import torch
 
 class NumpyUtils:
     def __init__(self, dir):
@@ -22,3 +23,11 @@ class NumpyUtils:
 class Results:
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
+
+def tensor_operation(x, operation):
+    assert isinstance(x, np.ndarray)
+    return operation(torch.from_numpy(x)).numpy()
+
+def numpy_operation(x, operation):
+    assert isinstance(x, torch.Tensor)
+    return torch.from_numpy(operation(x.numpy()))

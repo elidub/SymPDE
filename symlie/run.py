@@ -11,7 +11,7 @@ import wandb
 install()
 
 from model.setup import setup_model
-from data.generate_2d import sine2d
+from data.generate_2d import sine1d, sine2d, flower
 from data.generate_data import save_splits
 
 def parse_options(notebook = False):
@@ -34,14 +34,14 @@ def parse_options(notebook = False):
     parser.add_argument("--model_summary", type=bool, default=False, help="Weights summary")
 
     # Data kwargs
-    parser.add_argument("--space_length", type=int, default = 7) # 7    7
+    parser.add_argument("--grid_size", nargs='+', type=int, default = (1,7)) # 7    7
     parser.add_argument("--noise_std", type=float, default= 0.01)  # 0.5  0.01
     parser.add_argument("--y_low", type=int, default = 1)
     parser.add_argument("--y_high", type=int, default = 3)
 
     # Transformation kwargs
-    parser.add_argument("--eps_mult", type=list, default=[0., 0., 1., 1.])
-    parser.add_argument("--only_flip", type=bool, default=True)
+    parser.add_argument("--eps_mult", nargs='+', type=float, default=[1., 1., 1., 1.])
+    parser.add_argument("--only_flip", type=bool, default=False)
 
     # parser.add_argument("--persistent_workers", action="store_true", help="Persistent workers")
     parser.add_argument("--persistent_workers", default=True)
@@ -49,7 +49,7 @@ def parse_options(notebook = False):
     parser.add_argument("--generate_data", action="store_true", help="Generate data")
     # parser.add_argument("--train", action="store_true", help="Train the model")
     parser.add_argument("--run_id", type=str, default=None, help="Id of the training run")
-    parser.add_argument("--tags", nargs='+', default=[], help="Tags for wandb")
+    parser.add_argument("--tags", nargs='+', default=['dev'], help="Tags for wandb")
     parser.add_argument("--train", default=True)
     parser.add_argument("--predict", default=False)
     parser.add_argument("--test", default=True)
@@ -67,20 +67,14 @@ def parse_options(notebook = False):
     return args
 
 def process_args(args):
-    data_kwargs_keys = ['space_length', 'noise_std', 'y_low', 'y_high']
+    data_kwargs_keys = ['grid_size', 'noise_std', 'y_low', 'y_high']
     args.data_kwargs = {k : getattr(args, k) for k in data_kwargs_keys}
+    args.data_kwargs['grid_size'] = tuple(args.data_kwargs['grid_size']) # Convert to tuple
 
     transform_kwargs_keys = ['eps_mult', 'only_flip']
     args.transform_kwargs = {k : getattr(args, k) for k in transform_kwargs_keys} 
 
     args.n_splits = [n_split for n_split in [args.n_train, args.n_val, args.n_test]]
-
-    # # Check if name is in args
-    # if hasattr(args, 'name'): 
-    #     if args.name is None:
-    #         data_dir = args.data_dir.split('/')[-1]
-    #         bias = str(args.bias).lower()
-    #         args.name = f'symlieflat_data{data_dir}_net{args.net}_lr{math.log10(args.lr):.2f}_seed{args.seed}_ntrain{args.n_splits[0]}'
 
     args.args_processed = True
 
@@ -88,8 +82,7 @@ def process_args(args):
 
 def check_args_processed(args):
     if not hasattr(args, 'args_processed'):
-        if not hasattr(args, 'args_processed'):
-            raise ValueError("Args not processed. Run process_args(args) first")
+        raise ValueError("Args not processed. Run `process_args(args)` first!")
 
 def main(args):
     check_args_processed(args)    
@@ -110,7 +103,7 @@ def main(args):
             enable_checkpointing = None
             print(f"Running {logger.experiment.name} with id {logger.version}")
         else:
-            logger = None
+            logger = False
             enable_checkpointing = False
             print(f"Running without logging")
     else:
@@ -150,12 +143,18 @@ def main(args):
 def generate_data(args):
     check_args_processed(args)   
      
-    # create_sample_func_dict = {
-    #     'flower': flower,
-    # }
+    datasets = {
+        'sine1d' : {'create_sample_func' : sine1d},
+        'sine2d' : {'create_sample_func' : sine2d},
+        'flower' : {'create_sample_func' : flower},
+    }
+    
+    dataset_key = args.data_dir.split('/')[-1]
+    print(f"Generating data for {dataset_key}!")
+    dataset = datasets[dataset_key]
 
     save_splits(
-        create_sample_func = sine2d,
+        create_sample_func = dataset['create_sample_func'],
         data_kwargs=args.data_kwargs,
         transform_kwargs=args.transform_kwargs,
         data_dir=args.data_dir,

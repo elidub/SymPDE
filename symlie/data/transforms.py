@@ -5,6 +5,8 @@ from PIL import Image
 from torchvision.transforms import RandomAffine, InterpolationMode
 from tqdm import tqdm
 
+from typing import List, Union
+
 class UnsqueezeTransform:
     def __init__(self, dim):
         self.dim = dim
@@ -98,7 +100,10 @@ class CustomRandomRotation():
     
 
 class Transform:
-    def __init__(self, only_flip: bool = False):
+    def __init__(self, grid_size: tuple[int, ...], eps_mult: List[float] = [1., 1., 1., 1.], only_flip: bool = False):
+        self.grid_size = grid_size
+        self.eps_mult = torch.tensor(eps_mult)
+
         self.scale = RandomScale()
 
         self.rotate = CustomRandomRotation(only_flip = only_flip)
@@ -106,51 +111,51 @@ class Transform:
         self.space_translate_x = SpaceTranslate(dim = 2)
         self.space_translate_y = SpaceTranslate(dim = 1)
 
-    def batch_space_translate(self, x: torch.Tensor, shifts: torch.Tensor, shift_dir: str) -> torch.Tensor:
-        """Translate a batch of images by a specified number of pixels.
+    # def batch_space_translate(self, x: torch.Tensor, shifts: torch.Tensor, shift_dir: str) -> torch.Tensor:
+    #     """Translate a batch of images by a specified number of pixels.
 
-        Args:
-            x: Batch of images of shape (batch_size, height, width).
-            shifts: Batch of shifts of shape (batch_size, 2).
+    #     Args:
+    #         x: Batch of images of shape (batch_size, height, width).
+    #         shifts: Batch of shifts of shape (batch_size, 2).
 
-        Returns:
-            Batch of translated images of shape (batch_size, height, width).
-        """
-        batch_size, height, width = x.shape
-        assert height == width
+    #     Returns:
+    #         Batch of translated images of shape (batch_size, height, width).
+    #     """
+    #     batch_size, height, width = x.shape
+    #     assert height == width
 
     
-        # Create an index tensor
-        indices = torch.arange(height).unsqueeze(0).expand(len(shifts), -1)
+    #     # Create an index tensor
+    #     indices = torch.arange(height).unsqueeze(0).expand(len(shifts), -1)
 
-        # Use broadcasting to create tensor b
-        b = indices < shifts.unsqueeze(1)
-        if shift_dir == 'x': x = torch.transpose(x, 1, 2)
-        assert (x == 0.).sum() == 0, x
-        # i1, i2 = 1, torch.nan
-        i1, i2 = torch.tensor(1.), torch.tensor(0.)
-        b21 = torch.where(b, i1, i2).unsqueeze(2)
-        b22 = torch.where(b, i2, i1).unsqueeze(2)
-        x = torch.cat([x * b22, x * b21], dim = 1)
-        # indices2 = torch.where(~torch.isnan(x))
-        indices2 = torch.where(x != 0.)
-        x = x[[*indices2]].view(batch_size, height, width)
-        if shift_dir == 'x': x = torch.transpose(x, 1, 2)
+    #     # Use broadcasting to create tensor b
+    #     b = indices < shifts.unsqueeze(1)
+    #     if shift_dir == 'x': x = torch.transpose(x, 1, 2)
+    #     assert (x == 0.).sum() == 0, x
+    #     # i1, i2 = 1, torch.nan
+    #     i1, i2 = torch.tensor(1.), torch.tensor(0.)
+    #     b21 = torch.where(b, i1, i2).unsqueeze(2)
+    #     b22 = torch.where(b, i2, i1).unsqueeze(2)
+    #     x = torch.cat([x * b22, x * b21], dim = 1)
+    #     # indices2 = torch.where(~torch.isnan(x))
+    #     indices2 = torch.where(x != 0.)
+    #     x = x[[*indices2]].view(batch_size, height, width)
+    #     if shift_dir == 'x': x = torch.transpose(x, 1, 2)
 
-        return x
+    #     return x
 
-    def recenter(self, x, centers):
-        centers_x, centers_y = centers.T
-        x = self.batch_space_translate(x, centers_x, shift_dir = 'x')
-        x = self.batch_space_translate(x, centers_y, shift_dir = 'y')
-        return x
+    # def recenter(self, x, centers):
+    #     centers_x, centers_y = centers.T
+    #     x = self.batch_space_translate(x, centers_x, shift_dir = 'x')
+    #     x = self.batch_space_translate(x, centers_y, shift_dir = 'y')
+    #     return x
     
     def transform(self, x, centers, epsilons):
-        batch_size, features = x.shape
 
-        grid_size = int(np.sqrt(features))
-        x = x.reshape(batch_size, grid_size, grid_size)
-        # x = x.unsqueeze(1)
+        epsilons = epsilons * self.eps_mult
+
+        batch_size, features = x.shape
+        x = x.reshape(batch_size, *self.grid_size)
 
         # x = self.recenter(x, centers)
 

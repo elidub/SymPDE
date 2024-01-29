@@ -1,8 +1,9 @@
 import os
 import torch.nn as nn
 import torch
+import numpy as np
 
-from model.learner import PredictionLearner, TransformationLearner, FlowerTransformationLearner
+from model.learner import PredictionLearner, TransformationLearner
 
 from model.networks.mlp import MLP
 from model.networks.linear import  LinearP
@@ -12,9 +13,7 @@ from data.datamodule import BaseDataModule
 def setup_model(args):
     net = args.net
     
-    # TODO: Automize this
-    # features = args.data_kwargs['space_length'] # Flat
-    features = args.data_kwargs['space_length']**2 # 2D
+    features = np.prod(args.data_kwargs['grid_size'])
 
     if net == "TrainP":
         net = LinearP(
@@ -26,13 +25,7 @@ def setup_model(args):
             train_weights = False,
             train_P = True,
         )
-        # TODO: Automatize this, also in the learner
-        
-        # learner = TransformationLearner
-        # args.transform_kwargs = {'augment' : 'space_translation'}
-
-        learner = FlowerTransformationLearner
-        args.transform_kwargs['augment'] = 'transform_flower'
+        learner = TransformationLearner
 
     elif net.startswith("Predict-"):
         if net == "Predict-NoneP":
@@ -59,7 +52,6 @@ def setup_model(args):
         else:
             raise NotImplementedError(f"Network {net} not implemented")
         learner = PredictionLearner
-        args.transform_kwargs['augment'] = 'none'
     else:
         raise NotImplementedError(f"Network {net} not implemented")
     
@@ -85,9 +77,9 @@ def setup_model(args):
         ckpt_path = os.path.join(args.log_dir, 'symlie', args.run_id, "checkpoints")
         assert len(os.listdir(ckpt_path)) == 1, "Multiple checkpoints found!"
         ckpt = os.listdir(ckpt_path)[0]
-        if learner == FlowerTransformationLearner:
+        if learner == TransformationLearner:
             model = learner.load_from_checkpoint(
-                os.path.join(ckpt_path, ckpt), net=net, criterion=criterion, lr=args.lr, transform_kwargs=args.transform_kwargs,
+                os.path.join(ckpt_path, ckpt), net=net, criterion=criterion, lr=args.lr, grid_size=args.data_kwargs['grid_size'], transform_kwargs=args.transform_kwargs,
                 map_location=torch.device('cpu')
             )
         if learner == PredictionLearner:
@@ -98,8 +90,8 @@ def setup_model(args):
         print(f"Loaded model from {ckpt_path}")
 
     else:
-        if learner == FlowerTransformationLearner:
-            model = learner(net, criterion, lr=args.lr, transform_kwargs=args.transform_kwargs)
+        if learner == TransformationLearner:
+            model = learner(net, criterion, lr=args.lr, grid_size=args.data_kwargs['grid_size'], transform_kwargs=args.transform_kwargs)
         elif learner == PredictionLearner:
             model = learner(net, criterion, lr=args.lr)
         else:
