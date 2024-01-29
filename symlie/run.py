@@ -53,6 +53,7 @@ def parse_options(notebook = False):
     parser.add_argument("--train", default=True)
     parser.add_argument("--predict", default=False)
     parser.add_argument("--test", default=True)
+    parser.add_argument("--logger", default="wandb")
     
     parser.add_argument("--do_return", action="store_true", help="Return model, trainer, datamodule")
     parser.add_argument("--do_return_model", action="store_true", help="Return model, None, None")
@@ -103,10 +104,15 @@ def main(args):
         return model, None, None, None
     
     if args.run_id is None:
-        wandb.init(project="symlie", dir=args.log_dir, config=args, entity="eliasdubbeldam", tags=args.tags)
-        logger = pl.loggers.WandbLogger(version=args.version, save_dir=args.log_dir, project = "symlie")
-        enable_checkpointing = None
-        print(f"Running {logger.experiment.name} with id {logger.version}")
+        if args.logger == "wandb":
+            wandb.init(project="symlie", dir=args.log_dir, config=args, entity="eliasdubbeldam", tags=args.tags)
+            logger = pl.loggers.WandbLogger(version=args.version, save_dir=args.log_dir, project = "symlie")
+            enable_checkpointing = None
+            print(f"Running {logger.experiment.name} with id {logger.version}")
+        else:
+            logger = None
+            enable_checkpointing = False
+            print(f"Running without logging")
     else:
         assert args.train is False, "Continue training not implemented"
         logger = False

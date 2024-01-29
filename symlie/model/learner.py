@@ -54,8 +54,10 @@ class BaseLearner(pl.LightningModule):
         if self.trainer.logger == None:
             print("No logger found. Skipping logging")
             return
+        
+        run_id = self.trainer.logger.experiment.id
 
-        save =  NumpyUtils(dir=self.trainer.logger.experiment.dir).save
+        # save =  NumpyUtils(dir=self.trainer.logger.experiment.dir).save
 
         # pred_outs = zip(*self.test_step_outs)
         # for forward_key, pred_out in zip(self.forward_keys, pred_outs):
@@ -63,7 +65,9 @@ class BaseLearner(pl.LightningModule):
 
         for key, value in self.test_logs_method().items():
             print(f'Logging {key}')
-            save(key, value)
+            store_dir = os.path.join(self.trainer.log_dir, 'store', key)
+            os.makedirs(store_dir, exist_ok=True)
+            np.save(os.path.join(store_dir, f'{run_id}.npy'), value.cpu().numpy())
             
     
 class PredictionLearner(BaseLearner):
