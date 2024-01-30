@@ -15,8 +15,28 @@ def load_P_pred(run_id, P_dir = '../logs/store/P/'):
     P = torch.from_numpy(P).float()
     P = LinearP.normalize_P(P)
     return P
+# def find_id_for_P(args):
+#     df = pd.read_pickle('../logs/store/results_df.pkl')
+#     args.data_kwargs['grid_size'] = tuple(args.data_kwargs['grid_size'])
+
+#     for row in df['data_kwargs']:
+#         if 'grid_size' in row:
+#             row['grid_size'] = tuple(row['grid_size'])
+
+#     df_selected = df[(df.data_kwargs == args.data_kwargs) & (df.transform_kwargs == args.transform_kwargs) & (df.seed == args.seed)]
+
+#     if len(df_selected) == 0:
+#         raise ValueError('No results found for the given arguments')
+#     elif len(df_selected) > 1:
+#         print(df_selected['run_id'])
+#         raise ValueError('Multiple results found for the given arguments')
+#     else:
+#         run_id = df_selected.iloc[0]['run_id']
+#         print(f"Found run_id {run_id}")
+#         return run_id
+
 def find_id_for_P(args):
-    df = pd.read_pickle('../logs/store/results_df.pkl')
+    df = pd.read_pickle('../logs/store/map_df.pkl')
     args.data_kwargs['grid_size'] = tuple(args.data_kwargs['grid_size'])
 
     for row in df['data_kwargs']:
@@ -28,6 +48,7 @@ def find_id_for_P(args):
     if len(df_selected) == 0:
         raise ValueError('No results found for the given arguments')
     elif len(df_selected) > 1:
+        print(df_selected['run_id'])
         raise ValueError('Multiple results found for the given arguments')
     else:
         run_id = df_selected.iloc[0]['run_id']

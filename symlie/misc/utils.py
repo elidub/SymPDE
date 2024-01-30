@@ -24,6 +24,10 @@ class Results:
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
 
+class Args:
+    def __init__(self, **kwargs):
+        self.__dict__.update(kwargs)
+
 def tensor_operation(x, operation):
     assert isinstance(x, np.ndarray)
     return operation(torch.from_numpy(x)).numpy()
