@@ -29,7 +29,7 @@ def parse_options(notebook = False):
     parser.add_argument("--batch_size", type=int, default=2, help="Batch size")
     parser.add_argument("--lr", type=float, default=1e-3, help="Learning rate")
     parser.add_argument("--num_workers", type=int, default=7, help="Number of workers")
-    parser.add_argument("--version", type=str, default=None, help="Version of the training run")
+    parser.add_argument("--version", type=str, default='version_0', help="Version of the training run")
     parser.add_argument("--name", type=str, default=None, help="Name of the training run")
     parser.add_argument("--model_summary", type=bool, default=False, help="Weights summary")
 
