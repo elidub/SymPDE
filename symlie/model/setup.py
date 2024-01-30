@@ -88,11 +88,12 @@ def setup_model(args):
                 P_init = 'space_translation',
             )
         elif net == "Predict-TrainedP":
+            P_pred = load_P_pred(find_id_for_P(args)).to(args.device)
             net = MLP(
                 features = features, 
                 bias = args.bias,
                 device = args.device,
-                P_init = load_P_pred(find_id_for_P(args)),
+                P_init = P_pred,
             )
         elif net == "Predict-TrainedP-check":
             find_id_for_P(args)
@@ -123,8 +124,10 @@ def setup_model(args):
         assert args.version != None, "Version not specified!"
         # ckpt_path = os.path.join(args.log_dir, args.name, args.version, "checkpoints")
         ckpt_path = os.path.join(args.log_dir, 'symlie', args.run_id, "checkpoints")
+        print(ckpt_path)
         assert len(os.listdir(ckpt_path)) == 1, "Multiple checkpoints found!"
         ckpt = os.listdir(ckpt_path)[0]
+        print(ckpt)
         if learner == TransformationLearner:
             model = learner.load_from_checkpoint(
                 os.path.join(ckpt_path, ckpt), net=net, criterion=criterion, lr=args.lr, grid_size=args.data_kwargs['grid_size'], transform_kwargs=args.transform_kwargs,
