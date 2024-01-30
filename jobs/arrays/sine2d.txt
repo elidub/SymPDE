@@ -1,40 +1,5 @@
---net TrainP --lr 0.1 --n_train 1000 --seed 1
---net TrainP --lr 0.01 --n_train 1000 --seed 1
---net TrainP --lr 0.001 --n_train 1000 --seed 1
---net TrainP --lr 0.0001 --n_train 1000 --seed 1
---net TrainP --lr 0.1 --n_train 10000 --seed 1
---net TrainP --lr 0.01 --n_train 10000 --seed 1
---net TrainP --lr 0.001 --n_train 10000 --seed 1
---net TrainP --lr 0.0001 --n_train 10000 --seed 1
---net TrainP --lr 0.1 --n_train 1000 --seed 2
---net TrainP --lr 0.01 --n_train 1000 --seed 2
---net TrainP --lr 0.001 --n_train 1000 --seed 2
---net TrainP --lr 0.0001 --n_train 1000 --seed 2
---net TrainP --lr 0.1 --n_train 10000 --seed 2
---net TrainP --lr 0.01 --n_train 10000 --seed 2
---net TrainP --lr 0.001 --n_train 10000 --seed 2
---net TrainP --lr 0.0001 --n_train 10000 --seed 2
---net TrainP --lr 0.1 --n_train 1000 --seed 3
---net TrainP --lr 0.01 --n_train 1000 --seed 3
---net TrainP --lr 0.001 --n_train 1000 --seed 3
---net TrainP --lr 0.0001 --n_train 1000 --seed 3
---net TrainP --lr 0.1 --n_train 10000 --seed 3
---net TrainP --lr 0.01 --n_train 10000 --seed 3
---net TrainP --lr 0.001 --n_train 10000 --seed 3
---net TrainP --lr 0.0001 --n_train 10000 --seed 3
---net TrainP --lr 0.1 --n_train 1000 --seed 4
---net TrainP --lr 0.01 --n_train 1000 --seed 4
---net TrainP --lr 0.001 --n_train 1000 --seed 4
---net TrainP --lr 0.0001 --n_train 1000 --seed 4
---net TrainP --lr 0.1 --n_train 10000 --seed 4
---net TrainP --lr 0.01 --n_train 10000 --seed 4
---net TrainP --lr 0.001 --n_train 10000 --seed 4
---net TrainP --lr 0.0001 --n_train 10000 --seed 4
---net TrainP --lr 0.1 --n_train 1000 --seed 5
---net TrainP --lr 0.01 --n_train 1000 --seed 5
---net TrainP --lr 0.001 --n_train 1000 --seed 5
---net TrainP --lr 0.0001 --n_train 1000 --seed 5
---net TrainP --lr 0.1 --n_train 10000 --seed 5
---net TrainP --lr 0.01 --n_train 10000 --seed 5
---net TrainP --lr 0.001 --n_train 10000 --seed 5
---net TrainP --lr 0.0001 --n_train 10000 --seed 5
+--seed 1 --lr 0.001 --n_train 10000 --net TrainP --data_dir ../data/sine2d --eps_mult 0. 0. 1. 1. --grid_size 7 7 --noise_std 0.5 --y_low 1 --y_high 3 --n_val 1000 --n_test 1000 --max_epochs 50 --batch_size 2 --tags sine2d
+--seed 2 --lr 0.001 --n_train 10000 --net TrainP --data_dir ../data/sine2d --eps_mult 0. 0. 1. 1. --grid_size 7 7 --noise_std 0.5 --y_low 1 --y_high 3 --n_val 1000 --n_test 1000 --max_epochs 50 --batch_size 2 --tags sine2d
+--seed 3 --lr 0.001 --n_train 10000 --net TrainP --data_dir ../data/sine2d --eps_mult 0. 0. 1. 1. --grid_size 7 7 --noise_std 0.5 --y_low 1 --y_high 3 --n_val 1000 --n_test 1000 --max_epochs 50 --batch_size 2 --tags sine2d
+--seed 4 --lr 0.001 --n_train 10000 --net TrainP --data_dir ../data/sine2d --eps_mult 0. 0. 1. 1. --grid_size 7 7 --noise_std 0.5 --y_low 1 --y_high 3 --n_val 1000 --n_test 1000 --max_epochs 50 --batch_size 2 --tags sine2d
+--seed 5 --lr 0.001 --n_train 10000 --net TrainP --data_dir ../data/sine2d --eps_mult 0. 0. 1. 1. --grid_size 7 7 --noise_std 0.5 --y_low 1 --y_high 3 --n_val 1000 --n_test 1000 --max_epochs 50 --batch_size 2 --tags sine2d

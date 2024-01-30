@@ -5,11 +5,13 @@
 #SBATCH --job-name=Train
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=18
-#SBATCH --time=00:15:00
+#SBATCH --time=00:30:00
 #SBATCH --array=1-15%15
 #SBATCH --output=jobs/slurm_output/symlie_train_array_%A_%a.out
 
-array="sine1d-predict"
+# array="sine1d-predict"
+# array="sine2d"
+array="sine2d-predict"
 
 ARRAY_FILE=$HOME/thesis/SymPDE/jobs/arrays/$array.txt
 cd $HOME/thesis/SymPDE/symlie
