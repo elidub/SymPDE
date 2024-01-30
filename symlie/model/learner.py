@@ -84,8 +84,8 @@ class PredictionLearner(BaseLearner):
 
         return y_true, y_pred
     
-    def test_logs_method(self):
-        return {'P': self.net.mlp[0].P}
+    # def test_logs_method(self):
+    #     return {'P': self.net.mlp[0].P}
 
     
 # class TransformationLearner(BaseLearner):
