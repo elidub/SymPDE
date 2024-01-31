@@ -15,25 +15,6 @@ def load_P_pred(run_id, P_dir = '../logs/store/P/'):
     P = torch.from_numpy(P).float()
     P = LinearP.normalize_P(P)
     return P
-# def find_id_for_P(args):
-#     df = pd.read_pickle('../logs/store/results_df.pkl')
-#     args.data_kwargs['grid_size'] = tuple(args.data_kwargs['grid_size'])
-
-#     for row in df['data_kwargs']:
-#         if 'grid_size' in row:
-#             row['grid_size'] = tuple(row['grid_size'])
-
-#     df_selected = df[(df.data_kwargs == args.data_kwargs) & (df.transform_kwargs == args.transform_kwargs) & (df.seed == args.seed)]
-
-#     if len(df_selected) == 0:
-#         raise ValueError('No results found for the given arguments')
-#     elif len(df_selected) > 1:
-#         print(df_selected['run_id'])
-#         raise ValueError('Multiple results found for the given arguments')
-#     else:
-#         run_id = df_selected.iloc[0]['run_id']
-#         print(f"Found run_id {run_id}")
-#         return run_id
 
 def find_id_for_P(args):
     df = pd.read_pickle('../logs/store/map_df.pkl')
@@ -60,6 +41,12 @@ def setup_model(args):
     
     features = np.prod(args.data_kwargs['grid_size'])
 
+    dataset_name = args.data_dir.split('/')[-1]
+    if dataset_name == 'MNIST':
+        out_features = 10
+    else:
+        out_features = 1
+
     if net == "TrainP":
         net = LinearP(
             in_features = features,
@@ -75,14 +62,16 @@ def setup_model(args):
     elif net.startswith("Predict-"):
         if net == "Predict-NoneP":
             net = MLP(
-                features = features, 
+                in_features = features, 
+                out_features = out_features,
                 bias = args.bias,
                 device = args.device,
                 P_init = 'none',
             )
         elif net == "Predict-CalculatedP":
             net = MLP(
-                features = features, 
+                in_features = features, 
+                out_features = out_features,
                 bias = args.bias,
                 device = args.device,
                 P_init = 'space_translation',
@@ -90,7 +79,8 @@ def setup_model(args):
         elif net == "Predict-TrainedP":
             P_pred = load_P_pred(find_id_for_P(args)).to(args.device)
             net = MLP(
-                features = features, 
+                in_features = features, 
+                out_features = out_features,
                 bias = args.bias,
                 device = args.device,
                 P_init = P_pred,
@@ -117,7 +107,13 @@ def setup_model(args):
         persistent_workers = args.persistent_workers,
     )
     
-    criterion = nn.MSELoss()
+    criterions = {
+        'mse' : nn.MSELoss(),
+        'bce' : nn.BCELoss(),
+        'ce'  : nn.CrossEntropyLoss(),
+    }
+
+    criterion = criterions[args.criterion.lower()]
 
     # Load model
     if args.run_id is not None:

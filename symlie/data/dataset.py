@@ -27,6 +27,10 @@ class FlatDataset(Dataset):
 
         self.x = torch.from_numpy(x[:N]).float()
         self.y = torch.from_numpy(y[:N]).float()
+
+        if 'MNIST' in data_dir:
+            self.y = self.y.long()
+
         self.centers = torch.from_numpy(centers[:N])
 
 

@@ -20,12 +20,12 @@ def save_splits(create_sample_func: Callable, data_kwargs: dict, transform_kwarg
         n_splits: Dictionary with number of samples in each split.
         data_dir: Directory to save the splits.
     """
-    create_data = Create2dData(create_sample_func=create_sample_func, **data_kwargs, **transform_kwargs)
+    create_data = Create2dData(create_sample_func, data_kwargs, transform_kwargs)
 
     for split, n_samples in zip(['train', 'val', 'test'], n_splits):
         print(f"Creating {n_samples} for {split}.")
 
-        outs = create_data(N = n_samples)
+        outs = create_data(N = n_samples, split = split)
 
         split_dir = os.path.join(data_dir, split) 
         os.makedirs(split_dir, exist_ok=True)

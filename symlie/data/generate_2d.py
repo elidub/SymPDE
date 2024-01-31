@@ -7,6 +7,7 @@ from tqdm import tqdm
 import pickle
 from typing import Callable, List, Union, Tuple
 from PIL import Image
+from torchvision import datasets, transforms
 
 from data.transforms import Transform
 
@@ -30,7 +31,8 @@ def grid_2d(grid_size: Union[int, tuple[int, int]], x_min: float = 0., x_max: fl
     xx, yy = np.expand_dims(xx, -1), np.expand_dims(yy, -1)
     return xx, yy
 
-def sine1d(N: int, y_low: int, y_high: int, grid_size: int):
+# def sine1d(N: int, y_low: int, y_high: int, grid_size: int):
+def sine1d(N: int, split: str, y_low: int, y_high: int, grid_size: int, noise_std: float = 0.):
 
     x = grid_1d(grid_size=grid_size, x_min=0, x_max=1)
 
@@ -40,7 +42,7 @@ def sine1d(N: int, y_low: int, y_high: int, grid_size: int):
 
     return sins, k
 
-def sine2d(N: int, y_low: int, y_high: int, grid_size: Union[int, tuple[int, int]]):
+def sine2d(N: int, split: str, y_low: int, y_high: int, grid_size: Union[int, tuple[int, int]], noise_std: float = 0.):
 
     xx, yy = grid_2d(grid_size=grid_size, x_min=0, x_max=1)
 
@@ -51,7 +53,7 @@ def sine2d(N: int, y_low: int, y_high: int, grid_size: Union[int, tuple[int, int
 
     return sins, k
 
-def flower(N: int, y_low: int, y_high: int, grid_size: int, size: float = 3.):
+def flower(N: int, split: str, y_low: int, y_high: int, grid_size: int, size: float = 3., noise_std: float = 0.):
 
     xx, yy = grid_2d(grid_size=grid_size, x_min=-size, x_max=size)
 
@@ -69,16 +71,45 @@ def flower(N: int, y_low: int, y_high: int, grid_size: int, size: float = 3.):
 
     return z, n_leaves
 
+def mnist(N: int, split: str, grid_size: tuple[int, int], noise_std: float = 0.):
+    data_dir = '../data'
+    train = {'train': True, 'val': True, 'test':False}[split]
+    idx   = {'train': 0, 'val': 50_000, 'test': 0}
+
+    # check if data exists
+    if not os.path.exists(os.path.join(data_dir, 'MNIST/raw')):
+        datasets.MNIST(data_dir, train=True, download=True)
+        datasets.MNIST(data_dir, train=False, download=True)
+    dataset = datasets.MNIST(data_dir, train=train, download=False)
+
+    x = dataset.data
+    y = dataset.targets
+    
+    # compose dataset
+    compose = transforms.Compose([
+            transforms.Normalize((0.1307,), (0.3081,)),
+            transforms.Resize(grid_size, antialias=True)
+    ])
+    x = compose(x / 255.)
+
+
+    i = idx[split]
+    assert i + N < len(dataset), f"{i+N} >= {len(dataset)}"
+    if split == 'train':
+        assert i + N < idx['val'] , f"{i+N} >= {idx['val']}"
+
+    x = x[i:i+N].numpy()
+    y = y[i:i+N].numpy()
+    return x, y
+
 
 class Create2dData:
-    def __init__(self, create_sample_func: str, grid_size: tuple[int, ...], noise_std: float, y_low: int, y_high: int, eps_mult: List[float], only_flip: bool):
+    def __init__(self, create_sample_func: str, data_kwargs: dict, transform_kwargs: dict):
         self.create_sample_func = create_sample_func
-        self.grid_size = grid_size #TODO: make naming consistent
-        self.noise_std = noise_std
-        self.y_low = y_low
-        self.y_high = y_high
-        self.eps_mult = eps_mult
-        self.only_flip = only_flip
+        self.data_kwargs = data_kwargs
+        self.transform_kwargs = transform_kwargs
+        self.grid_size = data_kwargs['grid_size']
+        self.noise_std = data_kwargs['noise_std']
 
     def add_noise(self, x):
         noise = np.random.normal(0, self.noise_std, size = (x.shape))
@@ -86,7 +117,7 @@ class Create2dData:
         return x
     
     def transform_data(self, x, N):
-        transform = Transform(grid_size=self.grid_size, eps_mult=self.eps_mult, only_flip=self.only_flip)
+        transform = Transform(grid_size=self.grid_size, **self.transform_kwargs)
         centers_0 = torch.zeros(N, 2)
         epsilons  = torch.rand(N, 4)
         x = torch.from_numpy(x).reshape(N, np.prod(self.grid_size))
@@ -95,8 +126,8 @@ class Create2dData:
         x, centers = x.numpy(), centers.numpy()
         return x, centers
 
-    def __call__(self, N: int):
-        x, y = self.create_sample_func(N, self.y_low, self.y_high, self.grid_size)
+    def __call__(self, N: int, split: str = 'train'):
+        x, y = self.create_sample_func(N, split, **self.data_kwargs)
 
         x = self.add_noise(x)
 

@@ -82,7 +82,7 @@ class PredictionLearner(BaseLearner):
 
         y_pred = self.net(x.unsqueeze(1)).squeeze(1).squeeze(1)
 
-        return y_true, y_pred
+        return y_pred, y_true
     
     # def test_logs_method(self):
     #     return {'P': self.net.mlp[0].P}

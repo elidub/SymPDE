@@ -11,7 +11,7 @@ import wandb
 install()
 
 from model.setup import setup_model
-from data.generate_2d import sine1d, sine2d, flower
+from data.generate_2d import sine1d, sine2d, flower, mnist
 from data.generate_data import save_splits
 
 def parse_options(notebook = False):
@@ -22,6 +22,8 @@ def parse_options(notebook = False):
     # parser.add_argument("--transform_type", type=str, default='space_translation', help="Type of the transformation")
     # parser.add_argument("--linearmodules", nargs='+', default=['MyLinearPw', 'nn.Linear'], help="Linearmodules")
     parser.add_argument("--bias", action="store_true", help="Bias")
+
+    parser.add_argument("--criterion", type=str, default='mse', help="Criterion")
 
     parser.add_argument("--data_dir", type=str, default="../data/sinev2", help="Path to data directory")
     parser.add_argument("--log_dir", type=str, default="../logs", help="Path to log directory")
@@ -36,8 +38,8 @@ def parse_options(notebook = False):
     # Data kwargs
     parser.add_argument("--grid_size", nargs='+', type=int, default = (1,7)) # 7    7
     parser.add_argument("--noise_std", type=float, default= 0.01)  # 0.5  0.01
-    parser.add_argument("--y_low", type=int, default = 1)
-    parser.add_argument("--y_high", type=int, default = 3)
+    parser.add_argument("--y_low", type=int, default = None)
+    parser.add_argument("--y_high", type=int, default = None)
 
     # Transformation kwargs
     parser.add_argument("--eps_mult", nargs='+', type=float, default=[1., 1., 1., 1.])
@@ -69,6 +71,10 @@ def parse_options(notebook = False):
 def process_args(args):
     data_kwargs_keys = ['grid_size', 'noise_std', 'y_low', 'y_high']
     args.data_kwargs = {k : getattr(args, k) for k in data_kwargs_keys}
+    for data_kwargs_key in data_kwargs_keys:
+        if args.data_kwargs[data_kwargs_key] is None:
+            del args.data_kwargs[data_kwargs_key]
+
     args.data_kwargs['grid_size'] = tuple(args.data_kwargs['grid_size']) # Convert to tuple
 
     transform_kwargs_keys = ['eps_mult', 'only_flip']
@@ -125,6 +131,7 @@ def main(args):
         accelerator=args.device,
         deterministic=True,
         enable_model_summary=args.model_summary,
+        callbacks=[pl.callbacks.EarlyStopping(monitor='val_loss', patience=2, verbose=True)],
     )  
 
     if args.do_return:
@@ -147,6 +154,7 @@ def generate_data(args):
         'sine1d' : {'create_sample_func' : sine1d},
         'sine2d' : {'create_sample_func' : sine2d},
         'flower' : {'create_sample_func' : flower},
+        'MNIST'  : {'create_sample_func' : mnist},
     }
     
     dataset_key = args.data_dir.split('/')[-1]
