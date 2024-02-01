@@ -20,6 +20,8 @@ data/*/val
 data/*/test
 
 data/mnist/
+data/MNIST/*
+data/MNIST/raw/
 data/mathematica/
 
 ext_repos/LPSDA/models

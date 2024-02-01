@@ -131,7 +131,7 @@ def main(args):
         accelerator=args.device,
         deterministic=True,
         enable_model_summary=args.model_summary,
-        callbacks=[pl.callbacks.EarlyStopping(monitor='val_loss', patience=2, verbose=True)],
+        # callbacks=[pl.callbacks.EarlyStopping(monitor='val_loss', patience=5, verbose=True)],
     )  
 
     if args.do_return:
