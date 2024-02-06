@@ -28,7 +28,7 @@ def parse_options(notebook = False):
     parser.add_argument("--data_dir", type=str, default="../data/sinev2", help="Path to data directory")
     parser.add_argument("--log_dir", type=str, default="../logs", help="Path to log directory")
     parser.add_argument("--max_epochs", type=int, default=50, help="Number of epochs")
-    parser.add_argument("--batch_size", type=int, default=8, help="Batch size")
+    parser.add_argument("--batch_size", type=int, default=16, help="Batch size")
     parser.add_argument("--lr", type=float, default=1e-3, help="Learning rate")
     parser.add_argument("--num_workers", type=int, default=7, help="Number of workers")
     parser.add_argument("--version", type=str, default='version_0', help="Version of the training run")
