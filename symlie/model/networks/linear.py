@@ -27,6 +27,7 @@ class LinearP(nn.Module):
         self.set_bias = bias
         self.train_weights = train_weights
         self.train_P = train_P
+        assert train_weights != train_P
 
         # Initalize P
         self.calculated_p = CalculatedP(size = self.out_features, device = self.device)
@@ -35,17 +36,8 @@ class LinearP(nn.Module):
         else:
             self.P = P_init
 
-        # Initialize weights and bias
-        # self.weight = torch.randn(out_features, in_features)
-        # self.weight.to(device)
-        # print(self.weight.device)
-
-        # self.bias   = torch.randn(out_features)
-
-        # self.weight = 
-
-        if not train_P:
-            self.reset_parameters()
+        if not self.train_P:
+            self.reset_parameters(batch_size=None)
 
         if train_weights:
             assert P_init not in ['randn']
@@ -53,10 +45,8 @@ class LinearP(nn.Module):
             # self.bias = nn.Parameter(self.bias)
         else:
             self.P = nn.Parameter(self.P)
-            # self.P = nn.Parameter(torch.tensor(self.P, device = device))
-        # self.P = self.P.to('cuda')
 
-    def reset_parameters(self) -> None:
+    def reset_parameters(self, batch_size) -> None:
         """
         From torch.nn.Linear (https://github.com/pytorch/pytorch/blob/af7dc23124a6e3e7b8af0637e3b027f3a8b3fb76/torch/nn/modules/linear.py#L103)
         StackOverflow discussion (https://stackoverflow.com/questions/49433936/how-do-i-initialize-weights-in-pytorch#:~:text=To%20initialize%20layers,do%20it%20afterwards)
@@ -67,9 +57,10 @@ class LinearP(nn.Module):
         #     bound = 1 / math.sqrt(fan_in) if fan_in > 0 else 0
         #     nn.init.uniform_(self.bias, -bound, bound)
 
-        # self.register_buffer('weight', torch.randn(self.out_features, self.in_features))
-        
-        self.weight = torch.randn(self.out_features, self.in_features, device = self.device)
+        if batch_size is None:
+            self.weight = torch.randn(self.out_features, self.in_features, device = self.device)
+        else:
+            self.weight = torch.randn(batch_size, self.out_features, self.in_features, device = self.device)
         # self.bias   = torch.randn(self.out_features)
 
     @staticmethod
@@ -87,12 +78,16 @@ class LinearP(nn.Module):
 
         if normalize_P:
             P = self.normalize_P(P)
-        weight = (P @ self.weight.flatten()).reshape(self.weight.shape)
 
-        if self.set_bias:
-            out =  x@weight.T + self.bias
+        if not self.train_P:
+            weight = (P @ self.weight.flatten()).reshape(self.weight.shape)
+            out = x @ weight.T
+
         else:
-            out = x@weight.T
+            weight = (P @ self.weight.flatten(1).T).T.reshape(self.weight.shape)
+            out = torch.einsum('ij,bkj->bik', x, weight)
+
+        if self.set_bias: out = out + self.bias
         return out
     
 
@@ -104,8 +99,8 @@ class CalculatedP:
         transform_funcs = {
             'none': self.get_none,
             'randn': self.get_randn,
-            'space_translation': self.get_space_translation,
-            'kernelconv': self.get_kernelconv,
+            # 'space_translation': self.get_space_translation,
+            # 'kernelconv': self.get_kernelconv,
         }
 
         self.transform_funcs = {k : v().to(device) for k, v in transform_funcs.items()}

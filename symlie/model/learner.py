@@ -111,12 +111,11 @@ class TransformationLearner(BaseLearner, Transform):
 
         x, y_, centers = batch
 
-        batch_size = len(x)
         eps = torch.randn((4,))
 
         # Reset the weights and biases as training P should not be dependent on the weight initailization
         if self.net.train_P:
-            self.net.reset_parameters()
+            self.net.reset_parameters(batch_size=len(x))
 
         # Route a: Forward pass, transformation
         x_a = x
