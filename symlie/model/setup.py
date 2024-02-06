@@ -24,7 +24,12 @@ def find_id_for_P(args):
         if 'grid_size' in row:
             row['grid_size'] = tuple(row['grid_size'])
 
-    df_selected = df[(df.data_kwargs == args.data_kwargs) & (df.transform_kwargs == args.transform_kwargs) & (df.seed == args.seed)]
+    df_selected = df[
+        (df.data_kwargs == args.data_kwargs) & 
+        (df.transform_kwargs == args.transform_kwargs) & 
+        (df.seed == args.seed) &
+        (df.data_dir == args.data_dir)
+    ]
 
     if len(df_selected) == 0:
         raise ValueError('No results found for the given arguments')
