@@ -46,7 +46,7 @@ class LinearP(nn.Module):
         else:
             self.P = nn.Parameter(self.P)
 
-    def reset_parameters(self, batch_size) -> None:
+    def reset_parameters(self, batch_size = None) -> None:
         """
         From torch.nn.Linear (https://github.com/pytorch/pytorch/blob/af7dc23124a6e3e7b8af0637e3b027f3a8b3fb76/torch/nn/modules/linear.py#L103)
         StackOverflow discussion (https://stackoverflow.com/questions/49433936/how-do-i-initialize-weights-in-pytorch#:~:text=To%20initialize%20layers,do%20it%20afterwards)
@@ -73,19 +73,18 @@ class LinearP(nn.Module):
         # assert torch.allclose(P_sum, torch.ones_like(P_sum), atol=1e-5, rtol=1e-4), P_sum-torch.ones_like(P_sum)
         return P
 
-    def forward(self, x, P = None, normalize_P = True):
+    def forward(self, x, batch_size = None, P = None, normalize_P = True):
         P = self.P if P is None else P
 
         if normalize_P:
             P = self.normalize_P(P)
 
-        if not self.train_P:
+        if (not self.train_P) or (batch_size is None):
             weight = (P @ self.weight.flatten()).reshape(self.weight.shape)
             out = x @ weight.T
-
         else:
             weight = (P @ self.weight.flatten(1).T).T.reshape(self.weight.shape)
-            out = torch.einsum('ij,bkj->bik', x, weight)
+            out = torch.einsum('bi,boi->bo', x, weight)
 
         if self.set_bias: out = out + self.bias
         return out

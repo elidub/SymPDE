@@ -68,14 +68,14 @@ class BaseLearner(pl.LightningModule):
             save(forward_key, pred_out)
 
 
-        y_preds, y_trues = pred_outs
-        y_hats = np.argmax(y_preds, axis = 1)
+        # y_preds, y_trues = pred_outs
+        # y_hats = np.argmax(y_preds, axis = 1)
 
-        fig, ax = plt.subplots(1, 1, figsize=(7, 7), tight_layout=True)
-        disp = skm.ConfusionMatrixDisplay.from_predictions(y_trues, y_hats)
-        disp.plot(ax=ax, colorbar=False)
-        plt.close()
-        wandb.log({'confusion_matrix': wandb.Image(fig)})
+        # fig, ax = plt.subplots(1, 1, figsize=(7, 7), tight_layout=True)
+        # disp = skm.ConfusionMatrixDisplay.from_predictions(y_trues, y_hats)
+        # disp.plot(ax=ax, colorbar=False)
+        # plt.close()
+        # wandb.log({'confusion_matrix': wandb.Image(fig)})
         
 
         for key, value in self.test_logs_method().items():
@@ -119,13 +119,13 @@ class TransformationLearner(BaseLearner, Transform):
 
         # Route a: Forward pass, transformation
         x_a = x
-        out_a = self.net(x_a.unsqueeze(1)).squeeze(1)
+        out_a = self.net(x_a)
         out_a_prime, centers_a = self.transform(out_a, centers, eps)
 
         # Route b: Transformation, forward pass
         x_b = x
         x_b_prime, centers_b = self.transform(x_b, centers, eps)
-        out_b_prime = self.net(x_b_prime.unsqueeze(1)).squeeze(1)
+        out_b_prime = self.net(x_b_prime)
 
         assert (centers_a == centers_b).all()
         assert out_a.shape == x_b.shape
