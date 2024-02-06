@@ -22,6 +22,9 @@ def save_splits(create_sample_func: Callable, data_kwargs: dict, transform_kwarg
     """
     create_data = Create2dData(create_sample_func, data_kwargs, transform_kwargs)
 
+    data_kwargs_name = '_'.join([f'{k}={v}' for k, v in data_kwargs.items()])
+    transform_kwargs_name = '_'.join([f'{k}={v}' for k, v in transform_kwargs.items()])
+
     for split, n_samples in zip(['train', 'val', 'test'], n_splits):
         print(f"Creating {n_samples} for {split}.")
 
@@ -30,8 +33,7 @@ def save_splits(create_sample_func: Callable, data_kwargs: dict, transform_kwarg
         split_dir = os.path.join(data_dir, split) 
         os.makedirs(split_dir, exist_ok=True)
 
-        data_kwargs_name = '_'.join([f'{k}={v}' for k, v in data_kwargs.items()])
 
         for k, v in outs.items():
             assert type(v) == np.ndarray, f"Expected numpy array, got type of {k} = {type(v)}"
-            np.save(os.path.join(split_dir, f'{k}_{data_kwargs_name}.npy'), v)
+            np.save(os.path.join(split_dir, f'{k}_{data_kwargs_name}_{transform_kwargs_name}.npy'), v)

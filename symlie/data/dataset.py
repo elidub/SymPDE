@@ -19,9 +19,13 @@ class FlatDataset(Dataset):
 
         split_dir = os.path.join(data_dir, mode)
         data_kwargs_name = '_'.join([f'{k}={v}' for k, v in data_kwargs.items()])
-        x = np.load(os.path.join(split_dir, f'x_{data_kwargs_name}.npy'))
-        y = np.load(os.path.join(split_dir, f'y_{data_kwargs_name}.npy'))
-        centers = np.load(os.path.join(split_dir, f'centers_{data_kwargs_name}.npy'))
+        transform_kwargs_name = '_'.join([f'{k}={v}' for k, v in transform_kwargs.items()])
+
+        try:
+            data = {d : np.load(os.path.join(split_dir, f'{d}_{data_kwargs_name}_{transform_kwargs_name}.npy')) for d in ['x', 'y', 'centers']}
+        except:
+            data = {d : np.load(os.path.join(split_dir, f'{d}_{data_kwargs_name}.npy')) for d in ['x', 'y', 'centers']}
+        x, y, centers = data['x'], data['y'], data['centers']
 
         N = x.shape[0] if N == -1 else N
 

@@ -4,6 +4,9 @@ import pytorch_lightning as pl
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+import wandb
+
+import sklearn.metrics as skm
 
 from data.transforms import Transform
 from misc.utils import NumpyUtils
@@ -14,8 +17,8 @@ class BaseLearner(pl.LightningModule):
         self.net = net
         self.criterion = criterion
         self.lr = lr
-        self.test_step_outs = []
 
+        self.test_step_outs = []
         self.forward_keys = []
 
 
@@ -57,11 +60,23 @@ class BaseLearner(pl.LightningModule):
         
         run_id = self.trainer.logger.experiment.id
 
-        # save =  NumpyUtils(dir=self.trainer.logger.experiment.dir).save
+        save =  NumpyUtils(dir=self.trainer.logger.experiment.dir).save
 
-        # pred_outs = zip(*self.test_step_outs)
-        # for forward_key, pred_out in zip(self.forward_keys, pred_outs):
-        #     save(forward_key, torch.cat(pred_out).cpu().numpy())
+        pred_outs = zip(*self.test_step_outs)
+        pred_outs = [torch.cat(pred_out).cpu().numpy() for pred_out in pred_outs]
+        for forward_key, pred_out in zip(self.forward_keys, pred_outs):
+            save(forward_key, pred_out)
+
+
+        y_preds, y_trues = pred_outs
+        y_hats = np.argmax(y_preds, axis = 1)
+
+        fig, ax = plt.subplots(1, 1, figsize=(7, 7), tight_layout=True)
+        disp = skm.ConfusionMatrixDisplay.from_predictions(y_trues, y_hats)
+        disp.plot(ax=ax, colorbar=False)
+        plt.close()
+        wandb.log({'confusion_matrix': wandb.Image(fig)})
+        
 
         for key, value in self.test_logs_method().items():
             print(f'Logging {key}')
@@ -84,55 +99,7 @@ class PredictionLearner(BaseLearner):
 
         return y_pred, y_true
     
-    # def test_logs_method(self):
-    #     return {'P': self.net.mlp[0].P}
-
     
-# class TransformationLearner(BaseLearner):
-#     def __init__(self, net, criterion, lr):
-#         super(BaseLearner, self).__init__(net, criterion, lr)
-
-#     def space_translation(self, x, eps):
-#         """
-#         TODO: vectorize transformation and move to dataset
-#         """
-#         _, width = x.shape
-#         shift = (eps * width).to(torch.int)
-
-#         x_prime = torch.stack([
-#             torch.roll(x_i, shifts=int(shift_i), dims=0)
-#         for x_i, shift_i in zip(x, shift)])
-
-#         return x_prime
-    
-#     def forward(self, batch):
-
-#         x, y_, eps = batch
-
-#         # Hardcoded transformation # TODO: Automatize this
-#         transf = self.space_translation
-
-#         # Reset the weights and biases as training P should not be dependent on the weight initailization
-#         if self.net.train_P:
-#             self.net.reset_parameters()
-
-#         # Route a: Forward pass, transformation
-#         x_a = x
-#         out_a = self.net(x_a.unsqueeze(1)).squeeze(1)
-#         out_a_prime = transf(out_a, eps)
-
-#         # Route b: Transformation, forward pass
-#         x_b = x
-#         x_b_prime = transf(x_b, eps)
-#         out_b_prime = self.net(x_b_prime.unsqueeze(1)).squeeze(1)
-
-#         assert out_a.shape == x_b.shape
-#         assert out_a_prime.shape == out_b_prime.shape
-#         assert out_a_prime.shape == x_b_prime.shape
-
-#         return out_a_prime, out_b_prime
-    
-
 class TransformationLearner(BaseLearner, Transform):
     def __init__(self, net, criterion, lr, grid_size, transform_kwargs):
         BaseLearner.__init__(self, net, criterion, lr)

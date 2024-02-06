@@ -56,6 +56,7 @@ def parse_options(notebook = False):
     parser.add_argument("--predict", default=False)
     parser.add_argument("--test", default=True)
     parser.add_argument("--logger", default="wandb")
+    parser.add_argument("--earlystop", action="store_true")
     
     parser.add_argument("--do_return", action="store_true", help="Return model, trainer, datamodule")
     parser.add_argument("--do_return_model", action="store_true", help="Return model, None, None")
@@ -131,7 +132,7 @@ def main(args):
         accelerator=args.device,
         deterministic=True,
         enable_model_summary=args.model_summary,
-        # callbacks=[pl.callbacks.EarlyStopping(monitor='val_loss', patience=5, verbose=True)],
+        callbacks=[pl.callbacks.EarlyStopping(monitor='val_loss', patience=5, verbose=True)] if args.earlystop else None,
     )  
 
     if args.do_return:
