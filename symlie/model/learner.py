@@ -67,16 +67,9 @@ class BaseLearner(pl.LightningModule):
         for forward_key, pred_out in zip(self.forward_keys, pred_outs):
             save(forward_key, pred_out)
 
-
-        # y_preds, y_trues = pred_outs
-        # y_hats = np.argmax(y_preds, axis = 1)
-
-        # fig, ax = plt.subplots(1, 1, figsize=(7, 7), tight_layout=True)
-        # disp = skm.ConfusionMatrixDisplay.from_predictions(y_trues, y_hats)
-        # disp.plot(ax=ax, colorbar=False)
-        # plt.close()
-        # wandb.log({'confusion_matrix': wandb.Image(fig)})
-        
+        # TODO: Automatize this such taht it doesn't happen all the time
+        y_preds, y_trues = pred_outs
+        self.on_test_end_extra(y_preds, y_trues)
 
         for key, value in self.test_logs_method().items():
             print(f'Logging {key}')
@@ -99,33 +92,40 @@ class PredictionLearner(BaseLearner):
 
         return y_pred, y_true
     
+    def on_test_end_extra(self, y_preds, y_trues):
+        y_hats = np.argmax(y_preds, axis = 1)
+
+        fig, ax = plt.subplots(1, 1, figsize=(7, 7), tight_layout=True)
+        disp = skm.ConfusionMatrixDisplay.from_predictions(y_trues, y_hats)
+        disp.plot(ax=ax, colorbar=False)
+        plt.close()
+        wandb.log({'confusion_matrix': wandb.Image(fig)})
     
 class TransformationLearner(BaseLearner, Transform):
     def __init__(self, net, criterion, lr, grid_size, transform_kwargs):
         BaseLearner.__init__(self, net, criterion, lr)
         Transform.__init__(self, grid_size, **transform_kwargs)
 
-        # self.forward_keys = ['out_a_prime', 'out_b_prime']
-
     def forward(self, batch):
 
         x, y_, centers = batch
 
+        batch_size = len(x)
         eps = torch.randn((4,))
 
         # Reset the weights and biases as training P should not be dependent on the weight initailization
         if self.net.train_P:
-            self.net.reset_parameters(batch_size=len(x))
+            self.net.reset_parameters(batch_size=batch_size)
 
         # Route a: Forward pass, transformation
         x_a = x
-        out_a = self.net(x_a)
+        out_a = self.net(x_a, batch_size=batch_size)
         out_a_prime, centers_a = self.transform(out_a, centers, eps)
 
         # Route b: Transformation, forward pass
         x_b = x
         x_b_prime, centers_b = self.transform(x_b, centers, eps)
-        out_b_prime = self.net(x_b_prime)
+        out_b_prime = self.net(x_b_prime, batch_size=batch_size)
 
         assert (centers_a == centers_b).all()
         assert out_a.shape == x_b.shape

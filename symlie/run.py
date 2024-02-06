@@ -27,8 +27,8 @@ def parse_options(notebook = False):
 
     parser.add_argument("--data_dir", type=str, default="../data/sinev2", help="Path to data directory")
     parser.add_argument("--log_dir", type=str, default="../logs", help="Path to log directory")
-    parser.add_argument("--max_epochs", type=int, default=30, help="Number of epochs")
-    parser.add_argument("--batch_size", type=int, default=2, help="Batch size")
+    parser.add_argument("--max_epochs", type=int, default=50, help="Number of epochs")
+    parser.add_argument("--batch_size", type=int, default=8, help="Batch size")
     parser.add_argument("--lr", type=float, default=1e-3, help="Learning rate")
     parser.add_argument("--num_workers", type=int, default=7, help="Number of workers")
     parser.add_argument("--version", type=str, default='version_0', help="Version of the training run")
@@ -132,7 +132,7 @@ def main(args):
         accelerator=args.device,
         deterministic=True,
         enable_model_summary=args.model_summary,
-        callbacks=[pl.callbacks.EarlyStopping(monitor='val_loss', patience=5, verbose=True)] if args.earlystop else None,
+        callbacks=[pl.callbacks.EarlyStopping(monitor='val_loss', patience=10, verbose=False)] if args.earlystop else None,
     )  
 
     if args.do_return:
