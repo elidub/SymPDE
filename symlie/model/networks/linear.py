@@ -98,7 +98,7 @@ class CalculatedP:
         transform_funcs = {
             'none': self.get_none,
             'randn': self.get_randn,
-            # 'space_translation': self.get_space_translation,
+            'space_translation': self.get_space_translation,
             # 'kernelconv': self.get_kernelconv,
         }
 
