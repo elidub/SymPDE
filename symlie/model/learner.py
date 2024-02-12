@@ -68,7 +68,8 @@ class BaseLearner(pl.LightningModule):
             save(forward_key, pred_out)
 
         # TODO: Automatize this such taht it doesn't happen all the time
-        # y_preds, y_trues = pred_outs
+        y_preds, y_trues = pred_outs
+        self.on_test_end_extra_regression(y_preds, y_trues)
         # self.on_test_end_extra(y_preds, y_trues)
 
         for key, value in self.test_logs_method().items():
@@ -82,7 +83,7 @@ class PredictionLearner(BaseLearner):
     def __init__(self, net, criterion, lr):
         super().__init__(net, criterion, lr)
 
-        self.forward_keys = ['y_true', 'y_pred']
+        self.forward_keys = ['y_pred', 'y_true']
 
     def forward(self, batch):
 
@@ -92,7 +93,7 @@ class PredictionLearner(BaseLearner):
 
         return y_pred, y_true
     
-    def on_test_end_extra(self, y_preds, y_trues):
+    def on_test_end_extra_mnist(self, y_preds, y_trues):
         y_hats = np.argmax(y_preds, axis = 1)
 
         fig, ax = plt.subplots(1, 1, figsize=(7, 7), tight_layout=True)
@@ -100,7 +101,17 @@ class PredictionLearner(BaseLearner):
         disp.plot(ax=ax, colorbar=False)
         plt.close()
         wandb.log({'confusion_matrix': wandb.Image(fig)})
-    
+
+    def on_test_end_extra_regression(self, y_preds, y_trues):
+        fig, ax = plt.subplots(1, 1, figsize=(7, 7), tight_layout=True)
+        l = np.max(y_trues)+1
+        fig, ax = plt.subplots()
+        ax.plot([0, l], [0, l], 'k:')
+        ax.plot(y_trues, y_preds, '.', alpha=0.5)
+        plt.show()
+        wandb.log({'regression_results': wandb.Image(fig)})
+
+            
 class TransformationLearner(BaseLearner, Transform):
     def __init__(self, net, criterion, lr, grid_size, transform_kwargs):
         BaseLearner.__init__(self, net, criterion, lr)
