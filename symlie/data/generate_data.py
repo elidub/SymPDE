@@ -56,6 +56,13 @@ datasets = {
         'transform_kwargs'   : {'eps_mult':[0., 0., 1., 1.], 'only_flip' : False},
         'data_kwargs_show'   : {'grid_size':(16, 16), 'noise_std':0.0, 'y_low':1, 'y_high':3},
     },
+    'sine2d-rot': {
+        'create_sample_func' : sine2d,
+        'plot_func'          : plot2d,
+        'data_kwargs'        : {'grid_size':(7, 7), 'noise_std':0.1, 'y_low':1, 'y_high':3},
+        'transform_kwargs'   : {'eps_mult':[0., 1., 1., 1.], 'only_flip' : False},
+        'data_kwargs_show'   : {'grid_size':(16, 16), 'noise_std':0.0, 'y_low':1, 'y_high':3},
+    },
     'flower': {
         'create_sample_func' : flower,
         'plot_func'          : plot2d,
