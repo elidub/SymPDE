@@ -71,3 +71,5 @@ datasets = {
         'data_kwargs_show'   : {'grid_size': (18, 18), 'noise_std': 0.0},
     },
 }
+
+

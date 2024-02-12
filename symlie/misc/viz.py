@@ -23,3 +23,4 @@ def plot1d(x, y):
         val = normalize(y_i, y.min(), y.max())
         plt.plot(x_i, color = cmap(val), alpha = 0.5, linestyle = '-')
     plt.show()
+
