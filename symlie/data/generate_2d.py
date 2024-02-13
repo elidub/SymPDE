@@ -12,6 +12,7 @@ from torchvision import datasets, transforms
 from data.transforms import Transform
 
 def grid_1d(grid_size: int, x_min: float = 0., x_max: float = 1.):
+    grid_size = tuple(grid_size)
     if isinstance(grid_size, tuple):
         grid_size_x, grid_size_y = grid_size
         assert grid_size_x == 1
@@ -20,7 +21,7 @@ def grid_1d(grid_size: int, x_min: float = 0., x_max: float = 1.):
     x = np.linspace(x_min, x_max, grid_size, endpoint=False).reshape(-1, 1)
     return x
 def grid_2d(grid_size: Union[int, tuple[int, int]], x_min: float = 0., x_max: float = 1.):
-
+    grid_size = tuple(grid_size)
     if isinstance(grid_size, tuple):
         grid_size_x, grid_size_y = grid_size
         assert grid_size_x == grid_size_y
