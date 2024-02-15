@@ -22,6 +22,15 @@ def assert_unique(df_map_new):
         df_map_new[col] = df_map_new[col].astype(str)
     assert len(df_map_new) == len(df_map_new.drop_duplicates())
 
+def stringify_dict(d, stringify):
+    # ['seed', 'batch_size', 'noise_std', 'lr', 'test_loss']
+    df_map_new = d.copy()
+    for col in df_map_new.columns:
+        if col not in stringify: continue
+        df_map_new[col] = df_map_new[col].astype(str)
+    return df_map_new
+
+
 def pivot(d, columns, index = 'seed', values = 'test_loss'):
     if type(columns) == str: columns = [columns]
     if type(values) == str:  values = [values]
@@ -110,7 +119,7 @@ def assert_columns_same(d, columns, dataset=None):
     for col in columns:
         col_vals = d[col].values
         for val in col_vals:
-            assert val == col_vals[0]
+            assert str(val) == str(col_vals[0]), f"Expected {col} = {col_vals[0]}, got {col} = {val}"
         col_val = col_vals[0]
         
         if dataset is not None:
