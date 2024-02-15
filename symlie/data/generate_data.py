@@ -77,6 +77,13 @@ datasets = {
         'transform_kwargs'   : {'eps_mult':[0., 0., 1., 1.], 'only_flip' : False},
         'data_kwargs_show'   : {'grid_size': [18, 18], 'noise_std': 0.0},
     },
+    'mnist-noise': {
+        'create_sample_func' : mnist,
+        'plot_func'          : plot2d,
+        'data_kwargs'        : {'grid_size': [7,7], 'noise_std': 0.1},
+        'transform_kwargs'   : {'eps_mult':[0., 0., 1., 1.], 'only_flip' : False},
+        'data_kwargs_show'   : {'grid_size': [18, 18], 'noise_std': 0.0},
+    },
 }
 
 

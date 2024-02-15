@@ -7,3 +7,5 @@ pytorch-lightning
 torchvision
 icecream
 wandb
+pandas
+scikit-learn
