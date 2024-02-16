@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import torch
+from itertools import cycle, islice
 
 from data.generate_2d import Create2dData
 from misc.utils import Args
@@ -51,6 +52,9 @@ def plot_pivot(d=None, columns=None,d_pivot=None, figsize=(4, 4), logx = False, 
     unstack = lambda d, metric: d.apply(metric).unstack().reset_index(level=0, drop = True)
 
     d_mean, d_std = unstack(d_pivot, pd.Series.mean), unstack(d_pivot, pd.Series.std)
+
+    my_colors = list(islice(cycle(['b', 'r', 'g', 'y', 'k']), None, len(d_mean)))
+
 
     fig, ax = plt.subplots(figsize=figsize)
     d_mean.plot(kind='barh', xerr=d_std, ax = ax)
