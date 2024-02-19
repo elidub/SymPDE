@@ -4,6 +4,15 @@ def write_lines(file, lines):
     with open(file, 'w') as f:
         f.writelines(lines)
 
+def write_line(file, line):
+    with open(file, 'w') as f:
+        f.write(line)
+
+def read_lines(file):
+    with open(file, 'r') as f:
+        lines = f.readlines()
+    return lines
+
 def clean_val(val):
     val = str(val)
     # print(val)

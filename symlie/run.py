@@ -24,6 +24,7 @@ def parse_options(notebook = False):
     parser.add_argument("--bias", action="store_true", help="Bias")
 
     parser.add_argument("--criterion", type=str, default='mse', help="Criterion")
+    parser.add_argument("--out_features", type=int, default=1, help="Out features")
 
     parser.add_argument("--data_dir", type=str, default="../data/sinev2", help="Path to data directory")
     parser.add_argument("--log_dir", type=str, default="../logs", help="Path to log directory")
@@ -62,9 +63,9 @@ def parse_options(notebook = False):
     parser.add_argument("--do_return_model", action="store_true", help="Return model, None, None")
 
     # parser.add_argument("--n_splits", nargs='+', default=[10_000,5_000,5_000], help="Train, val, test split")
-    parser.add_argument("--n_train", type=int, default=400, help="Train split")
-    parser.add_argument("--n_val", type=int, default=100, help="Val split")
-    parser.add_argument("--n_test", type=int, default=100, help="Test split")
+    parser.add_argument("--n_train", type=int, default=10000, help="Train split")
+    parser.add_argument("--n_val", type=int, default=1000, help="Val split")
+    parser.add_argument("--n_test", type=int, default=1000, help="Test split")
 
     args = parser.parse_args([]) if notebook else parser.parse_args()
     return args

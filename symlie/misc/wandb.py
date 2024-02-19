@@ -1,15 +1,19 @@
+import os
 from tqdm import tqdm
 import pandas as pd
 import numpy as np
+import wandb
 
-def exceptions(runs, results_df_old):
+def exceptions(runs, results_df_old = None):
     
     runs_new = []
     for run in runs:
 
         if (run.state != 'finished'): continue
-        if (run.id in results_df_old['run_id'].values): continue 
+        if results_df_old is not None:
+            if (run.id in results_df_old['run_id'].values): continue 
         if 'dev' in run.tags: continue
+        if 'new' not in run.tags: continue
         
         runs_new.append(run)
     return runs_new
@@ -43,3 +47,23 @@ def new_runs(runs):
 
     results_df = pd.DataFrame(config_list)
     return results_df
+
+def update_results_df(from_scratch: bool = False, results_file: str = '../logs/store/results_df.pkl'):
+    api = wandb.Api()
+    runs = api.runs('eliasdubbeldam/symlie')
+
+    if from_scratch:
+        runs_selected = exceptions(runs)
+    
+        print(len(runs_selected))
+        results_df_new = results_df = new_runs(runs_selected).reset_index(drop=True)
+    else:
+        results_df_old = pd.read_pickle(results_file)
+        runs_selected = exceptions(runs, results_df_old)
+
+        print(len(runs_selected))
+        results_df = new_runs(runs_selected)
+        results_df_new = pd.concat([results_df_old, results_df]).reset_index(drop=True)
+    
+    # assert_unique(results_df_new)
+    results_df_new.to_pickle(os.path.join(results_file))

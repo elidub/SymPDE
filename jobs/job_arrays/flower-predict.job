@@ -1,0 +1,24 @@
+#!/bin/bash
+
+#SBATCH --partition=gpu
+#SBATCH --gpus=1
+#SBATCH --job-name=flower-predict
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=18
+#SBATCH --time=01:00:00
+#SBATCH --array=1-216%10
+#SBATCH --output=../slurm_output/flower-predict_%A_%a.out
+
+array="flower-predict"
+
+ARRAY_FILE=$HOME/thesis/SymPDE/jobs/arrays/$array.txt
+cd $HOME/thesis/SymPDE/symlie
+
+module purge
+module load 2022
+module load Anaconda3/2022.05
+source activate sympde
+
+srun python -u run.py \
+    --num_workers 18  \
+    $(head -$SLURM_ARRAY_TASK_ID $ARRAY_FILE | tail -1)

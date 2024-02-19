@@ -68,7 +68,7 @@ class BaseLearner(pl.LightningModule):
             save(forward_key, pred_out)
 
         # TODO: Automatize this such taht it doesn't happen all the time
-        y_preds, y_trues = pred_outs
+        # y_preds, y_trues = pred_outs
         # self.on_test_end_extra_regression(y_preds, y_trues)
         # self.on_test_end_extra(y_preds, y_trues)
 

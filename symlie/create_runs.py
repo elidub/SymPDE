@@ -11,6 +11,9 @@ def main(job_dir, array_file, array_dir):
 
     df = pd.DataFrame({key : vals.apply(lambda val: clean_val(val)) for key, vals in df.items() if key != 'experiment'})
 
+    # select only data_kwargs and transform_kwargs
+    # df = df[['y_high', 'y_low', 'noise_std', 'grid_size', 'eps_mult', 'data_dir']]
+
     for experiment, hparams in df.iterrows():
         output_file = os.path.join(array_dir, experiment + '.txt')
         output_lines = dict_to_array(hparams.dropna().to_dict())

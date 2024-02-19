@@ -6,20 +6,21 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=18
 #SBATCH --time=01:00:00
-#SBATCH --array=1-9%9
+#SBATCH --array=1-36%20
 #SBATCH --output=jobs/slurm_output/symlie_train_array_%A_%a.out
 
+# array="sine1d"
 # array="sine1d-predict"
 # array="sine2d"
 # array="sine2d-predict"
-# array="mnist"
+# array="flower"
+# array="flower-predict"
+array="mnist"
 # array="mnist-predict"
 # array="sine2d-rot"
 # array="sine2d-rot-predict"
-# array="flower"
-# array="flower-predict"
 # array="mnist-noise"
-array="mnist-noise-predict"
+# array="mnist-noise-predict"
 
 ARRAY_FILE=$HOME/thesis/SymPDE/jobs/arrays/$array.txt
 cd $HOME/thesis/SymPDE/symlie
