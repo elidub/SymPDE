@@ -42,13 +42,13 @@ def find_id_for_P(args):
         return run_id
 
 def setup_model(args):
+    dataset_name = args.data_dir.split('/')[-1]
     net = args.net
     
     features = np.prod(args.data_kwargs['grid_size'])
 
-    dataset_name = args.data_dir.split('/')[-1]
-    if dataset_name == 'MNIST':
-        out_features = 10
+    if args.criterion == 'ce':
+        out_features = args.out_features # 10 for MNIST
     else:
         out_features = 1
 
