@@ -1,0 +1,9 @@
+--seed 1 --lr 0.1 --earlystop  --n_train 10000 --net TrainP --max_epochs 1000 --data_dir ../data/MNIST --eps_mult 0. 1. 1. 1. --grid_size 7 7 --noise_std 0.1 --n_val 1000 --n_test 1000 --tags mnist-noise
+--seed 2 --lr 0.1 --earlystop  --n_train 10000 --net TrainP --max_epochs 1000 --data_dir ../data/MNIST --eps_mult 0. 1. 1. 1. --grid_size 7 7 --noise_std 0.1 --n_val 1000 --n_test 1000 --tags mnist-noise
+--seed 3 --lr 0.1 --earlystop  --n_train 10000 --net TrainP --max_epochs 1000 --data_dir ../data/MNIST --eps_mult 0. 1. 1. 1. --grid_size 7 7 --noise_std 0.1 --n_val 1000 --n_test 1000 --tags mnist-noise
+--seed 1 --lr 0.01 --earlystop  --n_train 10000 --net TrainP --max_epochs 1000 --data_dir ../data/MNIST --eps_mult 0. 1. 1. 1. --grid_size 7 7 --noise_std 0.1 --n_val 1000 --n_test 1000 --tags mnist-noise
+--seed 2 --lr 0.01 --earlystop  --n_train 10000 --net TrainP --max_epochs 1000 --data_dir ../data/MNIST --eps_mult 0. 1. 1. 1. --grid_size 7 7 --noise_std 0.1 --n_val 1000 --n_test 1000 --tags mnist-noise
+--seed 3 --lr 0.01 --earlystop  --n_train 10000 --net TrainP --max_epochs 1000 --data_dir ../data/MNIST --eps_mult 0. 1. 1. 1. --grid_size 7 7 --noise_std 0.1 --n_val 1000 --n_test 1000 --tags mnist-noise
+--seed 1 --lr 0.001 --earlystop  --n_train 10000 --net TrainP --max_epochs 1000 --data_dir ../data/MNIST --eps_mult 0. 1. 1. 1. --grid_size 7 7 --noise_std 0.1 --n_val 1000 --n_test 1000 --tags mnist-noise
+--seed 2 --lr 0.001 --earlystop  --n_train 10000 --net TrainP --max_epochs 1000 --data_dir ../data/MNIST --eps_mult 0. 1. 1. 1. --grid_size 7 7 --noise_std 0.1 --n_val 1000 --n_test 1000 --tags mnist-noise
+--seed 3 --lr 0.001 --earlystop  --n_train 10000 --net TrainP --max_epochs 1000 --data_dir ../data/MNIST --eps_mult 0. 1. 1. 1. --grid_size 7 7 --noise_std 0.1 --n_val 1000 --n_test 1000 --tags mnist-noise

@@ -1,0 +1,81 @@
+--seed 1 --pde_name Pde22 --mlp_hidden_channels 100
+--seed 2 --pde_name Pde22 --mlp_hidden_channels 100
+--seed 3 --pde_name Pde22 --mlp_hidden_channels 100
+--seed 1 --pde_name Pde24 --mlp_hidden_channels 100
+--seed 2 --pde_name Pde24 --mlp_hidden_channels 100
+--seed 3 --pde_name Pde24 --mlp_hidden_channels 100
+--seed 1 --pde_name KdV --mlp_hidden_channels 100
+--seed 2 --pde_name KdV --mlp_hidden_channels 100
+--seed 3 --pde_name KdV --mlp_hidden_channels 100
+--seed 1 --pde_name Pde22 --mlp_hidden_channels 100 100
+--seed 2 --pde_name Pde22 --mlp_hidden_channels 100 100
+--seed 3 --pde_name Pde22 --mlp_hidden_channels 100 100
+--seed 1 --pde_name Pde24 --mlp_hidden_channels 100 100
+--seed 2 --pde_name Pde24 --mlp_hidden_channels 100 100
+--seed 3 --pde_name Pde24 --mlp_hidden_channels 100 100
+--seed 1 --pde_name KdV --mlp_hidden_channels 100 100
+--seed 2 --pde_name KdV --mlp_hidden_channels 100 100
+--seed 3 --pde_name KdV --mlp_hidden_channels 100 100
+--seed 1 --pde_name Pde22 --mlp_hidden_channels 100 100 100
+--seed 2 --pde_name Pde22 --mlp_hidden_channels 100 100 100
+--seed 3 --pde_name Pde22 --mlp_hidden_channels 100 100 100
+--seed 1 --pde_name Pde24 --mlp_hidden_channels 100 100 100
+--seed 2 --pde_name Pde24 --mlp_hidden_channels 100 100 100
+--seed 3 --pde_name Pde24 --mlp_hidden_channels 100 100 100
+--seed 1 --pde_name KdV --mlp_hidden_channels 100 100 100
+--seed 2 --pde_name KdV --mlp_hidden_channels 100 100 100
+--seed 3 --pde_name KdV --mlp_hidden_channels 100 100 100
+--seed 1 --pde_name Pde22 --mlp_hidden_channels 100 100 100 100
+--seed 2 --pde_name Pde22 --mlp_hidden_channels 100 100 100 100
+--seed 3 --pde_name Pde22 --mlp_hidden_channels 100 100 100 100
+--seed 1 --pde_name Pde24 --mlp_hidden_channels 100 100 100 100
+--seed 2 --pde_name Pde24 --mlp_hidden_channels 100 100 100 100
+--seed 3 --pde_name Pde24 --mlp_hidden_channels 100 100 100 100
+--seed 1 --pde_name KdV --mlp_hidden_channels 100 100 100 100
+--seed 2 --pde_name KdV --mlp_hidden_channels 100 100 100 100
+--seed 3 --pde_name KdV --mlp_hidden_channels 100 100 100 100
+--seed 1 --pde_name Pde22 --mlp_hidden_channels 100 100 100 100 100
+--seed 2 --pde_name Pde22 --mlp_hidden_channels 100 100 100 100 100
+--seed 3 --pde_name Pde22 --mlp_hidden_channels 100 100 100 100 100
+--seed 1 --pde_name Pde24 --mlp_hidden_channels 100 100 100 100 100
+--seed 2 --pde_name Pde24 --mlp_hidden_channels 100 100 100 100 100
+--seed 3 --pde_name Pde24 --mlp_hidden_channels 100 100 100 100 100
+--seed 1 --pde_name KdV --mlp_hidden_channels 100 100 100 100 100
+--seed 2 --pde_name KdV --mlp_hidden_channels 100 100 100 100 100
+--seed 3 --pde_name KdV --mlp_hidden_channels 100 100 100 100 100
+--seed 1 --pde_name Pde22 --mlp_hidden_channels 100 100 100 100 100 100
+--seed 2 --pde_name Pde22 --mlp_hidden_channels 100 100 100 100 100 100
+--seed 3 --pde_name Pde22 --mlp_hidden_channels 100 100 100 100 100 100
+--seed 1 --pde_name Pde24 --mlp_hidden_channels 100 100 100 100 100 100
+--seed 2 --pde_name Pde24 --mlp_hidden_channels 100 100 100 100 100 100
+--seed 3 --pde_name Pde24 --mlp_hidden_channels 100 100 100 100 100 100
+--seed 1 --pde_name KdV --mlp_hidden_channels 100 100 100 100 100 100
+--seed 2 --pde_name KdV --mlp_hidden_channels 100 100 100 100 100 100
+--seed 3 --pde_name KdV --mlp_hidden_channels 100 100 100 100 100 100
+--seed 1 --pde_name Pde22 --mlp_hidden_channels 100 100 100 100 100 100 100
+--seed 2 --pde_name Pde22 --mlp_hidden_channels 100 100 100 100 100 100 100
+--seed 3 --pde_name Pde22 --mlp_hidden_channels 100 100 100 100 100 100 100
+--seed 1 --pde_name Pde24 --mlp_hidden_channels 100 100 100 100 100 100 100
+--seed 2 --pde_name Pde24 --mlp_hidden_channels 100 100 100 100 100 100 100
+--seed 3 --pde_name Pde24 --mlp_hidden_channels 100 100 100 100 100 100 100
+--seed 1 --pde_name KdV --mlp_hidden_channels 100 100 100 100 100 100 100
+--seed 2 --pde_name KdV --mlp_hidden_channels 100 100 100 100 100 100 100
+--seed 3 --pde_name KdV --mlp_hidden_channels 100 100 100 100 100 100 100
+--seed 1 --pde_name Pde22 --mlp_hidden_channels 100 100 100 100 100 100 100 100
+--seed 2 --pde_name Pde22 --mlp_hidden_channels 100 100 100 100 100 100 100 100
+--seed 3 --pde_name Pde22 --mlp_hidden_channels 100 100 100 100 100 100 100 100
+--seed 1 --pde_name Pde24 --mlp_hidden_channels 100 100 100 100 100 100 100 100
+--seed 2 --pde_name Pde24 --mlp_hidden_channels 100 100 100 100 100 100 100 100
+--seed 3 --pde_name Pde24 --mlp_hidden_channels 100 100 100 100 100 100 100 100
+--seed 1 --pde_name KdV --mlp_hidden_channels 100 100 100 100 100 100 100 100
+--seed 2 --pde_name KdV --mlp_hidden_channels 100 100 100 100 100 100 100 100
+--seed 3 --pde_name KdV --mlp_hidden_channels 100 100 100 100 100 100 100 100
+--seed 1 --pde_name Pde22 --mlp_hidden_channels 100 100 100 100 100 100 100 100 100
+--seed 2 --pde_name Pde22 --mlp_hidden_channels 100 100 100 100 100 100 100 100 100
+--seed 3 --pde_name Pde22 --mlp_hidden_channels 100 100 100 100 100 100 100 100 100
+--seed 1 --pde_name Pde24 --mlp_hidden_channels 100 100 100 100 100 100 100 100 100
+--seed 2 --pde_name Pde24 --mlp_hidden_channels 100 100 100 100 100 100 100 100 100
+--seed 3 --pde_name Pde24 --mlp_hidden_channels 100 100 100 100 100 100 100 100 100
+--seed 1 --pde_name KdV --mlp_hidden_channels 100 100 100 100 100 100 100 100 100
+--seed 2 --pde_name KdV --mlp_hidden_channels 100 100 100 100 100 100 100 100 100
+--seed 3 --pde_name KdV --mlp_hidden_channels 100 100 100 100 100 100 100 100 100
