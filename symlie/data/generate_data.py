@@ -45,45 +45,53 @@ datasets = {
     'sine1d': {
         'create_sample_func' : sine1d,
         'plot_func'          : plot1d,
-        'data_kwargs'        : {'grid_size': [1,7], 'noise_std': 0.5, 'y_low': 1, 'y_high': 3},
+        'data_kwargs'        : {'grid_size': (1,7), 'noise_std': 0.5, 'y_low': 1, 'y_high': 3},
         'transform_kwargs'   : {'eps_mult': [0., 0., 1., 0.], 'only_flip': False},
         'data_kwargs_show'   : {'grid_size': [1, 100], 'noise_std': 0.1, 'y_low': 1, 'y_high': 3},
     },
     'sine2d': {
         'create_sample_func' : sine2d,
         'plot_func'          : plot2d,
-        'data_kwargs'        : {'grid_size':[7,7], 'noise_std':0.5, 'y_low':1, 'y_high':3},
+        'data_kwargs'        : {'grid_size':(7,7), 'noise_std':0.5, 'y_low':1, 'y_high':3},
         'transform_kwargs'   : {'eps_mult':[0., 0., 1., 1.], 'only_flip' : False},
         'data_kwargs_show'   : {'grid_size':[16, 16], 'noise_std':0.0, 'y_low':1, 'y_high':3},
     },
     'sine2d-rot': {
         'create_sample_func' : sine2d,
         'plot_func'          : plot2d,
-        'data_kwargs'        : {'grid_size':[7,7], 'noise_std':0.1, 'y_low':1, 'y_high':3},
+        'data_kwargs'        : {'grid_size':(7,7), 'noise_std':0.1, 'y_low':1, 'y_high':3},
         'transform_kwargs'   : {'eps_mult':[0., 1., 1., 1.], 'only_flip' : False},
         'data_kwargs_show'   : {'grid_size':[16, 16], 'noise_std':0.0, 'y_low':1, 'y_high':3},
     },
     'flower': {
         'create_sample_func' : flower,
         'plot_func'          : plot2d,
-        'data_kwargs'        : {'grid_size':[10, 10], 'noise_std':0.1, 'y_low':2, 'y_high':7},
+        'data_kwargs'        : {'grid_size':(10,10), 'noise_std':0.1, 'y_low':2, 'y_high':7},
         'transform_kwargs'   : {'eps_mult':[0., 1., 1., 1.], 'only_flip' : False},
         'data_kwargs_show'   : {'grid_size':[50, 50], 'noise_std':0.00, 'y_low':2, 'y_high':7},
     },
     'mnist': {
         'create_sample_func' : mnist,
         'plot_func'          : plot2d,
-        'data_kwargs'        : {'grid_size': [7,7], 'noise_std': 0.0},
+        'data_kwargs'        : {'grid_size': (7,7), 'noise_std': 0.0},
         'transform_kwargs'   : {'eps_mult':[0., 0., 1., 1.], 'only_flip' : False},
         'data_kwargs_show'   : {'grid_size': [18, 18], 'noise_std': 0.0},
     },
     'mnist-noise': {
         'create_sample_func' : mnist,
         'plot_func'          : plot2d,
-        'data_kwargs'        : {'grid_size': [7,7], 'noise_std': 0.1},
+        'data_kwargs'        : {'grid_size': (7,7), 'noise_std': 0.1},
         'transform_kwargs'   : {'eps_mult':[0., 0., 1., 1.], 'only_flip' : False},
         'data_kwargs_show'   : {'grid_size': [18, 18], 'noise_std': 0.0},
     },
+    'mnist-noise-rot': {
+        'create_sample_func' : mnist,
+        'plot_func'          : plot2d,
+        'data_kwargs'        : {'grid_size': (7,7), 'noise_std': 0.1},
+        'transform_kwargs'   : {'eps_mult':[0., 1., 1., 1.], 'only_flip' : False},
+        'data_kwargs_show'   : {'grid_size': [18, 18], 'noise_std': 0.0},
+    },
+
 }
 
 

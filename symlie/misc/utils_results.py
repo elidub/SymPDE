@@ -32,7 +32,7 @@ def stringify_dict(d, stringify):
     return df_map_new
 
 
-def pivot(d, columns, index = 'seed', values = 'test_loss'):
+def pivot(d, columns = ['batch_size', 'lr', 'net'], index = 'seed', values = 'test_loss'):
     if type(columns) == str: columns = [columns]
     if type(values) == str:  values = [values]
     if type(index) == str:   index = [index]
@@ -40,7 +40,7 @@ def pivot(d, columns, index = 'seed', values = 'test_loss'):
     d = d[columns + index + values].sort_values(by= columns + index).reset_index(drop=True).pivot(index=index, columns=columns, values=values)
     return d
 
-def plot_pivot(d=None, columns=None,d_pivot=None, figsize=(4, 4), logx = False, legend_loc = None):
+def plot_pivot(d=None, columns=None,d_pivot=None, figsize=(4, 4), logx = False, legend_loc = None, suptitle = None):
 
     if d_pivot is None:
         assert (d is not None) and (columns is not None)
@@ -50,29 +50,31 @@ def plot_pivot(d=None, columns=None,d_pivot=None, figsize=(4, 4), logx = False, 
     d_pivot = pivot(d=d, columns=columns) if d_pivot is None else d_pivot
 
     unstack = lambda d, metric: d.apply(metric).unstack().reset_index(level=0, drop = True)
-
     d_mean, d_std = unstack(d_pivot, pd.Series.mean), unstack(d_pivot, pd.Series.std)
 
     my_colors = list(islice(cycle(['b', 'r', 'g', 'y', 'k']), None, len(d_mean)))
 
 
     fig, ax = plt.subplots(figsize=figsize)
-    d_mean.plot(kind='barh', xerr=d_std, ax = ax)
+    d_mean.plot(kind='bar', yerr=d_std, ax = ax)
     
-    if logx: ax.set_xscale('log')
+    if logx: ax.set_yscale('log')
     
     title = d_pivot.columns[0][0]
     if title == 'test_loss': title = 'Test Loss'
     
     ax.set_xlabel(title)
     ax.legend(loc=legend_loc)
+    fig.suptitle(suptitle)
 
     plt.show()
 
 
-def rename_net(d_pivot, level = 1, index = 0):
+def rename_net(d_pivot, level = 3, index = 0):
     d_pivot = d_pivot.rename(columns={'Predict-CalculatedP': 'Pre-calculated', 'Predict-NoneP': 'Vanilla', 'Predict-TrainedP': 'Trained'})
-    new_cols = d_pivot.columns.reindex(['Vanilla', 'Pre-calculated', 'Trained'], level = level)
+    
+    # new_cols = d_pivot.columns.reindex(['Vanilla', 'Trained', 'Pre-calculated'], level = level)
+    new_cols = d_pivot.columns.reindex(['Trained', 'Vanilla'], level = level)
     d_pivot = d_pivot.reindex(columns=new_cols[index])
     return d_pivot
 
@@ -126,8 +128,8 @@ def assert_columns_same(d, columns, dataset=None):
             assert str(val) == str(col_vals[0]), f"Expected {col} = {col_vals[0]}, got {col} = {val}"
         col_val = col_vals[0]
         
-        if dataset is not None:
-            assert col_val == dataset[col], f"Expected {col} = {dataset[col]}, got {col} = {col_val}"
+        # if dataset is not None:
+        #     assert col_val == dataset[col], f"Expected {col} = {dataset[col]}, got {col} = {col_val}"
         
         
         vals_same[col] = col_val

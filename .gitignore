@@ -6,6 +6,8 @@ logs/FNO1d_old
 logs/FNO1d_noprecision
 logs/symlie
 logs/wandb
+logs/store/P_old
+logs/store/P
 
 logs_org/
 logs_old/

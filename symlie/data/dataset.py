@@ -17,6 +17,9 @@ class FlatDataset(Dataset):
         ):
         assert mode in ['train', 'test', 'val']
 
+        if 'mnist' in data_dir:
+            data_dir = os.path.join(data_dir[:-6], 'MNIST')
+
         split_dir = os.path.join(data_dir, mode)
         data_kwargs_name = '_'.join([f'{k}={v}' for k, v in data_kwargs.items()])
         transform_kwargs_name = '_'.join([f'{k}={v}' for k, v in transform_kwargs.items()])
