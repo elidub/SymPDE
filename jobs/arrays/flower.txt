@@ -1,18 +1,4 @@
---seed 1 --lr 0.1 --n_train 10000 --batch_size 16 --noise_std 0.1 --net TrainP --data_dir ../data/flower --eps_mult 0. 1. 1. 1. --grid_size 10 10 --y_high 7 --y_low 2 --n_val 1000 --n_test 1000 --max_epochs 50 --tags flower
---seed 2 --lr 0.1 --n_train 10000 --batch_size 16 --noise_std 0.1 --net TrainP --data_dir ../data/flower --eps_mult 0. 1. 1. 1. --grid_size 10 10 --y_high 7 --y_low 2 --n_val 1000 --n_test 1000 --max_epochs 50 --tags flower
---seed 3 --lr 0.1 --n_train 10000 --batch_size 16 --noise_std 0.1 --net TrainP --data_dir ../data/flower --eps_mult 0. 1. 1. 1. --grid_size 10 10 --y_high 7 --y_low 2 --n_val 1000 --n_test 1000 --max_epochs 50 --tags flower
---seed 1 --lr 0.01 --n_train 10000 --batch_size 16 --noise_std 0.1 --net TrainP --data_dir ../data/flower --eps_mult 0. 1. 1. 1. --grid_size 10 10 --y_high 7 --y_low 2 --n_val 1000 --n_test 1000 --max_epochs 50 --tags flower
---seed 2 --lr 0.01 --n_train 10000 --batch_size 16 --noise_std 0.1 --net TrainP --data_dir ../data/flower --eps_mult 0. 1. 1. 1. --grid_size 10 10 --y_high 7 --y_low 2 --n_val 1000 --n_test 1000 --max_epochs 50 --tags flower
---seed 3 --lr 0.01 --n_train 10000 --batch_size 16 --noise_std 0.1 --net TrainP --data_dir ../data/flower --eps_mult 0. 1. 1. 1. --grid_size 10 10 --y_high 7 --y_low 2 --n_val 1000 --n_test 1000 --max_epochs 50 --tags flower
---seed 1 --lr 0.001 --n_train 10000 --batch_size 16 --noise_std 0.1 --net TrainP --data_dir ../data/flower --eps_mult 0. 1. 1. 1. --grid_size 10 10 --y_high 7 --y_low 2 --n_val 1000 --n_test 1000 --max_epochs 50 --tags flower
---seed 2 --lr 0.001 --n_train 10000 --batch_size 16 --noise_std 0.1 --net TrainP --data_dir ../data/flower --eps_mult 0. 1. 1. 1. --grid_size 10 10 --y_high 7 --y_low 2 --n_val 1000 --n_test 1000 --max_epochs 50 --tags flower
---seed 3 --lr 0.001 --n_train 10000 --batch_size 16 --noise_std 0.1 --net TrainP --data_dir ../data/flower --eps_mult 0. 1. 1. 1. --grid_size 10 10 --y_high 7 --y_low 2 --n_val 1000 --n_test 1000 --max_epochs 50 --tags flower
---seed 1 --lr 0.1 --n_train 10000 --batch_size 2 --noise_std 0.1 --net TrainP --data_dir ../data/flower --eps_mult 0. 1. 1. 1. --grid_size 10 10 --y_high 7 --y_low 2 --n_val 1000 --n_test 1000 --max_epochs 50 --tags flower
---seed 2 --lr 0.1 --n_train 10000 --batch_size 2 --noise_std 0.1 --net TrainP --data_dir ../data/flower --eps_mult 0. 1. 1. 1. --grid_size 10 10 --y_high 7 --y_low 2 --n_val 1000 --n_test 1000 --max_epochs 50 --tags flower
---seed 3 --lr 0.1 --n_train 10000 --batch_size 2 --noise_std 0.1 --net TrainP --data_dir ../data/flower --eps_mult 0. 1. 1. 1. --grid_size 10 10 --y_high 7 --y_low 2 --n_val 1000 --n_test 1000 --max_epochs 50 --tags flower
---seed 1 --lr 0.01 --n_train 10000 --batch_size 2 --noise_std 0.1 --net TrainP --data_dir ../data/flower --eps_mult 0. 1. 1. 1. --grid_size 10 10 --y_high 7 --y_low 2 --n_val 1000 --n_test 1000 --max_epochs 50 --tags flower
---seed 2 --lr 0.01 --n_train 10000 --batch_size 2 --noise_std 0.1 --net TrainP --data_dir ../data/flower --eps_mult 0. 1. 1. 1. --grid_size 10 10 --y_high 7 --y_low 2 --n_val 1000 --n_test 1000 --max_epochs 50 --tags flower
---seed 3 --lr 0.01 --n_train 10000 --batch_size 2 --noise_std 0.1 --net TrainP --data_dir ../data/flower --eps_mult 0. 1. 1. 1. --grid_size 10 10 --y_high 7 --y_low 2 --n_val 1000 --n_test 1000 --max_epochs 50 --tags flower
---seed 1 --lr 0.001 --n_train 10000 --batch_size 2 --noise_std 0.1 --net TrainP --data_dir ../data/flower --eps_mult 0. 1. 1. 1. --grid_size 10 10 --y_high 7 --y_low 2 --n_val 1000 --n_test 1000 --max_epochs 50 --tags flower
---seed 2 --lr 0.001 --n_train 10000 --batch_size 2 --noise_std 0.1 --net TrainP --data_dir ../data/flower --eps_mult 0. 1. 1. 1. --grid_size 10 10 --y_high 7 --y_low 2 --n_val 1000 --n_test 1000 --max_epochs 50 --tags flower
---seed 3 --lr 0.001 --n_train 10000 --batch_size 2 --noise_std 0.1 --net TrainP --data_dir ../data/flower --eps_mult 0. 1. 1. 1. --grid_size 10 10 --y_high 7 --y_low 2 --n_val 1000 --n_test 1000 --max_epochs 50 --tags flower
+--data_dir ../data/flower --eps_mult 0. 0. 1. 1. --grid_size 10 10 --noise_std 0. --y_low 2 --y_high 7
+--data_dir ../data/flower --eps_mult 0. 1. 1. 1. --grid_size 10 10 --noise_std 0. --y_low 2 --y_high 7
+--data_dir ../data/flower --eps_mult 0. 0. 1. 1. --grid_size 10 10 --noise_std 0.1 --y_low 2 --y_high 7
+--data_dir ../data/flower --eps_mult 0. 1. 1. 1. --grid_size 10 10 --noise_std 0.1 --y_low 2 --y_high 7
