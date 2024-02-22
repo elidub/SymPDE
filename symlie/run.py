@@ -1,14 +1,12 @@
 import torch
 import os
 import pytorch_lightning as pl
-from icecream import install
 import argparse
 import logging
-import math
-import json
 import wandb
+import os
+import yaml
 
-install()
 
 from model.setup import setup_model
 from data.generate_2d import sine1d, sine2d, flower, mnist
@@ -16,6 +14,8 @@ from data.generate_data import save_splits
 
 def parse_options(notebook = False):
     parser = argparse.ArgumentParser(description='SymLie')
+
+    parser.add_argument("--config", type=str, default=None, help="Name of the config file")
 
     parser.add_argument("--seed", type=int, default=42, help="Seed for reproducibility")
     parser.add_argument("--net", type=str, default='MLP', help="Name of the network")
@@ -68,6 +68,18 @@ def parse_options(notebook = False):
     parser.add_argument("--n_test", type=int, default=1000, help="Test split")
 
     args = parser.parse_args([]) if notebook else parser.parse_args()
+
+
+    #read yaml file
+    config_dir = '../jobs/configs/'
+    if args.config:
+        with open(os.path.join(config_dir, f'{args.config}.yaml')) as file:
+            yaml_config = yaml.safe_load(file)
+
+        #update args with yaml file
+        for key, value in yaml_config.items():
+            setattr(args, key, value)
+
     return args
 
 def process_args(args):

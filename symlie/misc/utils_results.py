@@ -61,9 +61,10 @@ def plot_pivot(d=None, columns=None,d_pivot=None, figsize=(4, 4), logx = False, 
     if logx: ax.set_yscale('log')
     
     title = d_pivot.columns[0][0]
-    if title == 'test_loss': title = 'Test Loss'
     
-    ax.set_xlabel(title)
+    # if title == 'test_loss': title = 'Test Loss'
+    # ax.set_xlabel(title)
+    
     ax.legend(loc=legend_loc)
     fig.suptitle(suptitle)
 

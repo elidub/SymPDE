@@ -10,6 +10,7 @@ class FlatDataset(Dataset):
     def __init__(
             self, 
             mode: str, 
+            task: str,
             data_kwargs: dict, 
             transform_kwargs: dict,
             data_dir = '../data/flat',
@@ -31,12 +32,18 @@ class FlatDataset(Dataset):
         x, y, centers = data['x'], data['y'], data['centers']
 
         N = x.shape[0] if N == -1 else N
+        y_min = y.min()
 
         self.x = torch.from_numpy(x[:N]).float()
         self.y = torch.from_numpy(y[:N]).float()
 
-        if 'MNIST' in data_dir:
+        if task == 'classification':
+            self.y = self.y - y_min # Shift classes such that they correspond for CrossEntropyLoss
             self.y = self.y.long()
+
+
+        # if 'MNIST' in data_dir:
+        #     self.y = self.y.long()
 
         self.centers = torch.from_numpy(centers[:N])
 

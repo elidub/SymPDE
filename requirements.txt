@@ -9,3 +9,4 @@ icecream
 wandb
 pandas
 scikit-learn
+pyyaml

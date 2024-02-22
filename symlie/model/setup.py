@@ -47,6 +47,12 @@ def setup_model(args):
     
     features = np.prod(args.data_kwargs['grid_size'])
 
+    tasks = {
+        'ce' : 'classification',
+        'mse' : 'regression',
+    }
+    task = tasks[args.criterion]
+
     if args.criterion == 'ce':
         out_features = args.out_features # 10 for MNIST
     else:
@@ -103,6 +109,7 @@ def setup_model(args):
     
     datamodule = BaseDataModule(
         dataset = dataset,
+        task = task,
         data_kwargs = args.data_kwargs,
         transform_kwargs = args.transform_kwargs,
         data_dir = args.data_dir, 
@@ -136,7 +143,7 @@ def setup_model(args):
             )
         if learner == PredictionLearner:
             model = learner.load_from_checkpoint(
-                os.path.join(ckpt_path, ckpt), net=net, criterion=criterion, lr=args.lr,
+                os.path.join(ckpt_path, ckpt), net=net, criterion=criterion, lr=args.lr, task=task,
                 map_location=torch.device('cpu')
             )
         print(f"Loaded model from {ckpt_path}")
@@ -145,7 +152,7 @@ def setup_model(args):
         if learner == TransformationLearner:
             model = learner(net, criterion, lr=args.lr, grid_size=args.data_kwargs['grid_size'], transform_kwargs=args.transform_kwargs)
         elif learner == PredictionLearner:
-            model = learner(net, criterion, lr=args.lr)
+            model = learner(net, criterion, lr=args.lr, task=task)
         else:
             raise NotImplementedError(f"Network {net} not implemented")
 

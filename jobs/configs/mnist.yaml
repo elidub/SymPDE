@@ -1,0 +1,19 @@
+seed: 1
+net: Predict-NoneP
+
+criterion: ce
+out_features: 10
+
+data_dir: ../data/MNIST
+max_epochs: 3
+
+grid_size: [7,7]
+noise_std: 0.5
+
+eps_mult: 0. 0. 1. 0.
+
+tags: dev
+
+n_train: 100
+n_val: 10
+n_test: 10

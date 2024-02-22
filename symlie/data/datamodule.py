@@ -6,6 +6,7 @@ class BaseDataset(Dataset):
     def __init__(
             self,
             mode: str,
+            task: str,
             data_kwargs: dict = {},
             transform_kwargs: dict = {},
             data_dir: str = '../data',
@@ -25,6 +26,7 @@ class BaseDataModule(pl.LightningDataModule):
     def __init__(
             self,
             dataset: BaseDataset,
+            task: str,
             data_kwargs: dict = {},
             transform_kwargs: dict = {},
             data_dir: str = '../data',
@@ -35,6 +37,7 @@ class BaseDataModule(pl.LightningDataModule):
     ):
         super().__init__()
         self.dataset = dataset
+        self.task = task
         self.data_kwargs = data_kwargs
         self.transform_kwargs = transform_kwargs
         self.data_dir = data_dir
@@ -49,6 +52,7 @@ class BaseDataModule(pl.LightningDataModule):
             split:
                 self.dataset(
                     mode=split,
+                    task=self.task,
                     data_kwargs=self.data_kwargs,
                     transform_kwargs = self.transform_kwargs,
                     data_dir=self.data_dir,
