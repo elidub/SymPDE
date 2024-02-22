@@ -2,14 +2,14 @@
 
 #SBATCH --partition=gpu
 #SBATCH --gpus=1
-#SBATCH --job-name=flower-predict
+#SBATCH --job-name=sine1d-task
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=18
 #SBATCH --time=01:00:00
-#SBATCH --array=1-216%10
-#SBATCH --output=../slurm_output/flower-predict_%A_%a.out
+#SBATCH --array=1-18%10
+#SBATCH --output=../slurm_output/sine1d-task_%A_%a.out
 
-array="flower-predict"
+array="sine1d-task"
 
 ARRAY_FILE=$HOME/thesis/SymPDE/jobs/arrays/$array.txt
 cd $HOME/thesis/SymPDE/symlie
