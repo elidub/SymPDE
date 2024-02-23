@@ -11,7 +11,7 @@ from typing import Callable
 from PIL import Image
 
 from data.generate_2d import Create2dData
-from data.generate_2d import sine1d, sine2d, flower, mnist
+from data.generate_2d import sine1d, sine2d, flower, mnist, noise
 from misc.viz import plot1d, plot2d
 
 def save_splits(create_sample_func: Callable, data_kwargs: dict, transform_kwargs: dict, data_dir: str, n_splits: dict = {'train': 400,'val': 1_000,'test': 1_000}) -> None:
@@ -42,12 +42,19 @@ def save_splits(create_sample_func: Callable, data_kwargs: dict, transform_kwarg
 
 
 datasets = {
+    'noise': {
+        'create_sample_func' : noise,
+        'plot_func'          : plot1d,
+        'data_kwargs'        : {'grid_size': (1,7), 'noise_std': 1.},
+        'transform_kwargs'   : {'eps_mult': [0., 0., 0., 0.], 'only_flip': False},
+        'data_kwargs_show'   : {'grid_size': (1, 7), 'noise_std': 1.},
+    },
     'sine1d': {
         'create_sample_func' : sine1d,
         'plot_func'          : plot1d,
         'data_kwargs'        : {'grid_size': (1,7), 'noise_std': 0.5, 'y_low': 1, 'y_high': 3},
         'transform_kwargs'   : {'eps_mult': [0., 0., 1., 0.], 'only_flip': False},
-        'data_kwargs_show'   : {'grid_size': [1, 100], 'noise_std': 0.1, 'y_low': 1, 'y_high': 3},
+        'data_kwargs_show'   : {'grid_size': (1, 100), 'noise_std': 0.1, 'y_low': 1, 'y_high': 3},
     },
     'sine2d': {
         'create_sample_func' : sine2d,

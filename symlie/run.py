@@ -4,12 +4,12 @@ import pytorch_lightning as pl
 import argparse
 import logging
 import wandb
-import os
+import os, sys
 import yaml
 
 
 from model.setup import setup_model
-from data.generate_2d import sine1d, sine2d, flower, mnist
+from data.generate_2d import sine1d, sine2d, flower, mnist, noise
 from data.generate_data import save_splits
 
 def parse_options(notebook = False):
@@ -83,13 +83,19 @@ def parse_options(notebook = False):
     return args
 
 def process_args(args):
+    args.grid_size = tuple(args.grid_size) # Convert to tuple
+    if isinstance(args.eps_mult, str): args.eps_mult = tuple([float(e_i) for e_i in args.eps_mult.split(' ')])
+    if isinstance(args.eps_mult, list): args.eps_mult = tuple(args.eps_mult)
+
     data_kwargs_keys = ['grid_size', 'noise_std', 'y_low', 'y_high']
     args.data_kwargs = {k : getattr(args, k) for k in data_kwargs_keys}
     for data_kwargs_key in data_kwargs_keys:
         if args.data_kwargs[data_kwargs_key] is None:
             del args.data_kwargs[data_kwargs_key]
 
-    args.data_kwargs['grid_size'] = tuple(args.data_kwargs['grid_size']) # Convert to tuple
+    if not isinstance(args.data_kwargs['grid_size'], tuple):
+        print('Warning grid_size should already be tuple')
+        args.data_kwargs['grid_size'] = tuple(args.data_kwargs['grid_size']) # Convert to tuple
 
     transform_kwargs_keys = ['eps_mult', 'only_flip']
     args.transform_kwargs = {k : getattr(args, k) for k in transform_kwargs_keys} 
@@ -165,6 +171,7 @@ def generate_data(args):
     check_args_processed(args)   
      
     datasets = {
+        "noise"  : {'create_sample_func' : noise},
         'sine1d' : {'create_sample_func' : sine1d},
         'sine2d' : {'create_sample_func' : sine2d},
         'flower' : {'create_sample_func' : flower},

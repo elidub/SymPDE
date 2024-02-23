@@ -1,0 +1,24 @@
+# General
+# seed: 42
+net: TrainP
+# generate_data: True
+
+data_dir: ../data/noise
+
+# Data and transform 
+grid_size: [1, 7]
+noise_std: 1.
+
+eps_mult: [0., 0., 1., 0.]
+
+# Training
+max_epochs: 50
+
+# n_train: 100
+# n_val: 10
+# n_test: 10
+
+# Logging
+tags: [noise, dev]
+# logger: None
+

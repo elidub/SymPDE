@@ -14,15 +14,18 @@ def plot2d(x, y = None, l = 1, set_axis_off = True, max_grid = None):
     plt.show()
 
 
-def plot1d(x, y, l=1):
+def plot1d(x, y = None, l=1):
     x = x.squeeze(1)
+    if y is None:
+        y = np.ones(len(x))
+    assert len(x) == len(y)
 
-    normalize = lambda value, min_val, max_val: (value - min_val) / (max_val - min_val)
+    normalize = lambda value, min_val, max_val: (value - min_val) / (max_val - min_val) if max_val - min_val > 0 else 0
 
     fig, ax = plt.subplots(figsize=np.array([2, 1])*5*l)
     cmap = plt.cm.get_cmap('viridis', 2)
     for x_i, y_i in zip(x, y):
         val = normalize(y_i, y.min(), y.max())
-        plt.plot(x_i, color = cmap(val), alpha = 0.5, linestyle = '-')
+        plt.plot(x_i, color = cmap(val), alpha = 0.5)
     plt.show()
 

@@ -15,3 +15,10 @@ The folder `ext_repos/` contains cloned repositories from other authors. I remov
 ## Presentations
 - [Presentation 13 dec](assets/presentations/presentation_13dec.pdf)
 - [Presentation 23 nov](assets/presentations/presentation_23nov.html) (still in html)
+
+## Commands
+Local
+- ss: sh ~/EliasMBA/Projects/Uni/SymPDE/jobs/sync.sh
+- ca: conda activate sympde
+- ru: python run.py
+- ruc: python run.py --config $1

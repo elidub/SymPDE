@@ -12,7 +12,7 @@ from torchvision import datasets, transforms
 from data.transforms import Transform
 
 def grid_1d(grid_size: int, x_min: float = 0., x_max: float = 1.):
-    grid_size = tuple(grid_size)
+    if isinstance(grid_size, list): grid_size = tuple(grid_size)
     if isinstance(grid_size, tuple):
         grid_size_x, grid_size_y = grid_size
         assert grid_size_x == 1
@@ -21,7 +21,7 @@ def grid_1d(grid_size: int, x_min: float = 0., x_max: float = 1.):
     x = np.linspace(x_min, x_max, grid_size, endpoint=False).reshape(-1, 1)
     return x
 def grid_2d(grid_size: Union[int, tuple[int, int]], x_min: float = 0., x_max: float = 1.):
-    grid_size = tuple(grid_size)
+    if isinstance(grid_size, list): grid_size = tuple(grid_size)
     if isinstance(grid_size, tuple):
         grid_size_x, grid_size_y = grid_size
         assert grid_size_x == grid_size_y
@@ -31,6 +31,23 @@ def grid_2d(grid_size: Union[int, tuple[int, int]], x_min: float = 0., x_max: fl
     xx, yy = np.meshgrid(x, x)
     xx, yy = np.expand_dims(xx, -1), np.expand_dims(yy, -1)
     return xx, yy
+
+def noise(N: int, split: str, grid_size: int, noise_std: float = 0.):
+
+    if isinstance(grid_size, tuple):
+        grid_size_x, grid_size_y = grid_size
+        if grid_size_x == 1:
+            zeros = np.zeros((N, grid_size_y))
+        else:
+            zeros = np.zeros((N, *grid_size))
+    elif isinstance(grid_size, int):
+        zeros = np.zeros((N, grid_size))
+    else:
+        raise ValueError(f"grid_size = {grid_size} not understood.")
+
+    random = np.random.normal(size=N)
+    return zeros, random
+
 
 # def sine1d(N: int, y_low: int, y_high: int, grid_size: int):
 def sine1d(N: int, split: str, y_low: int, y_high: int, grid_size: int, noise_std: float = 0.):
@@ -57,6 +74,7 @@ def sine2d(N: int, split: str, y_low: int, y_high: int, grid_size: Union[int, tu
 def flower(N: int, split: str, y_low: int, y_high: int, grid_size: int, size: float = 3., noise_std: float = 0.):
 
     xx, yy = grid_2d(grid_size=grid_size, x_min=-size, x_max=size)
+    print(xx.shape, yy.shape)
 
     s = 1
     n_leaves = np.random.randint(y_low, y_high, size = (N,))
