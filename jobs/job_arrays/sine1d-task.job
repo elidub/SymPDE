@@ -1,6 +1,7 @@
 #!/bin/bash
 
 #SBATCH --partition=gpu
+#SBATCH -exclude=gcn45
 #SBATCH --gpus=1
 #SBATCH --job-name=sine1d-task
 #SBATCH --ntasks=1
