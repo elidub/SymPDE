@@ -154,13 +154,13 @@ class PredictionLearner(BaseLearner):
         wandb.log({'regression_results': wandb.Image(fig)})
             
 class TransformationLearner(BaseLearner, Transform):
-    def __init__(self, net, criterion, lr, grid_size, transform_kwargs):
+    def __init__(self, net, criterion, lr, grid_size, transform_params):
         BaseLearner.__init__(self, net, criterion, lr)
-        Transform.__init__(self, grid_size, **transform_kwargs)
+        Transform.__init__(self, grid_size, **transform_params)
 
     def forward(self, batch):
 
-        x, y_, centers = batch
+        x, y_ = batch
 
         batch_size = len(x)
         eps = torch.randn((4,))
@@ -172,11 +172,11 @@ class TransformationLearner(BaseLearner, Transform):
         # Route a: Forward pass, transformation
         x_a = x
         out_a = self.net(x_a, batch_size=batch_size)
-        out_a_prime, centers_a = self.transform(out_a, centers, eps)
+        out_a_prime, centers_a = self.transform(out_a, eps)
 
         # Route b: Transformation, forward pass
         x_b = x
-        x_b_prime, centers_b = self.transform(x_b, centers, eps)
+        x_b_prime, centers_b = self.transform(x_b, eps)
         out_b_prime = self.net(x_b_prime, batch_size=batch_size)
 
         assert (centers_a == centers_b).all()

@@ -9,11 +9,11 @@ from misc.utils import Args
 from model.setup import find_id_for_P, load_P_pred
 
 
-def plot_data(dataset, data_kwargs_list=['data_kwargs_show', 'data_kwargs'], N_plot=5, l=1):
-    for data_kwargs in data_kwargs_list:
-        create_data = Create2dData(dataset['create_sample_func'], dataset[data_kwargs], dataset['transform_kwargs'])
+def plot_data(dataset, data_params_list=['data_params_show', 'data_params'], N_plot=5, l=1):
+    for data_params in data_params_list:
+        create_data = Create2dData(dataset['create_sample_func'], dataset[data_params], dataset['transform_params'])
         out = create_data(N = N_plot)
-        x, y = out['x'].reshape(N_plot, *dataset[data_kwargs]['grid_size']), out['y']
+        x, y = out['x'].reshape(N_plot, *dataset[data_params]['grid_size']), out['y']
         dataset['plot_func'](x, y, l)
 
 def assert_unique(df_map_new):

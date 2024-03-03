@@ -36,9 +36,11 @@ def parse_options(notebook = False):
     parser.add_argument("--name", type=str, default=None, help="Name of the training run")
     parser.add_argument("--model_summary", type=bool, default=False, help="Weights summary")
 
-    # Data kwargs
+    # Data hparam kwargs
     parser.add_argument("--grid_size", nargs='+', type=int, default = None) 
     parser.add_argument("--noise_std", type=float, default = None) 
+
+    # Data content kwargs
     parser.add_argument("--y_low", type=int, default = None)
     parser.add_argument("--y_high", type=int, default = None)
     parser.add_argument("--A_low", type=float, default = None)
@@ -89,18 +91,18 @@ def process_args(args):
     if isinstance(args.eps_mult, str): args.eps_mult = tuple([float(e_i) for e_i in args.eps_mult.split(' ')])
     if isinstance(args.eps_mult, list): args.eps_mult = tuple(args.eps_mult)
 
-    data_kwargs_keys = ['grid_size', 'noise_std', 'y_low', 'y_high', 'A_low', 'A_high']
-    args.data_kwargs = {k : getattr(args, k) for k in data_kwargs_keys}
-    for data_kwargs_key in data_kwargs_keys:
-        if args.data_kwargs[data_kwargs_key] is None:
-            del args.data_kwargs[data_kwargs_key]
+    
+    data_params_keys  = ['grid_size', 'noise_std']
+    args.data_params = {k : getattr(args, k) for k in data_params_keys}
+    
+    data_vars_keys = ['y_low', 'y_high', 'A_low', 'A_high']
+    args.data_vars = {k : getattr(args, k) for k in data_vars_keys}
+    for data_vars_key in data_vars_keys:
+        if args.data_vars_keys[data_vars_key] is None:
+            del args.data_vars_keys[data_vars_key]
 
-    if not isinstance(args.data_kwargs['grid_size'], tuple):
-        print('Warning grid_size should already be tuple')
-        args.data_kwargs['grid_size'] = tuple(args.data_kwargs['grid_size']) # Convert to tuple
-
-    transform_kwargs_keys = ['eps_mult', 'only_flip']
-    args.transform_kwargs = {k : getattr(args, k) for k in transform_kwargs_keys} 
+    transform_params_keys = ['eps_mult', 'only_flip']
+    args.t = {k : getattr(args, k) for k in transform_params_keys} 
 
     args.n_splits = [n_split for n_split in [args.n_train, args.n_val, args.n_test]]
 
@@ -187,8 +189,9 @@ def generate_data(args):
 
     save_splits(
         create_sample_func = dataset['create_sample_func'],
-        data_kwargs=args.data_kwargs,
-        transform_kwargs=args.transform_kwargs,
+        data_params=args.data_params,
+        data_vars=args.data_vars,
+        transform_params=args.transform_params,
         data_dir=args.data_dir,
         n_splits=args.n_splits
     )

@@ -32,7 +32,8 @@ def grid_2d(grid_size: Union[int, tuple[int, int]], x_min: float = 0., x_max: fl
     xx, yy = np.expand_dims(xx, -1), np.expand_dims(yy, -1)
     return xx, yy
 
-def noise(N: int, split: str, grid_size: int, noise_std: float = 0.):
+
+def noise(N: int, grid_size: int):
 
     if isinstance(grid_size, tuple):
         grid_size_x, grid_size_y = grid_size
@@ -48,13 +49,12 @@ def noise(N: int, split: str, grid_size: int, noise_std: float = 0.):
     random = np.random.normal(size=N)
     return zeros, random
 
-
-# def sine1d(N: int, y_low: int, y_high: int, grid_size: int):
-def sine1d(N: int, split: str, y_low: int, y_high: int, grid_size: int, A_low: float = 1., A_high: float = 1., noise_std: float = 0.):
+# def sine1d(N: int, k_low: int, k_high: int, grid_size: int):
+def sine1d(N: int, grid_size: int, k_low: int, k_high: int, A_low: float = 1., A_high: float = 1.):
     
     x = grid_1d(grid_size=grid_size, x_min=0, x_max=1)
 
-    k = np.random.randint(y_low, y_high, size = (N,))
+    k = np.random.randint(k_low, k_high, size = (N,))
     A = np.random.uniform(A_low, A_high, size = (N))
 
     sins = np.reshape(A, (-1, 1))*np.sin(2*np.pi*k*x).T
@@ -63,24 +63,24 @@ def sine1d(N: int, split: str, y_low: int, y_high: int, grid_size: int, A_low: f
 
     return sins, np.stack([k, A], axis = 1)
 
-def sine2d(N: int, split: str, y_low: int, y_high: int, grid_size: Union[int, tuple[int, int]], noise_std: float = 0.):
+def sine2d(N: int, grid_size: Union[int, tuple[int, int]], k_low: int, k_high: int, ):
 
     xx, yy = grid_2d(grid_size=grid_size, x_min=0, x_max=1)
 
-    k = np.random.randint(y_low, y_high, size = (N,))
+    k = np.random.randint(k_low, k_high, size = (N,))
     x_mult, y_mult = 0, 1
 
     sins = np.sin(2*np.pi*k*(xx*x_mult+yy*y_mult)).T
 
     return sins, k
 
-def flower(N: int, split: str, y_low: int, y_high: int, grid_size: int, size: float = 3., noise_std: float = 0.):
+def flower(N: int, k_low: int, k_high: int, grid_size: int, size: float = 3., noise_std: float = 0.):
 
     xx, yy = grid_2d(grid_size=grid_size, x_min=-size, x_max=size)
     print(xx.shape, yy.shape)
 
     s = 1
-    n_leaves = np.random.randint(y_low, y_high, size = (N,))
+    n_leaves = np.random.randint(k_low, k_high, size = (N,))
 
     r = np.sqrt(xx**2 + yy**2)
     theta = np.arctan2(yy, xx)
@@ -93,7 +93,7 @@ def flower(N: int, split: str, y_low: int, y_high: int, grid_size: int, size: fl
 
     return z, n_leaves
 
-def mnist(N: int, split: str, grid_size: tuple[int, int], noise_std: float = 0.):
+def mnist(N: int, grid_size: tuple[int, int], split: str):
     data_dir = '../data'
     train = {'train': True, 'val': True, 'test':False}[split]
     idx   = {'train': 0, 'val': 50_000, 'test': 0}
@@ -126,12 +126,11 @@ def mnist(N: int, split: str, grid_size: tuple[int, int], noise_std: float = 0.)
 
 
 class Create2dData:
-    def __init__(self, create_sample_func: str, data_kwargs: dict, transform_kwargs: dict):
+    def __init__(self, create_sample_func: str, data_params: dict, data_vars: dict, transform_params: dict):
         self.create_sample_func = create_sample_func
-        self.data_kwargs = data_kwargs
-        self.transform_kwargs = transform_kwargs
-        self.grid_size = data_kwargs['grid_size']
-        self.noise_std = data_kwargs['noise_std']
+        self.grid_size, self.noise_std = data_params['grid_size'], data_params['noise_std']
+        self.data_vars = data_vars
+        self.transform_params = transform_params
 
     def add_noise(self, x):
         noise = np.random.normal(0, self.noise_std, size = (x.shape))
@@ -139,23 +138,24 @@ class Create2dData:
         return x
     
     def transform_data(self, x, N):
-        transform = Transform(grid_size=self.grid_size, **self.transform_kwargs)
-        centers_0 = torch.zeros(N, 2)
+        transform = Transform(grid_size=self.grid_size **self.transform_params)
         epsilons  = torch.rand(N, 4)
         x = torch.from_numpy(x).reshape(N, np.prod(self.grid_size))
-        x, centers = transform(x, centers=centers_0, epsilons=epsilons, transform_individual_bool=True)
-        x = x.reshape(N, *self.grid_size)
-        x, centers = x.numpy(), centers.numpy()
-        return x, centers
+        x = transform(x, epsilons=epsilons, transform_individual_bool=True)
+        x = x.reshape(N, *self.grid_size).numpy()
+        return x
 
-    def __call__(self, N: int, split: str = 'train', flatten: bool = True):
-        x, y = self.create_sample_func(N, split, **self.data_kwargs)
+    def __call__(self, N: int, split: str = 'train'):
+
+
+        data_vars = self.data_vars.copy()
+        if self.create_sample_func == mnist: data_vars['split'] = split
+
+        x, y = self.create_sample_func(N, **data_vars)
 
         x = self.add_noise(x)
 
-        x, centers = self.transform_data(x, N)
+        x = self.transform_data(x, N)
 
-        if flatten: x = x.reshape(N, np.prod(self.grid_size))
-
-        return {'x': x, 'y':y, 'centers': centers}
+        return {'x': x, 'y':y}
 

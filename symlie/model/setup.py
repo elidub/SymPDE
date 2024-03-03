@@ -18,18 +18,13 @@ def load_P_pred(run_id, P_dir = '../logs/store/P/'):
 
 def find_id_for_P(args):
     df = pd.read_pickle('../logs/store/map_df.pkl')
-    args.data_kwargs['grid_size'] = tuple(args.data_kwargs['grid_size'])
-
-    for row in df['data_kwargs']:
-        if 'grid_size' in row:
-            row['grid_size'] = tuple(row['grid_size'])
-
 
     data_filter = (df.data_dir == '../data/noise') if args.use_P_from_noise else (df.data_dir == args.data_dir)
 
     df_selected = df[
-        (df.data_kwargs == args.data_kwargs) & 
-        (df.transform_kwargs == args.transform_kwargs) & 
+        (df.data_params == args.data_params) & 
+        (df.data_vars == args.data_vars) & 
+        (df.transform_params == args.transform_params) & 
         (df.seed == args.seed) & 
         data_filter
     ]
@@ -49,7 +44,7 @@ def setup_model(args):
     dataset_name = args.data_dir.split('/')[-1]
     net = args.net
     
-    features = np.prod(args.data_kwargs['grid_size'])
+    features = np.prod(args.data_params['grid_size'])
 
     tasks = {
         'ce' : 'classification',
@@ -116,8 +111,9 @@ def setup_model(args):
     datamodule = BaseDataModule(
         dataset = dataset,
         task = task,
-        data_kwargs = args.data_kwargs,
-        transform_kwargs = args.transform_kwargs,
+        data_params = args.data_params,
+        data_vars = args.data_vars,
+        transform_params = args.transform_params,
         data_dir = args.data_dir, 
         batch_size = args.batch_size,
         num_workers = args.num_workers,
@@ -144,7 +140,7 @@ def setup_model(args):
         print(ckpt)
         if learner == TransformationLearner:
             model = learner.load_from_checkpoint(
-                os.path.join(ckpt_path, ckpt), net=net, criterion=criterion, lr=args.lr, grid_size=args.data_kwargs['grid_size'], transform_kwargs=args.transform_kwargs,
+                os.path.join(ckpt_path, ckpt), net=net, criterion=criterion, lr=args.lr, grid_size=args.data_params['grid_size'], transform_params=args.transform_params,
                 map_location=torch.device('cpu')
             )
         if learner == PredictionLearner:
@@ -156,7 +152,7 @@ def setup_model(args):
 
     else:
         if learner == TransformationLearner:
-            model = learner(net, criterion, lr=args.lr, grid_size=args.data_kwargs['grid_size'], transform_kwargs=args.transform_kwargs)
+            model = learner(net, criterion, lr=args.lr, grid_size=args.data_params['grid_size'], transform_params=args.transform_params)
         elif learner == PredictionLearner:
             model = learner(net, criterion, lr=args.lr, task=task)
         else:

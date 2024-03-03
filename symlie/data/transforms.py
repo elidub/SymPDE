@@ -56,9 +56,8 @@ class RandomPad:
         
         
 class SpaceTranslate():
-    def __init__(self, dim, return_shift = True):
+    def __init__(self, dim):
         self.dim = dim
-        self.return_shift = return_shift
 
     def __repr__(self) -> str:
         return f'SpaceTranslate_{self.dim}'
@@ -67,11 +66,7 @@ class SpaceTranslate():
         grid_size = x.shape[self.dim]
         shift = int(grid_size*eps)
         x = torch.roll(x, shifts = shift, dims = self.dim)
-        if self.return_shift:
-            shifts = torch.full(size=(len(x),), fill_value=shift)
-            return x, shifts
-        else:
-            return x
+        return x
     
 class RandomScale():
     def __init__(self, l = 2):
@@ -150,36 +145,33 @@ class Transform:
     #     x = self.batch_space_translate(x, centers_y, shift_dir = 'y')
     #     return x
     
-    def transform(self, x, centers, epsilons):
+    def transform(self, x, epsilons):
 
         epsilons = epsilons * self.eps_mult
 
         batch_size, features = x.shape
         x = x.reshape(batch_size, *self.grid_size)
 
-        # x = self.recenter(x, centers)
-
         x = self.scale(x, epsilons[0])
 
         x = self.rotate(x, epsilons[1])
 
-        x, centers_x = self.space_translate_x(x, epsilons[2])
-        x, centers_y = self.space_translate_y(x, epsilons[3])
+        x = self.space_translate_x(x, epsilons[2])
+        x = self.space_translate_y(x, epsilons[3])
 
         x = x.reshape(batch_size, features)
 
-        centers_new = torch.stack([centers_x, centers_y], dim = 1)
-        return x, centers_new
+        return x
 
-    def transform_individual(self, x, centers, epsilons):
-        xs, centers = zip(*[self.transform(x_i, centers_i, epsilons_i) for x_i, centers_i, epsilons_i in tqdm(zip(x.unsqueeze(1), centers.unsqueeze(1), epsilons), total = len(x), leave=False, disable = True)])
-        x, centers = torch.cat(xs), torch.cat(centers)
-        return x, centers
+    def transform_individual(self, x, epsilons):
+        xs = zip(*[self.transform(x_i, epsilons_i) for x_i, epsilons_i in tqdm(zip(x.unsqueeze(1), epsilons), total = len(x), leave=False, disable = True)])
+        x = torch.cat(xs)
+        return x
 
-    def __call__(self, x, centers, epsilons, transform_individual_bool = False):
+    def __call__(self, x, epsilons, transform_individual_bool = False):
         if transform_individual_bool:
-            return self.transform_individual(x, centers, epsilons)
+            return self.transform_individual(x, epsilons)
         else:
-            return self.transform(x, centers, epsilons)
+            return self.transform(x, epsilons)
 
 
