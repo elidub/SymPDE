@@ -18,7 +18,25 @@ The folder `ext_repos/` contains cloned repositories from other authors. I remov
 
 ## Commands
 Local
-- ss: sh ~/EliasMBA/Projects/Uni/SymPDE/jobs/sync.sh
-- ca: conda activate sympde
-- ru: python run.py
-- ruc: python run.py --config $1
+```bash
+ss  sh ~/EliasMBA/Projects/Uni/SymPDE/jobs/sync.sh
+ca  conda activate sympde
+ru  python run.py
+ruc python run.py --config $1
+```
+
+Snellius
+```bash
+ll  ls -la
+sq  squeue -u eliasd
+squ squeue
+sb  sbatch jobs/sumlie_train_array.job
+sba sh jobs/run_all.sh
+ru  python run.py
+ruc python run.py --config $1
+ca  conda activate sympde
+catb    conda activate sympde ; tensorboard --logdir logs
+cl      gpu debugger 10 minutes
+cl1h    gpu debugger 1 hour
+cl8h    gpu debugger 8 hours
+```

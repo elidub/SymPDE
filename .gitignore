@@ -18,6 +18,7 @@ jobs/slurm_output
 jobs/slurm_output_noprecision
 jobs/archive_slurm_output
 jobs/arrays
+jobs/job_arrays
 
 data/*/train
 data/*/val
