@@ -56,7 +56,9 @@ def setup_model(args):
     if args.criterion == 'ce':
         out_features = args.out_features # 10 for MNIST
     else:
-        out_features = 1
+        # Manually set out_features for multi-target regression TODO: automate this
+        out_features = 1 if args.A_low is None else 2
+        assert out_features == args.out_features, f"Expected out_features = {out_features}, got {args.out_features}"
 
     if net == "TrainP":
         net = LinearP(

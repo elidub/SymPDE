@@ -32,18 +32,17 @@ class FlatDataset(Dataset):
         x, y, centers = data['x'], data['y'], data['centers']
 
         N = x.shape[0] if N == -1 else N
-        y_min = y.min()
+
+        # y = y[:, 1]
 
         self.x = torch.from_numpy(x[:N]).float()
         self.y = torch.from_numpy(y[:N]).float()
 
         if task == 'classification':
+            assert len(y.shape) == 1
+            y_min = y.min()
             self.y = self.y - y_min # Shift classes such that they correspond for CrossEntropyLoss
             self.y = self.y.long()
-
-
-        # if 'MNIST' in data_dir:
-        #     self.y = self.y.long()
 
         self.centers = torch.from_numpy(centers[:N])
 

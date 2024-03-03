@@ -37,10 +37,12 @@ def parse_options(notebook = False):
     parser.add_argument("--model_summary", type=bool, default=False, help="Weights summary")
 
     # Data kwargs
-    parser.add_argument("--grid_size", nargs='+', type=int, default = (1,7)) # 7    7
-    parser.add_argument("--noise_std", type=float, default= 0.01)  # 0.5  0.01
+    parser.add_argument("--grid_size", nargs='+', type=int, default = None) 
+    parser.add_argument("--noise_std", type=float, default = None) 
     parser.add_argument("--y_low", type=int, default = None)
     parser.add_argument("--y_high", type=int, default = None)
+    parser.add_argument("--A_low", type=float, default = None)
+    parser.add_argument("--A_high", type=float, default = None)
 
     # Transformation kwargs
     parser.add_argument("--eps_mult", nargs='+', type=float, default=[1., 1., 1., 1.])
@@ -87,7 +89,7 @@ def process_args(args):
     if isinstance(args.eps_mult, str): args.eps_mult = tuple([float(e_i) for e_i in args.eps_mult.split(' ')])
     if isinstance(args.eps_mult, list): args.eps_mult = tuple(args.eps_mult)
 
-    data_kwargs_keys = ['grid_size', 'noise_std', 'y_low', 'y_high']
+    data_kwargs_keys = ['grid_size', 'noise_std', 'y_low', 'y_high', 'A_low', 'A_high']
     args.data_kwargs = {k : getattr(args, k) for k in data_kwargs_keys}
     for data_kwargs_key in data_kwargs_keys:
         if args.data_kwargs[data_kwargs_key] is None:
@@ -173,6 +175,7 @@ def generate_data(args):
     datasets = {
         "noise"  : {'create_sample_func' : noise},
         'sine1d' : {'create_sample_func' : sine1d},
+        'sine1dtwo' : {'create_sample_func' : sine1d},
         'sine2d' : {'create_sample_func' : sine2d},
         'flower' : {'create_sample_func' : flower},
         'MNIST'  : {'create_sample_func' : mnist},

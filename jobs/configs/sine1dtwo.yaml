@@ -1,0 +1,32 @@
+seed: 42
+# net: Predict-NoneP
+net: Predict-CalculatedP
+# generate_data: True
+data_dir: ../data/sine1dtwo
+
+criterion: mse
+out_features: 2
+# out_features: 1
+
+# criterion: ce
+# out_features: 2
+
+max_epochs: 50
+# lr: 0.01
+
+grid_size: [1,7]
+noise_std: 0.1
+y_low: 1
+y_high: 3
+A_low: 0.1
+A_high: 3.0
+
+eps_mult: 0. 0. 1. 0.
+
+tags: [sine1dtwo, dev]
+
+n_train: 1000
+n_val: 100
+n_test: 100
+
+# logger: None

@@ -50,15 +50,18 @@ def noise(N: int, split: str, grid_size: int, noise_std: float = 0.):
 
 
 # def sine1d(N: int, y_low: int, y_high: int, grid_size: int):
-def sine1d(N: int, split: str, y_low: int, y_high: int, grid_size: int, noise_std: float = 0.):
-
+def sine1d(N: int, split: str, y_low: int, y_high: int, grid_size: int, A_low: float = 1., A_high: float = 1., noise_std: float = 0.):
+    
     x = grid_1d(grid_size=grid_size, x_min=0, x_max=1)
 
     k = np.random.randint(y_low, y_high, size = (N,))
+    A = np.random.uniform(A_low, A_high, size = (N))
 
-    sins = np.sin(2*np.pi*k*x).T
+    sins = np.reshape(A, (-1, 1))*np.sin(2*np.pi*k*x).T
 
-    return sins, k
+    y = np.stack([k, A], axis = 1)
+
+    return sins, np.stack([k, A], axis = 1)
 
 def sine2d(N: int, split: str, y_low: int, y_high: int, grid_size: Union[int, tuple[int, int]], noise_std: float = 0.):
 
@@ -145,14 +148,14 @@ class Create2dData:
         x, centers = x.numpy(), centers.numpy()
         return x, centers
 
-    def __call__(self, N: int, split: str = 'train'):
+    def __call__(self, N: int, split: str = 'train', flatten: bool = True):
         x, y = self.create_sample_func(N, split, **self.data_kwargs)
 
         x = self.add_noise(x)
 
         x, centers = self.transform_data(x, N)
 
-        x = x.reshape(N, np.prod(self.grid_size))
+        if flatten: x = x.reshape(N, np.prod(self.grid_size))
 
         return {'x': x, 'y':y, 'centers': centers}
 

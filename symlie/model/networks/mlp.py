@@ -19,12 +19,25 @@ class MLP(torch.nn.Module):
         ):
         super().__init__()
 
+        # bias = True
+        # nn.Linear(in_features=in_features, out_features=in_features, bias = bias),
+
         self.mlp = torch.nn.Sequential(
             linearmodules[0](
                 in_features=in_features, out_features=in_features, bias=bias, device=device,
                 P_init = P_init, train_weights=train_weights, train_P=train_P
             ),
             activation(),
+
+            linearmodules[0](
+                in_features=in_features, out_features=in_features, bias=bias, device=device,
+                P_init = P_init, train_weights=train_weights, train_P=train_P
+            ),
+            activation(),
+
+            # nn.Linear(in_features=in_features, out_features=in_features, bias = bias),
+            # activation(),
+
             linearmodules[1](in_features=in_features, out_features=out_features, bias = bias),
         )
 

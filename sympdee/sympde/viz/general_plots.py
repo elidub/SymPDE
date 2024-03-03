@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
 import numpy as np
+import os
 
 def imshows(plots, titles = None, vminmaxs = None, suptitle = None, colorbar = False, axis_off = False, plot_labels = False, l =1, imshow_kwargs = {}, rows = True, text_vals = None):
     n_plots = len(plots)
@@ -80,3 +81,7 @@ def imshow(x, figsize = (3,3)):
     plt.figure(figsize = figsize)
     plt.imshow(x)
     plt.show()
+
+def savefig(fig, name, path = '/Users/elias/EliasMBA/Projects/Uni/Thesis/ai_thesis/figures/code', tight_layout = True, **kwargs):
+    if not hasattr(kwargs, 'dpi'): kwargs['dpi'] = fig.dpi
+    fig.savefig(os.path.join(path, f'{name}.png'), **kwargs)

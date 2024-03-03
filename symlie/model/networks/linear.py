@@ -59,9 +59,10 @@ class LinearP(nn.Module):
 
         if batch_size is None:
             self.weight = torch.randn(self.out_features, self.in_features, device = self.device)
+            # self.bias   = torch.randn(self.out_features, device = self.device)
         else:
             self.weight = torch.randn(batch_size, self.out_features, self.in_features, device = self.device)
-        # self.bias   = torch.randn(self.out_features)
+            # self.bias   = torch.randn(batch_size, self.out_features, device = self.device)
 
     @staticmethod
     def normalize_P(P):
@@ -99,7 +100,7 @@ class CalculatedP:
             'none': self.get_none,
             'randn': self.get_randn,
             'space_translation': self.get_space_translation,
-            # 'kernelconv': self.get_kernelconv,
+            'kernelconv': self.get_kernelconv,
         }
 
         self.transform_funcs = {k : v().to(device) for k, v in transform_funcs.items()}
