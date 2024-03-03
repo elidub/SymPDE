@@ -24,12 +24,16 @@ def find_id_for_P(args):
         if 'grid_size' in row:
             row['grid_size'] = tuple(row['grid_size'])
 
+
+    data_filter = (df.data_dir == '../data/noise') if args.use_P_from_noise else (df.data_dir == args.data_dir)
+
     df_selected = df[
         (df.data_kwargs == args.data_kwargs) & 
         (df.transform_kwargs == args.transform_kwargs) & 
-        (df.seed == args.seed) &
-        (df.data_dir == args.data_dir)
+        (df.seed == args.seed) & 
+        data_filter
     ]
+
 
     if len(df_selected) == 0:
         raise ValueError('No results found for the given arguments')

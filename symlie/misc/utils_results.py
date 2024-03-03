@@ -75,7 +75,7 @@ def rename_net(d_pivot, level = 3, index = 0):
     d_pivot = d_pivot.rename(columns={'Predict-CalculatedP': 'Pre-calculated', 'Predict-NoneP': 'Vanilla', 'Predict-TrainedP': 'Trained'})
     
     # new_cols = d_pivot.columns.reindex(['Vanilla', 'Trained', 'Pre-calculated'], level = level)
-    new_cols = d_pivot.columns.reindex(['Trained', 'Vanilla'], level = level)
+    new_cols = d_pivot.columns.reindex(['Trained', 'Pre-calculated', 'Vanilla'], level = level)
     d_pivot = d_pivot.reindex(columns=new_cols[index])
     return d_pivot
 
@@ -138,11 +138,11 @@ def assert_columns_same(d, columns, dataset=None):
 
     return vals_same
 
-def get_and_check_Ps(seeds, map_kwargs):
+def get_and_check_Ps(seeds, map_kwargs, use_P_from_noise=False):
     Ps = []
     for seed in seeds:
 
-        args = Args(**dict(seed = seed,**map_kwargs))
+        args = Args(**dict(seed = seed, use_P_from_noise=use_P_from_noise, **map_kwargs))
 
         run_id = find_id_for_P(args)
         P = load_P_pred(run_id)
