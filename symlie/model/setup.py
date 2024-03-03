@@ -24,14 +24,18 @@ def find_id_for_P(args):
         if 'grid_size' in row:
             row['grid_size'] = tuple(row['grid_size'])
 
-
-    data_filter = (df.data_dir == '../data/noise') if args.use_P_from_noise else (df.data_dir == args.data_dir)
+    if args.use_P_from_noise:
+        data_dir_filter = (df.data_dir == '../data/noise')
+        data_kwargs_filter = pd.Series([data_kwarg['grid_size'] == args.data_kwargs['grid_size'] for data_kwarg in df.data_kwargs])
+    else:
+        data_dir_filter = (df.data_dir == args.data_dir)
+        data_kwargs_filter = (df.data_kwargs == args.data_kwargs)
 
     df_selected = df[
-        (df.data_kwargs == args.data_kwargs) & 
+        data_kwargs_filter & 
         (df.transform_kwargs == args.transform_kwargs) & 
         (df.seed == args.seed) & 
-        data_filter
+        data_dir_filter
     ]
 
 
