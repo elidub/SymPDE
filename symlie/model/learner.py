@@ -131,27 +131,28 @@ class PredictionLearner(BaseLearner):
         
     def _log_regression(self, y_preds, y_trues):
 
+        print(y_preds.shape, y_trues.shape)
 
         if len(y_preds.shape) == 1:
             y_preds = y_preds.reshape(-1, 1)
             y_trues = y_trues.reshape(-1, 1)
 
-        y_keys = ['k', 'A']
-        fig, axs = plt.subplots(1, len(y_preds.T), figsize=(10, 5))
+        n_cols = len(y_preds.T)
+        fig, axs = plt.subplots(1, n_cols, figsize=(5*n_cols, 5))
 
-        if len(y_preds.T) == 1:
-            axs = [axs]
+        if len(y_preds.T) == 1: axs = [axs]
 
-        for ax, y_trues_i, y_preds_i, y_key in zip(axs, y_trues.T, y_preds.T, y_keys):
+        for ax, y_trues_i, y_preds_i in zip(axs, y_trues.T, y_preds.T):
 
             l_min, l_max = np.min(y_trues_i)*0.9, np.max(y_trues_i)*1.1
             ax.plot([l_min, l_max], [l_min, l_max], 'k--')
             ax.plot(y_trues_i, y_preds_i, '.', alpha=0.5)
-            ax.set_title(y_key)
         fig.supxlabel('True')
         fig.supylabel('Predicted')
         plt.close()
         wandb.log({'regression_results': wandb.Image(fig)})
+
+        print('Logged regression results')
             
 class TransformationLearner(BaseLearner, Transform):
     def __init__(self, net, criterion, lr, grid_size, transform_kwargs):

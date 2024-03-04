@@ -49,7 +49,7 @@ def noise(N: int, split: str, grid_size: int, noise_std: float = 0.):
     return zeros, random
 
 # def sine1d(N: int, y_low: int, y_high: int, grid_size: int):
-def sine1d(N: int, split: str, y_low: int, y_high: int, grid_size: int, A_low: float = 1., A_high: float = 1., y_multi: int = 1, noise_std: float = 0.):
+def sine1d(N: int, split: str, y_low: int, y_high: int, grid_size: int, A_low: float = 1., A_high: float = 1., noise_std: float = 0.):
     
     x = grid_1d(grid_size=grid_size, x_min=0, x_max=1)
 
@@ -60,12 +60,12 @@ def sine1d(N: int, split: str, y_low: int, y_high: int, grid_size: int, A_low: f
 
 
     if A_low == 1. and A_high == 1.:
-        if y_multi == 1:
-            y = k
-        else:
-            y = np.stack([k*(1+y_range_i) for y_range_i in range(y_multi)]).T
+        # if y_multi == 1:
+        y = k
+        # else:
+        #     y = np.stack([k*(1+y_range_i) for y_range_i in range(y_multi)]).T
     else:
-        assert y_multi == 1
+        # assert y_multi == 1
         y = np.stack([k, A], axis = 1)
 
     return sins, y

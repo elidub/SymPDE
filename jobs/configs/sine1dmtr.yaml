@@ -2,7 +2,7 @@ seed: 42
 # generate_data: True
 net: Predict-NoneP
 # net: Predict-CalculatedP
-data_dir: ../data/sine1dmtr
+data_dir: ../data/sine1d
 
 criterion: mse
 out_features: 3

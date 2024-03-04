@@ -94,7 +94,7 @@ def process_args(args):
     if isinstance(args.eps_mult, str): args.eps_mult = tuple([float(e_i) for e_i in args.eps_mult.split(' ')])
     if isinstance(args.eps_mult, list): args.eps_mult = tuple(args.eps_mult)
 
-    data_kwargs_keys = ['grid_size', 'noise_std', 'y_low', 'y_high', 'y_multi', 'A_low', 'A_high']
+    data_kwargs_keys = ['grid_size', 'noise_std', 'y_low', 'y_high', 'A_low', 'A_high']
     args.data_kwargs = {k : getattr(args, k) for k in data_kwargs_keys}
     for data_kwargs_key in data_kwargs_keys:
         if args.data_kwargs[data_kwargs_key] is None:

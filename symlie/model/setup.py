@@ -150,6 +150,7 @@ def setup_model(args):
     datamodule = BaseDataModule(
         dataset = dataset,
         task = task,
+        args = args,
         data_kwargs = args.data_kwargs,
         transform_kwargs = args.transform_kwargs,
         data_dir = args.data_dir, 

@@ -11,6 +11,7 @@ class FlatDataset(Dataset):
             self, 
             mode: str, 
             task: str,
+            args, 
             data_kwargs: dict, 
             transform_kwargs: dict,
             data_dir = '../data/flat',
@@ -57,6 +58,9 @@ class FlatDataset(Dataset):
             y_min = y.min()
             self.y = self.y - y_min # Shift classes such that they correspond for CrossEntropyLoss
             self.y = self.y.long()
+
+        if hasattr(args, 'y_multi'):
+            self.y = torch.stack([self.y*(1+y_range_i) for y_range_i in range(args.y_multi)]).T
 
         self.centers = torch.from_numpy(centers[:N])
 
