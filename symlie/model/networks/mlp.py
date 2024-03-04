@@ -12,6 +12,7 @@ class MLP(torch.nn.Module):
             device: str,
             activation = torch.nn.ReLU,
             linearmodules: List[Union[LinearP, nn.Linear]] = [LinearP, nn.Linear],
+            n_hidden_layers = 1,
             out_features: int = 1,
             P_init: Union[torch.Tensor, str] = 'none',
             train_weights = True, 
@@ -19,27 +20,33 @@ class MLP(torch.nn.Module):
         ):
         super().__init__()
 
-        # bias = True
-        # nn.Linear(in_features=in_features, out_features=in_features, bias = bias),
-
-        self.mlp = torch.nn.Sequential(
-            linearmodules[0](
+        layers = []
+        for _ in range(n_hidden_layers):
+            layers.append(linearmodules[0](
                 in_features=in_features, out_features=in_features, bias=bias, device=device,
                 P_init = P_init, train_weights=train_weights, train_P=train_P
-            ),
-            activation(),
+            ))
+            layers.append(activation())
 
-            linearmodules[0](
-                in_features=in_features, out_features=in_features, bias=bias, device=device,
-                P_init = P_init, train_weights=train_weights, train_P=train_P
-            ),
-            activation(),
+        layers.append(linearmodules[1](in_features=in_features, out_features=out_features, bias = bias))
 
-            # nn.Linear(in_features=in_features, out_features=in_features, bias = bias),
-            # activation(),
+        self.mlp = torch.nn.Sequential(*layers)
 
-            linearmodules[1](in_features=in_features, out_features=out_features, bias = bias),
-        )
+        # self.mlp = torch.nn.Sequential(
+        #     linearmodules[0](
+        #         in_features=in_features, out_features=in_features, bias=bias, device=device,
+        #         P_init = P_init, train_weights=train_weights, train_P=train_P
+        #     ),
+        #     activation(),
+
+        #     linearmodules[0](
+        #         in_features=in_features, out_features=in_features, bias=bias, device=device,
+        #         P_init = P_init, train_weights=train_weights, train_P=train_P
+        #     ),
+        #     activation(),
+
+        #     linearmodules[1](in_features=in_features, out_features=out_features, bias = bias),
+        # )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.mlp(x)

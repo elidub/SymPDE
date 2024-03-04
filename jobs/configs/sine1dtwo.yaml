@@ -1,7 +1,7 @@
 seed: 42
+generate_data: True
 # net: Predict-NoneP
-net: Predict-CalculatedP
-# generate_data: True
+# net: Predict-CalculatedP
 data_dir: ../data/sine1dtwo
 
 criterion: mse
@@ -25,7 +25,7 @@ eps_mult: 0. 0. 1. 0.
 
 tags: [sine1dtwo, dev]
 
-n_train: 1000
+n_train: 10000
 n_val: 100
 n_test: 100
 

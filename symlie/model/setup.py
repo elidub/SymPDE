@@ -19,10 +19,17 @@ def load_P_pred(run_id, P_dir = '../logs/store/P/'):
 def find_id_for_P(args):
     df = pd.read_pickle('../logs/store/map_df.pkl')
     args.data_kwargs['grid_size'] = tuple(args.data_kwargs['grid_size'])
+    args.transform_kwargs['eps_mult'] = tuple(args.transform_kwargs['eps_mult'])
 
     for row in df['data_kwargs']:
         if 'grid_size' in row:
             row['grid_size'] = tuple(row['grid_size'])
+
+    for row in df['transform_kwargs']:
+        if 'eps_mult' in row:
+            row['eps_mult'] = tuple(row['eps_mult'])
+
+
 
     if args.use_P_from_noise:
         data_dir_filter = (df.data_dir == '../data/noise')
@@ -86,6 +93,7 @@ def setup_model(args):
                 in_features = features, 
                 out_features = out_features,
                 bias = args.bias,
+                n_hidden_layers = args.n_hidden_layers,
                 device = args.device,
                 P_init = 'none',
             )
@@ -94,15 +102,30 @@ def setup_model(args):
                 in_features = features, 
                 out_features = out_features,
                 bias = args.bias,
+                n_hidden_layers = args.n_hidden_layers,
                 device = args.device,
                 P_init = 'space_translation',
             )
         elif net == "Predict-TrainedP":
+            assert args.use_P_from_noise == False
             P_pred = load_P_pred(find_id_for_P(args)).to(args.device)
             net = MLP(
                 in_features = features, 
                 out_features = out_features,
                 bias = args.bias,
+                n_hidden_layers = args.n_hidden_layers,
+                device = args.device,
+                P_init = P_pred,
+            )
+        elif net == "Predict-NoiseTrainedP":
+            args.use_P_from_noise = True
+            assert args.use_P_from_noise == True
+            P_pred = load_P_pred(find_id_for_P(args)).to(args.device)
+            net = MLP(
+                in_features = features, 
+                out_features = out_features,
+                bias = args.bias,
+                n_hidden_layers = args.n_hidden_layers,
                 device = args.device,
                 P_init = P_pred,
             )

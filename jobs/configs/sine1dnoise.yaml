@@ -1,0 +1,28 @@
+seed: 1
+# generate_data: True
+# net: Predict-NoneP
+# net: Predict-CalculatedP
+net: Predict-TrainedP
+use_P_from_noise: True
+
+criterion: mse
+out_features: 1
+
+max_epochs: 50
+
+data_dir: ../data/sine1d
+
+grid_size: [1,7]
+noise_std: 0.5
+y_low: 1
+y_high: 3
+
+eps_mult: "0. 0. 1. 0."
+
+tags: [sine1d, dev]
+
+n_train: 1000
+n_val: 100
+n_test: 100
+
+# logger: None
