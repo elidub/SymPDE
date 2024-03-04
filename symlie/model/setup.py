@@ -72,7 +72,14 @@ def setup_model(args):
         out_features = args.out_features # 10 for MNIST
     else:
         # Manually set out_features for multi-target regression TODO: automate this
-        out_features = 1 if args.A_low is None else 2
+
+        if args.A_low is None:
+            if args.y_multi is None:
+                out_features = 1
+            else:
+                out_features = args.y_multi
+        else:
+            out_features = 2
         assert out_features == args.out_features, f"Expected out_features = {out_features}, got {args.out_features}"
 
     if net == "TrainP":

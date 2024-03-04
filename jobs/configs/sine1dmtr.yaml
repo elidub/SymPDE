@@ -1,0 +1,27 @@
+seed: 42
+# generate_data: True
+net: Predict-NoneP
+# net: Predict-CalculatedP
+data_dir: ../data/sine1dmtr
+
+criterion: mse
+out_features: 3
+
+max_epochs: 50
+# lr: 0.01
+
+grid_size: [1,7]
+noise_std: 0.5
+y_low: 1
+y_high: 3
+y_multi: 3
+
+eps_mult: 0. 0. 1. 0.
+
+tags: [sine1dmtr-predict, dev]
+
+n_train: 10000
+n_val: 100
+n_test: 100
+
+# logger: None
