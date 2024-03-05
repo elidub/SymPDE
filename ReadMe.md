@@ -32,8 +32,10 @@ sq  squeue -u eliasd
 squ squeue
 sb  sbatch jobs/sumlie_train_array.job
 sba sh jobs/run_all.sh
+sbals sh jobs/job_arrays
 ru  python run.py
 ruc python run.py --config $1
+rul python run.py --logger None $1
 ca  conda activate sympde
 catb    conda activate sympde ; tensorboard --logdir logs
 cl      gpu debugger 10 minutes

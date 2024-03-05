@@ -41,10 +41,10 @@ def parse_options(notebook = False):
     parser.add_argument("--noise_std", type=float, default = None) 
     parser.add_argument("--y_low", type=int, default = None)
     parser.add_argument("--y_high", type=int, default = None)
-    parser.add_argument("--y_multi", type=int, default = None)
     parser.add_argument("--A_low", type=float, default = None)
     parser.add_argument("--A_high", type=float, default = None)
 
+    parser.add_argument("--y_multi", type=int, default = 1)
     # Transformation kwargs
     parser.add_argument("--eps_mult", nargs='+', type=float, default=[1., 1., 1., 1.])
     parser.add_argument("--only_flip", type=bool, default=False)

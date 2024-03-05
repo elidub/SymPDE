@@ -13,7 +13,8 @@ def exceptions(runs, results_df_old = None):
         if results_df_old is not None:
             if (run.id in results_df_old['run_id'].values): continue 
         if 'dev' in run.tags: continue
-        if not ('new' in run.tags or 'hparam' in run.tags): continue
+        # if not ('new' in run.tags or 'hparam' in run.tags): continue
+        if not ('new' in run.tags): continue
         
         runs_new.append(run)
     return runs_new

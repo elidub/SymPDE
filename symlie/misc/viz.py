@@ -17,14 +17,13 @@ def plot2d(x, y = None, l = 1, set_axis_off = True, max_grid = None):
 def plot1d(x, y = None, l=1):
     x = x.squeeze(1)
 
-    print(y)
-
     n_y = y.shape[1] if len(y.shape) > 1 else 1
-    y_keys = ['k', 'A'][:n_y]
+    # y_keys = ['k', 'A'][:n_y]
 
     fig, ax = plt.subplots(figsize=np.array([2, 1])*5*l)
     ax.plot(x.T)
-    ax.legend(np.round(y, 2), title = ', '.join(y_keys))
+    # ax.legend(np.round(y, 2), title = ', '.join(y_keys))
+    ax.legend(np.round(y, 2))
     plt.show()    
 
     return
