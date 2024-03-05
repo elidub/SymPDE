@@ -23,6 +23,7 @@ ss  sh ~/EliasMBA/Projects/Uni/SymPDE/jobs/sync.sh
 ca  conda activate sympde
 ru  python run.py
 ruc python run.py --config $1
+rul python run.py --logger None $1
 ```
 
 Snellius

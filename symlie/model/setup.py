@@ -69,7 +69,7 @@ def setup_model(args):
     task = tasks[args.criterion]
 
     if args.criterion == 'ce':
-        out_features = args.out_features # 10 for MNIST
+        out_features = args.n_classes # 10 for MNIST
     else:
         # Manually set out_features for multi-target regression TODO: automate this
 

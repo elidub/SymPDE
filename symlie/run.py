@@ -25,6 +25,7 @@ def parse_options(notebook = False):
 
     parser.add_argument("--criterion", type=str, default='mse', help="Criterion")
     parser.add_argument("--out_features", type=int, default=1, help="Out features")
+    parser.add_argument("--n_classes", type=int, default=None, help="Number of classes")
 
     parser.add_argument("--data_dir", type=str, default="../data/sinev2", help="Path to data directory")
     parser.add_argument("--log_dir", type=str, default="../logs", help="Path to log directory")

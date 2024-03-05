@@ -101,7 +101,7 @@ class PredictionLearner(BaseLearner):
 
         y_pred = self.net(x.unsqueeze(1)).squeeze(1).squeeze(1)
 
-        print(y_pred, y_true)
+        y_true = y_true.squeeze(1)
 
         return y_pred, y_true
     
