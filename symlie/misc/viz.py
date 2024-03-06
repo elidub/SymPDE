@@ -17,26 +17,26 @@ def plot2d(x, y = None, l = 1, set_axis_off = True, max_grid = None):
 def plot1d(x, y = None, l=1):
     x = x.squeeze(1)
 
-    n_y = y.shape[1] if len(y.shape) > 1 else 1
-    # y_keys = ['k', 'A'][:n_y]
+    # n_y = y.shape[1] if len(y.shape) > 1 else 1
+    # # y_keys = ['k', 'A'][:n_y]
 
-    fig, ax = plt.subplots(figsize=np.array([2, 1])*5*l)
-    ax.plot(x.T)
-    # ax.legend(np.round(y, 2), title = ', '.join(y_keys))
-    ax.legend(np.round(y, 2))
-    plt.show()    
+    # fig, ax = plt.subplots(figsize=np.array([2, 1])*5*l)
+    # ax.plot(x.T)
+    # # ax.legend(np.round(y, 2), title = ', '.join(y_keys))
+    # ax.legend(np.round(y, 2))
+    # plt.show()    
 
-    return
+    # return
 
 
-    y_keys, y_vals = y.keys(), np.array(tuple(y.values())).T
+    # y_keys, y_vals = y.keys(), np.array(tuple(y.values())).T
 
-    fig, ax = plt.subplots(figsize=np.array([2, 1])*5*l)
-    ax.plot(x.T)
-    ax.legend(np.round(y_vals, 2), title = ', '.join(y_keys))
-    plt.show()
+    # fig, ax = plt.subplots(figsize=np.array([2, 1])*5*l)
+    # ax.plot(x.T)
+    # ax.legend(np.round(y_vals, 2), title = ', '.join(y_keys))
+    # plt.show()
     
-    return
+    # return
 
 
     if y is None:
@@ -50,5 +50,6 @@ def plot1d(x, y = None, l=1):
     for x_i, y_i in zip(x, y):
         val = normalize(y_i, y.min(), y.max())
         plt.plot(x_i, color = cmap(val), alpha = 0.5)
+    plt.axis('off')
     plt.show()
 

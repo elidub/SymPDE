@@ -192,7 +192,12 @@ class TransformationLearner(BaseLearner, Transform):
     def log_test_results(self):
         run_id = self.trainer.logger.experiment.id
 
-        logging_objects = {'P': self.net.P}
+
+        if self.net.svd:
+            P = self.net.U @ torch.diag(self.net.S) @ self.net.V
+            logging_objects = {'P' : P, 'U': self.net.U, 'S': self.net.S, 'V': self.net.V}
+        else:
+            logging_objects = {'P': self.net.P}
 
         for key, value in logging_objects.items():
             print(f'Logging {key}')

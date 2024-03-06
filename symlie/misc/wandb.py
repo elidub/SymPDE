@@ -4,6 +4,26 @@ import pandas as pd
 import numpy as np
 import wandb
 
+def get_inspect_df(reload: bool = False, results_file: str = '../logs/store/inspect_df.pkl'):
+
+    if not reload:
+        return pd.read_pickle(results_file)
+
+    api = wandb.Api()
+    runs = api.runs('eliasdubbeldam/symlie')
+
+    runs_inspect = []
+    for run in runs:
+        if (run.state != 'finished'): continue
+        if not ('inspect' in run.tags): continue
+        runs_inspect.append(run)
+
+    inspect_df = new_runs(runs_inspect).reset_index(drop=True)
+
+    inspect_df.to_pickle(os.path.join(results_file))
+
+    return inspect_df
+
 def exceptions(runs, results_df_old = None):
     
     runs_new = []

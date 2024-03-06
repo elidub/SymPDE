@@ -53,6 +53,7 @@ def parse_options(notebook = False):
     parser.add_argument("--use_P_from_noise", type = bool, default = False)
 
     parser.add_argument("--n_hidden_layers", type = int, default = 1)
+    parser.add_argument("--svd_rank", type = int, default = None)
 
     # parser.add_argument("--persistent_workers", action="store_true", help="Persistent workers")
     parser.add_argument("--persistent_workers", default=True)

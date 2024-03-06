@@ -29,8 +29,6 @@ def find_id_for_P(args):
         if 'eps_mult' in row:
             row['eps_mult'] = tuple(row['eps_mult'])
 
-
-
     if args.use_P_from_noise:
         data_dir_filter = (df.data_dir == '../data/noise')
         data_kwargs_filter = pd.Series([data_kwarg['grid_size'] == args.data_kwargs['grid_size'] for data_kwarg in df.data_kwargs])
@@ -91,6 +89,7 @@ def setup_model(args):
             P_init = 'randn',
             train_weights = False,
             train_P = True,
+            svd_rank = args.svd_rank,
         )
         learner = TransformationLearner
 

@@ -40,7 +40,7 @@ def pivot(d, columns = ['batch_size', 'lr', 'net'], index = 'seed', values = 'te
     d = d[columns + index + values].sort_values(by= columns + index).reset_index(drop=True).pivot(index=index, columns=columns, values=values)
     return d
 
-def plot_pivot(d=None, columns=None,d_pivot=None, figsize=(4, 4), logx = False, legend_loc = None, suptitle = None):
+def plot_pivot(d=None, columns=None,d_pivot=None, figsize=(8, 4), logx = False, legend_loc = None, suptitle = None):
 
     if d_pivot is None:
         assert (d is not None) and (columns is not None)
@@ -49,33 +49,45 @@ def plot_pivot(d=None, columns=None,d_pivot=None, figsize=(4, 4), logx = False, 
 
     d_pivot = pivot(d=d, columns=columns) if d_pivot is None else d_pivot
 
-    unstack = lambda d, metric: d.apply(metric).unstack().reset_index(level=0, drop = True)
+    net_names = d_pivot.columns.get_level_values(3).unique()
+    net_names_order = ['Vanilla', 'Pre-calculated', 'Trained', 'Trained with noise']
+    net_names = [net for net in net_names_order if net in net_names]
+
+    unstack = lambda d, metric: d.apply(metric).unstack().reset_index(level=0, drop = True)[net_names]
     d_mean, d_std = unstack(d_pivot, pd.Series.mean), unstack(d_pivot, pd.Series.std)
+
 
     my_colors = list(islice(cycle(['b', 'r', 'g', 'y', 'k']), None, len(d_mean)))
 
 
-    fig, ax = plt.subplots(figsize=figsize)
+    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=figsize, tight_layout=True)
     d_mean.plot(kind='bar', yerr=d_std, ax = ax)
-    
     if logx: ax.set_yscale('log')
-    
-    title = d_pivot.columns[0][0]
-    
-    # if title == 'test_loss': title = 'Test Loss'
-    # ax.set_xlabel(title)
-    
     ax.legend(loc=legend_loc)
+
+    # fig, axs = plt.subplots(nrows=1, ncols=2, figsize=figsize, tight_layout=True)
+    # for ax in axs:
+    #     d_mean.plot(kind='bar', yerr=d_std, ax = ax, legend = False)
+    # axs[0].legend(loc=legend_loc)
+    # axs[1].set_yscale('log')
+
     fig.suptitle(suptitle)
 
     plt.show()
 
 
 def rename_net(d_pivot, level = 3, index = 0):
-    d_pivot = d_pivot.rename(columns={'Predict-CalculatedP': 'Pre-calculated', 'Predict-NoneP': 'Vanilla', 'Predict-TrainedP': 'Trained'})
+    renames = {
+        'Predict-NoneP': 'Vanilla', 
+        'Predict-CalculatedP': 'Pre-calculated', 
+        'Predict-TrainedP': 'Trained',
+        'Predict-NoiseTrainedP': 'Trained with noise'
+    }
+    
+    d_pivot = d_pivot.rename(columns=renames)
     
     # new_cols = d_pivot.columns.reindex(['Vanilla', 'Trained', 'Pre-calculated'], level = level)
-    new_cols = d_pivot.columns.reindex(['Trained', 'Pre-calculated', 'Vanilla'], level = level)
+    new_cols = d_pivot.columns.reindex(list(renames.values()), level = level)
     d_pivot = d_pivot.reindex(columns=new_cols[index])
     return d_pivot
 

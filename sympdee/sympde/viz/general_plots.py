@@ -65,9 +65,10 @@ def plot_vals(x, ax):
         for j in range(x.shape[1]):
             ax.text(j, i, f'{x[i, j]:.2f}', ha='center', va='center', color='white')
 
-def simple_imshow(x, l = 1, print_values = True, precision = 2):
-    fig, ax = plt.subplots(1, 1, figsize=np.array(x.shape)*l)
-    ax.imshow(x)
+def simple_imshow(x, l = 1, print_values = False, precision = 2, title = None, imshow_kwargs = {}):
+    fig, ax = plt.subplots(1, 1, figsize=np.array(x.T.shape)*l, tight_layout=True)
+    ax.imshow(x, **imshow_kwargs)
+    ax.set_title(title)
 
     if print_values:
         for i in range(x.shape[0]):
@@ -76,12 +77,14 @@ def simple_imshow(x, l = 1, print_values = True, precision = 2):
 
     ax.axis('off')
     plt.show()
+    return fig
 
 def imshow(x, figsize = (3,3)):
     plt.figure(figsize = figsize)
     plt.imshow(x)
     plt.show()
 
-def savefig(fig, name, path = '/Users/elias/EliasMBA/Projects/Uni/Thesis/ai_thesis/figures/code', tight_layout = True, **kwargs):
+def savefig(fig, name, subdir = '', path = '/Users/elias/EliasMBA/Projects/Uni/Thesis/ai_thesis/figures/code', tight_layout = True, **kwargs):
     if not hasattr(kwargs, 'dpi'): kwargs['dpi'] = fig.dpi
-    fig.savefig(os.path.join(path, f'{name}.png'), **kwargs)
+    os.makedirs(os.path.join(path, subdir), exist_ok = True)
+    fig.savefig(os.path.join(path, subdir, f'{name}.png'), **kwargs)
