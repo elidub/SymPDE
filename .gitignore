@@ -8,6 +8,9 @@ logs/symlie
 logs/wandb
 logs/store/P_old
 logs/store/P
+logs/store/U
+logs/store/S
+logs/store/V
 
 logs_org/
 logs_old/
@@ -44,6 +47,5 @@ workbench.ipynb
 workbench.py
 workbench
 
-logs/store/P_old
 logs_symlieold/
 data_symlieold/

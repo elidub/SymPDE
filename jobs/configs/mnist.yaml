@@ -1,0 +1,14 @@
+seed: 42
+generate_data: True
+# net: Predict-NoneP
+
+data_dir: ../data/MNIST
+
+grid_size: [7,7]
+noise_std: 0.1
+
+eps_mult: 0. 0. 1. 1.
+
+n_train: 10000
+n_val: 100
+n_test: 100
