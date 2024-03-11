@@ -37,11 +37,18 @@ def find_id_for_P(args):
         data_dir_filter = (df.data_dir == args.data_dir)
         data_kwargs_filter = (df.data_kwargs == args.data_kwargs)
 
+    if hasattr(args, 'svd_rank'):
+        svd_filter = (df.svd_rank == args.svd_rank)
+    else:
+        svd_filter = True
+
+
     df_selected = df[
         data_kwargs_filter & 
         (df.transform_kwargs == args.transform_kwargs) & 
         (df.seed == args.seed) & 
-        data_dir_filter
+        data_dir_filter &
+        svd_filter
     ]
 
 
