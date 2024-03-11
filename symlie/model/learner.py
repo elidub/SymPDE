@@ -24,6 +24,15 @@ class BaseLearner(pl.LightningModule):
         # self.forward_keys = []
 
 
+        if type(criterion) == list:
+            if len(criterion) == 2:
+                self.criterion_alt = True
+            else:
+                raise NotImplementedError(f"Criterion {criterion} not implemented")
+        else:
+            self.criterion_alt = False
+
+
     def forward(self, batch):
         raise NotImplementedError
     
@@ -31,30 +40,34 @@ class BaseLearner(pl.LightningModule):
         pass
 
     def step(self, batch, mode):
-        out = self.forward(batch)
-        
-        out1, out2 = out
-        criterion1, criterion2 = self.criterion
-        
-        loss1 = criterion1(*out1)
-        loss2 = criterion2(*out2)
-        loss = 0*loss1 + loss2
 
-        # Log Metrics
-        self.log(f"{mode}_loss1", loss1, prog_bar=True, on_step=False, on_epoch=True)
-        self.log(f"{mode}_loss2", loss2, prog_bar=True, on_step=False, on_epoch=True)
-        self.log(f"{mode}_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
+        if self.criterion_alt:
+            loss, batch, out = self.step_alt(batch, mode)
+        else:
+            out = self.forward(batch)
+            loss = self.criterion(*out)
+
+            # Log Metrics
+            self.log(f"{mode}_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
 
         return loss, batch, out
     
-    # def step(self, batch, mode):
-    #     out = self.forward(batch)
-    #     loss = self.criterion(*out)
+    def step(self, batch, mode):
+        out = self.forward(batch)
 
-    #     # Log Metrics
-    #     self.log(f"{mode}_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
+        out_o, out_dg = out
+        (lossweight_o, criterion_o), (lossweight_dg, criterion_dg) = self.criterion
+        
+        loss_o = criterion_o(*out_o)
+        loss_dg = criterion_dg(*out_dg)
+        loss = lossweight_o*loss_o + lossweight_dg*loss_dg
 
-    #     return loss, batch, out
+        # Log Metrics
+        self.log(f"{mode}_loss_o", loss_o, prog_bar=True, on_step=False, on_epoch=True)
+        self.log(f"{mode}_loss_dg", loss_dg, prog_bar=True, on_step=False, on_epoch=True)
+        self.log(f"{mode}_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
+
+        return loss, batch, out
     
     def training_step(self, batch, batch_idx=0):
         loss, batch, _ = self.step(batch, "train")
@@ -212,7 +225,7 @@ class TransformationLearner(BaseLearner, Transform):
             dg_out = out_a_prime - out_b_prime
             return (out_a_prime, out_b_prime), (dg_x, dg_out)
 
-        return out_a_prime, out_b_prime
+        return (out_a_prime, out_b_prime)
     
     def log_test_results(self):
         run_id = self.trainer.logger.experiment.id

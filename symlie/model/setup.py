@@ -186,7 +186,7 @@ def setup_model(args):
     
     criterions = {
         'mse' : nn.MSELoss(),
-        'mses' : [nn.MSELoss(), nn.MSELoss()],
+        'mses' : [(args.lossweight_o, nn.MSELoss()), (args.lossweight_dg, nn.MSELoss())],
         'bce' : nn.BCELoss(),
         'ce'  : nn.CrossEntropyLoss(),
     }
