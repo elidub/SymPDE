@@ -1,0 +1,23 @@
+seed: 2
+net: Predict-NoiseTrainedP
+
+max_epochs: 3
+lr: 0.001
+
+data_dir: ../data/sine1d
+grid_size: [1,7]
+noise_std: 0.5
+y_low: 1
+y_high: 3
+
+eps_mult: 0. 0. 1. 0.
+
+tags: dev
+
+n_train: 100
+n_val: 10
+n_test: 10
+
+svd_rank: 7
+
+logger: None

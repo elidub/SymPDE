@@ -43,7 +43,8 @@ def pivot(d, columns = ['batch_size', 'lr', 'net'], index = 'seed', values = 'te
 def plot_pivot(d_pivot, step: int, figsize=(8, 4), logx = False, legend_loc = None, suptitle = None):
 
     if step == 2:
-        net_names = d_pivot.columns.get_level_values(3).unique()
+        net_names = d_pivot.columns.get_level_values(4).unique()
+        print(net_names)
     else:
         net_names = slice(None)
 
@@ -52,7 +53,7 @@ def plot_pivot(d_pivot, step: int, figsize=(8, 4), logx = False, legend_loc = No
 
 
     fig, ax = plt.subplots(nrows=1, ncols=1, figsize=figsize, tight_layout=True)
-    d_mean.plot(kind='bar', yerr=d_std, ax = ax, legend = True)#.legend(loc=legend_loc)
+    d_mean.plot(kind='bar', yerr=d_std, ax = ax, legend = True).legend(loc=legend_loc)
     if logx: ax.set_yscale('log')
 
     # fig, axs = plt.subplots(nrows=1, ncols=2, figsize=figsize, tight_layout=True)
@@ -73,8 +74,6 @@ def aggregate_dataset(datasets: List[str], df: pd.DataFrame, step: int, group_pa
     dds, dds_mean, dds_std, mins = [], [], [], []
 
     for dataset_name in datasets:
-
-
 
         # Filter step on df
         if step == 1:
@@ -104,7 +103,8 @@ def aggregate_dataset(datasets: List[str], df: pd.DataFrame, step: int, group_pa
 
             d_pivot = pivot(d, columns=hyper_params)
             if step == 2:
-                d_pivot = rename_net(d_pivot)
+                print(d_pivot.columns.names)
+                d_pivot = rename_net(d_pivot, level = len(hyper_params))
             d_pivots[(dataset_name, group)] = dict(d_pivot=d_pivot, map_kwargs=map_kwargs)
 
             dd = pd.DataFrame(data = [f'{mean:.2e} ± {std:.2e}' for mean, std in zip(d_pivot.mean().values, d_pivot.std().values)], index = d_pivot.columns).T
@@ -227,6 +227,7 @@ def plot_vertical(d_pivots):
 
 
 def rename_net(d_pivot, level = 3, index = 0):
+
     renames = {
         'Predict-NoneP': 'Vanilla', 
         'Predict-TrainedP': 'Trained',
