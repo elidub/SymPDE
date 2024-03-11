@@ -1,19 +1,25 @@
 seed: 42
+
 net: TrainP
-# svd_rank: 10
 
 data_dir: ../data/noise
-max_epochs: 50
 
+# Data and transform 
 grid_size: [1,7]
 noise_std: 1.
 
 eps_mult: 0. 0. 1. 0.
 
-tags: ['dev']
+# Training
+max_epochs: 100
 
 n_train: 10000
 n_val: 1000
 n_test: 1000
 
+# Logging
+tags: [loss, dev]
+
 # logger: None
+
+criterion: mses

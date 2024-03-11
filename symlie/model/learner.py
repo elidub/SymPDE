@@ -29,15 +29,32 @@ class BaseLearner(pl.LightningModule):
     
     def log_test_results(self):
         pass
-    
+
     def step(self, batch, mode):
         out = self.forward(batch)
-        loss = self.criterion(*out)
+        
+        out1, out2 = out
+        criterion1, criterion2 = self.criterion
+        
+        loss1 = criterion1(*out1)
+        loss2 = criterion2(*out2)
+        loss = 0*loss1 + loss2
 
         # Log Metrics
+        self.log(f"{mode}_loss1", loss1, prog_bar=True, on_step=False, on_epoch=True)
+        self.log(f"{mode}_loss2", loss2, prog_bar=True, on_step=False, on_epoch=True)
         self.log(f"{mode}_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
 
         return loss, batch, out
+    
+    # def step(self, batch, mode):
+    #     out = self.forward(batch)
+    #     loss = self.criterion(*out)
+
+    #     # Log Metrics
+    #     self.log(f"{mode}_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
+
+    #     return loss, batch, out
     
     def training_step(self, batch, batch_idx=0):
         loss, batch, _ = self.step(batch, "train")
@@ -193,7 +210,7 @@ class TransformationLearner(BaseLearner, Transform):
         if criterion_alt:
             dg_x = x_a - x_b_prime
             dg_out = out_a_prime - out_b_prime
-            return dg_x, dg_out
+            return (out_a_prime, out_b_prime), (dg_x, dg_out)
 
         return out_a_prime, out_b_prime
     

@@ -74,6 +74,7 @@ def setup_model(args):
     tasks = {
         'ce' : 'classification',
         'mse' : 'regression',
+        'mses' : 'regression',
     }
     task = tasks[args.criterion]
 
@@ -185,6 +186,7 @@ def setup_model(args):
     
     criterions = {
         'mse' : nn.MSELoss(),
+        'mses' : [nn.MSELoss(), nn.MSELoss()],
         'bce' : nn.BCELoss(),
         'ce'  : nn.CrossEntropyLoss(),
     }
