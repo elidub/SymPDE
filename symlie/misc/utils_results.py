@@ -51,9 +51,11 @@ def plot_pivot(d_pivot, step: int, figsize=(8, 4), logx = False, legend_loc = No
     unstack = lambda d, metric: d.apply(metric).unstack().reset_index(level=0, drop = True)[net_names]
     d_mean, d_std = unstack(d_pivot, pd.Series.mean), unstack(d_pivot, pd.Series.std)
 
+    d_min = unstack(d_pivot, pd.Series.min)
 
     fig, ax = plt.subplots(nrows=1, ncols=1, figsize=figsize, tight_layout=True)
-    d_mean.plot(kind='bar', yerr=d_std, ax = ax, legend = True).legend(loc=legend_loc)
+    # d_mean.plot(kind='bar', yerr=d_std, ax = ax, legend = True).legend(loc=legend_loc)
+    d_min.plot(kind='bar', ax = ax, legend = True).legend(loc=legend_loc)
     if logx: ax.set_yscale('log')
 
     # fig, axs = plt.subplots(nrows=1, ncols=2, figsize=figsize, tight_layout=True)
@@ -101,7 +103,7 @@ def aggregate_dataset(datasets: List[str], df: pd.DataFrame, step: int, group_pa
 
 
             d_pivot = pivot(d, columns=hyper_params)
-            return d_pivot
+            # return d_pivot
             if step == 2:
                 d_pivot = rename_net(d_pivot, level = len(hyper_params))
             d_pivots[(dataset_name, group)] = dict(d_pivot=d_pivot, map_kwargs=map_kwargs)

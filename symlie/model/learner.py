@@ -189,6 +189,12 @@ class TransformationLearner(BaseLearner, Transform):
         assert out_a_prime.shape == out_b_prime.shape
         assert out_a_prime.shape == x_b_prime.shape
 
+        criterion_alt = True
+        if criterion_alt:
+            dg_x = x_a - x_b_prime
+            dg_out = out_a_prime - out_b_prime
+            return dg_x, dg_out
+
         return out_a_prime, out_b_prime
     
     def log_test_results(self):

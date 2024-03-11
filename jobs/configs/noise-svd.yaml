@@ -1,18 +1,18 @@
 seed: 42
 net: TrainP
-svd_rank: 10
+# svd_rank: 10
 
 data_dir: ../data/noise
 max_epochs: 50
 
 grid_size: [1,7]
-noise_std: 0.5
+noise_std: 1.
 
 eps_mult: 0. 0. 1. 0.
 
-tags: dev
+tags: ['dev']
 
-n_train: 1000
+n_train: 10000
 n_val: 1000
 n_test: 1000
 
