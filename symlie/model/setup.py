@@ -38,9 +38,12 @@ def find_id_for_P(args):
         data_kwargs_filter = (df.data_kwargs == args.data_kwargs)
 
     if hasattr(args, 'svd_rank'):
-        svd_filter = (df.svd_rank == args.svd_rank)
+        if args.svd_rank is not None:
+            svd_filter = (df.svd_rank == args.svd_rank)
+        else:
+            svd_filter = df.svd_rank.isna()
     else:
-        svd_filter = True
+        svd_filter = df.svd_rank.isna()
 
 
     df_selected = df[

@@ -80,11 +80,10 @@ def aggregate_dataset(datasets: List[str], df: pd.DataFrame, step: int, group_pa
             d = df[df['tags'].astype(str).str.contains(f"'{dataset_name}'")].reset_index(drop=True)
             d = d[~d['tags'].astype(str).str.contains(f'predict')].reset_index(drop=True)
         elif step == 2:
-            d = df[df['tags'].astype(str).str.contains(f'{dataset_name}-predict')].reset_index(drop=True)
+            d = df[df['tags'].astype(str).str.contains(f"'{dataset_name}-predict'")].reset_index(drop=True)
 
         d = stringify_dict(d, group_params) # Striningify group_params for unique indexing
         ds = {group : d_group for group, d_group in d.groupby(group_params)} if group_params else {0 : d}
-
 
         for group, d in ds.items():
 
@@ -102,10 +101,12 @@ def aggregate_dataset(datasets: List[str], df: pd.DataFrame, step: int, group_pa
 
 
             d_pivot = pivot(d, columns=hyper_params)
+            return d_pivot
             if step == 2:
-                print(d_pivot.columns.names)
                 d_pivot = rename_net(d_pivot, level = len(hyper_params))
             d_pivots[(dataset_name, group)] = dict(d_pivot=d_pivot, map_kwargs=map_kwargs)
+
+
 
             dd = pd.DataFrame(data = [f'{mean:.2e} ± {std:.2e}' for mean, std in zip(d_pivot.mean().values, d_pivot.std().values)], index = d_pivot.columns).T
             dd_mean = pd.DataFrame(data = [mean for mean in d_pivot.mean().values], index = d_pivot.columns).T

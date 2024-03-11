@@ -131,7 +131,7 @@ def main(args):
     model, datamodule = setup_model(args)
 
     if args.do_return_model:
-        return model, None, None, None
+        return model, None, None
     
     if args.run_id is None:
         if args.logger == "wandb":
@@ -176,7 +176,7 @@ def main(args):
         trainer.test(model, datamodule=datamodule)
 
     wandb.finish()
-    return model, trainer, datamodule, None
+    return model, trainer, datamodule
 
 def generate_data(args):
     check_args_processed(args)   
