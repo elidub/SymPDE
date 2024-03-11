@@ -1,0 +1,20 @@
+# General
+seed: 42
+net: TrainImplicitP
+hidden_implicit_layers: [49, 49]
+
+data_dir: ../data/noise
+
+# Data and transform 
+grid_size: [1, 7]
+noise_std: 1.
+
+eps_mult: [0., 0., 1., 0.]
+
+# Training
+max_epochs: 100
+
+# Logging
+tags: [implicit, dev]
+logger: None
+

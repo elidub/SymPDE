@@ -10,6 +10,8 @@ import sklearn.metrics as skm
 
 from data.transforms import Transform
 from misc.utils import NumpyUtils
+from model.networks.linear import LinearP
+from model.networks.implicit import LinearImplicit
 
 class BaseLearner(pl.LightningModule):
     def __init__(self, net, criterion, lr):
@@ -192,15 +194,24 @@ class TransformationLearner(BaseLearner, Transform):
     def log_test_results(self):
         run_id = self.trainer.logger.experiment.id
 
-
-        if self.net.svd:
-            P = self.net.U @ torch.diag(self.net.S) @ self.net.V
-            logging_objects = {'P' : P, 'U': self.net.U, 'S': self.net.S, 'V': self.net.V}
+        if hasattr(self.net, 'svd'):
+            if self.net.svd: 
+                P = self.net.U @ torch.diag(self.net.S) @ self.net.V
+                logging_objects = {'P' : P, 'U': self.net.U, 'S': self.net.S, 'V': self.net.V}
+            else:
+                logging_objects = {'P': self.net.P}
+            save_format = 'numpy'
+        elif hasattr(self.net, 'implicit_P'):
+            logging_objects = {'implicit_P': self.net.implicit_P.state_dict()}
+            save_format = 'state_dict'
         else:
-            logging_objects = {'P': self.net.P}
+            raise NotImplementedError(f"Logging not implemented for {self.net}")
 
         for key, value in logging_objects.items():
             print(f'Logging {key}')
             store_dir = os.path.join(self.trainer.log_dir, 'store', key)
             os.makedirs(store_dir, exist_ok=True)
-            np.save(os.path.join(store_dir, f'{run_id}.npy'), value.cpu().numpy())
+            if save_format == 'numpy':
+                np.save(os.path.join(store_dir, f'{run_id}.npy'), value.cpu().numpy())
+            elif save_format == 'state_dict':
+                torch.save(value, os.path.join(store_dir, f'{run_id}.pt'))

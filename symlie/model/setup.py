@@ -7,6 +7,7 @@ import pandas as pd
 from model.learner import PredictionLearner, TransformationLearner
 from model.networks.mlp import MLP
 from model.networks.linear import  LinearP
+from model.networks.implicit import LinearImplicit
 from data.dataset import FlatDataset
 from data.datamodule import BaseDataModule
 
@@ -80,17 +81,30 @@ def setup_model(args):
             out_features = 2
         assert out_features == args.out_features, f"Expected out_features = {out_features}, got {args.out_features}"
 
-    if net == "TrainP":
-        net = LinearP(
-            in_features = features,
-            out_features = features,
-            bias = False,
-            device = args.device,
-            P_init = 'randn',
-            train_weights = False,
-            train_P = True,
-            svd_rank = args.svd_rank,
-        )
+    if net.startswith("Train"):
+        if net == "TrainP":
+            net = LinearP(
+                in_features = features,
+                out_features = features,
+                bias = False,
+                device = args.device,
+                P_init = 'randn',
+                train_weights = False,
+                train_P = True,
+                svd_rank = args.svd_rank,
+            )
+
+        
+        elif net == "TrainImplicitP":
+            net = LinearImplicit(
+                in_features = features,
+                out_features = features,
+                bias = False,
+                hidden_implicit_layers = args.hidden_implicit_layers,
+                device = args.device,
+                train_weights = False,
+                train_P = True,
+            )
         learner = TransformationLearner
 
     elif net.startswith("Predict-"):

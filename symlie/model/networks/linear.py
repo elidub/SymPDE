@@ -15,8 +15,6 @@ class CalculatedP:
             'kernelconv': self.get_kernelconv,
         }
 
-        # self.transform_funcs = {k : v().to(device) for k, v in transform_funcs.items()}
-
     def get_none(self):
         out = torch.eye(self.size**2).reshape(self.size**2, self.size**2)
         return out
@@ -83,7 +81,6 @@ class LinearP(nn.Module, CalculatedP):
         assert train_weights != train_P
 
         # Initalize P
-        # self.calculated_p = CalculatedP(size = self.out_features, device = self.device)
         if self.svd:
             assert P_init == 'randn' and train_P
             self.U = torch.randn(self.out_features**2, svd_rank, device = self.device)
