@@ -222,7 +222,7 @@ class TransformationLearner(BaseLearner, Transform):
         criterion_alt = True
         if criterion_alt:
             dg_x = x_a - x_b_prime
-            dg_out = out_a_prime - out_b_prime
+            dg_out = out_a - out_b_prime
             return (out_a_prime, out_b_prime), (dg_x, dg_out)
 
         return (out_a_prime, out_b_prime)

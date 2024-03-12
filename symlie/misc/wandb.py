@@ -4,6 +4,22 @@ import pandas as pd
 import numpy as np
 import wandb
 
+
+def get_inspectdev_df(tags: list):
+    api = wandb.Api()
+    runs = api.runs('eliasdubbeldam/symlie')
+
+    runs_inspect = []
+    for run in runs:
+        if (run.state != 'finished'): continue
+        if not all(tag in run.tags for tag in tags): continue
+        runs_inspect.append(run)
+
+    inspect_df = new_runs(runs_inspect).reset_index(drop=True)
+
+    return inspect_df
+
+
 def get_inspect_df(reload: bool = False, results_file: str = '../logs/store/inspect_df.pkl'):
 
     if not reload:
@@ -56,13 +72,16 @@ def new_runs(runs):
         config['tags']     = run.tags
 
         # Test loss
-        try:
-            test_loss_history = run.history(keys=['test_loss'])['test_loss']
-            if len(test_loss_history) != 1:
-                print(f'Warning: {id} has test_loss {test_loss_history}')
-            config['test_loss'] = test_loss_history.item()
-        except:
-            config['test_loss'] = np.nan
+        losses = ['test_loss', 'test_loss_o', 'test_loss_dg']
+        # losses = ['test_loss']
+        for loss in losses:
+            try:
+                test_loss_history = run.history(keys=[loss])[loss]
+                if len(test_loss_history) != 1:
+                    print(f'Warning: {id} has test_loss {test_loss_history}')
+                config[loss] = test_loss_history.item()
+            except:
+                config[loss] = np.nan
 
         config_list.append(config)
 
