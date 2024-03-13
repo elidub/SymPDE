@@ -1,0 +1,26 @@
+# General
+seed: 42
+
+
+# net: Predict-NoiseTrainedImplicitP
+# hidden_implicit_layers: [49, 49]
+
+net: Predict-NoiseTrainedP
+
+data_dir: ../data/sine1d
+
+# Data and transform 
+grid_size: [1, 7]
+noise_std: 0.5
+y_low: 1
+y_high: 3
+
+eps_mult: 0. 0. 1. 0.
+
+# Training
+max_epochs: 100
+lr: 0.001
+
+# Logging
+tags: [loss, implicit, dev]
+logger: None
