@@ -82,7 +82,11 @@ class BaseLearner(pl.LightningModule):
         self.test_step_outs.append(out)
 
     def configure_optimizers(self):
-        print(self.parameters)
+
+        for name, param in self.net.named_parameters():
+            print(name, param.requires_grad)
+
+        # print(self.parameters)
         optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
         return optimizer
     
@@ -237,7 +241,7 @@ class TransformationLearner(BaseLearner, Transform):
         criterion_alt = True
         if criterion_alt:
             eps_multed = eps * self.eps_mult
-            eps_multed = eps_multed.repeat(batch_size, 1)
+            eps_multed = eps_multed.repeat(batch_size, 1).to(x_a.device)
             dg_x = self.generator(torch.cat([x_a, eps_multed], dim=1)) - x_b_prime
             dg_out = self.generator(torch.cat([out_a, eps_multed], dim=1)) - out_b_prime
             return (out_a_prime, out_b_prime), (dg_x, dg_out)

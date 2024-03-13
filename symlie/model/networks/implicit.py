@@ -28,10 +28,11 @@ class LinearImplicit(nn.Module):
         # Initalize P
         self.implicit_P = self.setup_implict_P(hidden_implicit_layers = hidden_implicit_layers)
         if P_init is not None:
+            print('Loading weights P')
             self.implicit_P.load_state_dict(P_init)
 
 
-        if not self.train_P or True:
+        if not self.train_P: # or True ??
             self.reset_parameters(batch_size=None)
 
         if train_weights:
