@@ -24,7 +24,8 @@ class MLP(torch.nn.Module):
         for _ in range(n_hidden_layers):
             layers.append(linearmodules[0](
                 in_features=in_features, out_features=in_features, bias=bias, device=device,
-                P_init = P_init, train_weights=train_weights, train_P=train_P
+                P_init = P_init, train_weights=train_weights, train_P=train_P,
+                hidden_implicit_layers = [49, 49]
             ))
             layers.append(activation())
 

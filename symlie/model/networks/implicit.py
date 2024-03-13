@@ -2,6 +2,7 @@ import torch
 from torch import nn
 import torchvision
 from typing import List, Union
+import collections
 
 
 class LinearImplicit(nn.Module):
@@ -9,9 +10,8 @@ class LinearImplicit(nn.Module):
             self, in_features, out_features, bias, 
             hidden_implicit_layers: List[int],
             device = 'cpu',
-            # P_init: Union[torch.Tensor, str] = 'none',
+            P_init: collections.OrderedDict = None,
             train_weights = True, train_P = False,
-            # svd_rank: int = None,
         ):
         nn.Module.__init__(self)
         self.device = device
@@ -27,6 +27,8 @@ class LinearImplicit(nn.Module):
 
         # Initalize P
         self.implicit_P = self.setup_implict_P(hidden_implicit_layers = hidden_implicit_layers)
+        if P_init is not None:
+            self.implicit_P.load_state_dict(P_init)
 
 
         if not self.train_P or True:

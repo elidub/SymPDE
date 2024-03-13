@@ -17,6 +17,10 @@ def load_P_pred(run_id, P_dir = '../logs/store/P/'):
     P = LinearP.normalize_P(P)
     return P
 
+def load_implicitP_statedict(run_id, P_dir = '../logs/store/implicit_P/'):
+    statedict = torch.load(P_dir + run_id + '.pt')
+    return statedict
+
 def find_id_for_P(args):
     df = pd.read_pickle('../logs/store/map_df.pkl')
     args.data_kwargs['grid_size'] = tuple(args.data_kwargs['grid_size'])
@@ -104,8 +108,6 @@ def setup_model(args):
                 train_P = True,
                 svd_rank = args.svd_rank,
             )
-
-        
         elif net == "TrainImplicitP":
             net = LinearImplicit(
                 in_features = features,
@@ -159,7 +161,25 @@ def setup_model(args):
                 n_hidden_layers = args.n_hidden_layers,
                 device = args.device,
                 P_init = P_pred,
+                linearmodules=[LinearP, nn.Linear],
             )
+
+        elif net == "Predict-NoiseTrainedImplicitP":
+            args.use_P_from_noise = True
+            assert args.use_P_from_noise == True
+            # statedict_implicitP = load_implicitP_statedict(find_id_for_P(args))
+            statedict_implicitP = load_implicitP_statedict('be1v5f84')
+            print('statedict_implicitP', statedict_implicitP.keys())
+            net = MLP(
+                in_features = features, 
+                out_features = out_features,
+                bias = args.bias,
+                n_hidden_layers = args.n_hidden_layers,
+                device = args.device,
+                P_init = statedict_implicitP,
+                linearmodules = [LinearImplicit, nn.Linear],
+            )
+
         elif net == "Predict-TrainedP-check":
             find_id_for_P(args)
             sys.exit()
