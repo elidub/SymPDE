@@ -11,9 +11,13 @@ noise_std: 1.
 eps_mult: 0. 0. 1. 0.
 
 # Training
-max_epochs: 100
+max_epochs: 500
+lr: 0.001
+lossweight_dg: 1
+lossweight_o: 1
+criterion: mses
 
-n_train: 10000
+n_train: 100000
 n_val: 1000
 n_test: 1000
 

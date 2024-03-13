@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import wandb
+import torchvision
 
 import sklearn.metrics as skm
 
@@ -52,7 +53,7 @@ class BaseLearner(pl.LightningModule):
 
         return loss, batch, out
     
-    def step(self, batch, mode):
+    def step_alt(self, batch, mode):
         out = self.forward(batch)
 
         out_o, out_dg = out
@@ -81,6 +82,7 @@ class BaseLearner(pl.LightningModule):
         self.test_step_outs.append(out)
 
     def configure_optimizers(self):
+        print(self.parameters)
         optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
         return optimizer
     
@@ -193,6 +195,19 @@ class TransformationLearner(BaseLearner, Transform):
         BaseLearner.__init__(self, net, criterion, lr)
         Transform.__init__(self, grid_size, **transform_kwargs)
 
+        size = torch.prod(torch.tensor(grid_size)).item()
+        self.generator = self.init_generator_learner(size)
+
+    def init_generator_learner(self, size):
+        print(f'Initializing generator with size {size}')
+        mlp = torchvision.ops.MLP(
+            in_channels = size + len(self.eps_mult),
+            hidden_channels = [size, size],
+        )
+        return mlp
+
+
+
     def forward(self, batch):
 
         x, y_, centers = batch
@@ -221,8 +236,10 @@ class TransformationLearner(BaseLearner, Transform):
 
         criterion_alt = True
         if criterion_alt:
-            dg_x = x_a - x_b_prime
-            dg_out = out_a - out_b_prime
+            eps_multed = eps * self.eps_mult
+            eps_multed = eps_multed.repeat(batch_size, 1)
+            dg_x = self.generator(torch.cat([x_a, eps_multed], dim=1)) - x_b_prime
+            dg_out = self.generator(torch.cat([out_a, eps_multed], dim=1)) - out_b_prime
             return (out_a_prime, out_b_prime), (dg_x, dg_out)
 
         return (out_a_prime, out_b_prime)

@@ -24,6 +24,7 @@ ca  conda activate sympde
 ru  python run.py
 ruc python run.py --config $1
 rul python run.py --logger None $1
+pdftopng $1 # convert $1.pdf to $1.png in that directory
 ```
 
 Snellius

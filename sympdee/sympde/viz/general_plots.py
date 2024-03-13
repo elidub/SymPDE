@@ -79,8 +79,8 @@ def simple_imshow(x, l = 1, print_values = False, precision = 2, title = None, i
     plt.show()
     return fig
 
-def imshow(x, figsize = (3,3)):
-    plt.figure(figsize = figsize)
+def imshow(x, figsize = (3,3), l = 1):
+    plt.figure(figsize = np.array(figsize)*l)
     plt.imshow(x)
     plt.show()
 
