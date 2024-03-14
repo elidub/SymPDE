@@ -26,16 +26,18 @@ class LinearImplicit(nn.Module):
         assert train_weights != train_P
 
         # Initalize P
+        print('Setup implicit_P')
         self.implicit_P = self.setup_implict_P(hidden_implicit_layers = hidden_implicit_layers)
         if P_init is not None:
             print('Loading weights P')
             self.implicit_P.load_state_dict(P_init)
 
 
-        if not self.train_P: # or True ??
-            self.reset_parameters(batch_size=None)
+        # if train_weights: # or True ??
+            # self.reset_parameters(batch_size=None)
 
         if train_weights:
+            self.reset_parameters(batch_size=None)
             self.weight = nn.Parameter(self.weight)
 
             # Turn off gradients for implicit_P
@@ -71,14 +73,11 @@ class LinearImplicit(nn.Module):
             # self.bias   = torch.randn(batch_size, self.out_features, device = self.device)
 
     # @staticmethod
-    # def normalize_P(P):
-    #     # P = torch.abs(P)
-    #     # P = torch.exp(P)
-    #     P = P / torch.linalg.norm(P, ord = 1, dim = 1).reshape(-1, 1)
-
-    #     # P_sum = torch.sum(P, dim = 1)
-    #     # assert torch.allclose(P_sum, torch.ones_like(P_sum), atol=1e-5, rtol=1e-4), P_sum-torch.ones_like(P_sum)
-    #     return P
+    def normalize_weight(self, weight, mean = 0., std = 1.):
+        weight_mean = weight.mean()
+        weight_std = weight.std()
+        weight_norm = ((weight - weight_mean) / weight_std) * std + mean
+        return weight_norm
 
     def forward(self, x, batch_size = None, normalize_P = True):
 
@@ -87,10 +86,13 @@ class LinearImplicit(nn.Module):
 
         if (not self.train_P) or (batch_size is None):
             weight = self.implicit_P(self.weight.flatten()).reshape(self.weight.shape)
+            # weight = self.normalize_weight(weight)
             out = x @ weight.T
         else:
             weight = self.implicit_P(self.weight.flatten(1)).reshape(self.weight.shape)
+            # weight = self.normalize_weight(weight)
             out = torch.einsum('bi,boi->bo', x, weight)
+
 
         if self.set_bias: out = out + self.bias
         return out

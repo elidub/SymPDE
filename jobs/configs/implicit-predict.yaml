@@ -1,11 +1,12 @@
 # General
-seed: 42
+seed: 1
 
 
 # net: Predict-NoiseTrainedImplicitP
 # hidden_implicit_layers: [49, 49]
 
 net: Predict-NoiseTrainedP
+# net: Predict-NoneP
 
 data_dir: ../data/sine1d
 
@@ -20,6 +21,7 @@ eps_mult: 0. 0. 1. 0.
 # Training
 max_epochs: 100
 lr: 0.001
+n_train: 1000
 
 # Logging
 tags: [loss, implicit, dev]

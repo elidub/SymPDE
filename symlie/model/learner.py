@@ -28,6 +28,8 @@ class BaseLearner(pl.LightningModule):
         if type(criterion) == list:
             if len(criterion) == 2:
                 self.criterion_alt = True
+            elif len(criterion) == 4: # Adding losses dx and do
+                self.criterion_alt = True
             else:
                 raise NotImplementedError(f"Criterion {criterion} not implemented")
         else:
@@ -68,6 +70,22 @@ class BaseLearner(pl.LightningModule):
         self.log(f"{mode}_loss_dg", loss_dg, prog_bar=True, on_step=False, on_epoch=True)
         self.log(f"{mode}_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
 
+        # out_o, out_dg, out_dx, out_do = out
+        # (lossweight_o, criterion_o), (lossweight_dg, criterion_dg), (lossweight_dx, criterion_dx), (lossweight_do, criterion_do) = self.criterion
+        
+        # loss_o = criterion_o(*out_o)
+        # loss_dg = criterion_dg(*out_dg)
+        # loss_dx = criterion_dx(*out_dx)
+        # loss_do = criterion_do(*out_do)
+        # loss = lossweight_o*loss_o + lossweight_dg*loss_dg + lossweight_dx*loss_dx + lossweight_do*loss_do
+
+        # # Log Metrics
+        # self.log(f"{mode}_loss_o", loss_o, prog_bar=True, on_step=False, on_epoch=True)
+        # self.log(f"{mode}_loss_dg", loss_dg, prog_bar=True, on_step=False, on_epoch=True)
+        # self.log(f"{mode}_loss_dx", loss_dx, prog_bar=True, on_step=False, on_epoch=True)
+        # self.log(f"{mode}_loss_do", loss_do, prog_bar=True, on_step=False, on_epoch=True)
+        # self.log(f"{mode}_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
+
         return loss, batch, out
     
     def training_step(self, batch, batch_idx=0):
@@ -83,10 +101,10 @@ class BaseLearner(pl.LightningModule):
 
     def configure_optimizers(self):
 
-        for name, param in self.net.named_parameters():
+        print('Print parameters in configure_optimizers')
+        for name, param in self.named_parameters():
             print(name, param.requires_grad)
 
-        # print(self.parameters)
         optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
         return optimizer
     
@@ -242,9 +260,15 @@ class TransformationLearner(BaseLearner, Transform):
         if criterion_alt:
             eps_multed = eps * self.eps_mult
             eps_multed = eps_multed.repeat(batch_size, 1).to(x_a.device)
-            dg_x = self.generator(torch.cat([x_a, eps_multed], dim=1)) - x_b_prime
-            dg_out = self.generator(torch.cat([out_a, eps_multed], dim=1)) - out_b_prime
-            return (out_a_prime, out_b_prime), (dg_x, dg_out)
+
+            phi_x_a   = self.generator(torch.cat([x_a, eps_multed], dim=1)) 
+            phi_out_a = self.generator(torch.cat([out_a, eps_multed], dim=1))
+            # phi_x_a   = x_a
+            # phi_out_a = out_a
+
+            dg_x = phi_x_a - x_b_prime
+            dg_out = phi_out_a - out_b_prime
+            return (out_a_prime, out_b_prime), (dg_x, dg_out)#, (phi_x_a, x_b_prime), (phi_out_a, out_b_prime)
 
         return (out_a_prime, out_b_prime)
     
