@@ -91,10 +91,11 @@ class LinearP(nn.Module, CalculatedP):
         else:
             self.P = P_init
 
-        if not self.train_P:
-            self.reset_parameters(batch_size=None)
+        # if not self.train_P:
+        #     self.reset_parameters(batch_size=None)
 
         if train_weights:
+            self.reset_parameters(batch_size=None)
             assert P_init not in ['randn']
             self.weight = nn.Parameter(self.weight)
             # self.bias = nn.Parameter(self.bias)
@@ -135,8 +136,6 @@ class LinearP(nn.Module, CalculatedP):
         return P
 
     def forward(self, x, batch_size = None, P = None, normalize_P = True):
-
-
 
         if P is None:
             if self.svd:

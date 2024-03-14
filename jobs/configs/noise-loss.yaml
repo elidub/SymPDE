@@ -1,7 +1,9 @@
-seed: 42
+seed: 1
 
 net: TrainImplicitP
 hidden_implicit_layers: [49, 49]
+
+# net: TrainP
 
 data_dir: ../data/noise
 
@@ -17,7 +19,7 @@ lossweight_dg: 1
 lossweight_o: 1
 criterion: mses
 
-n_train: 10_000
+n_train: 100_000
 
 # Logging
 tags: [loss, dev]

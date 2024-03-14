@@ -14,7 +14,7 @@ from data.datamodule import BaseDataModule
 def load_P_pred(run_id, P_dir = '../logs/store/P/'):
     P = np.load(P_dir + run_id + '.npy')
     P = torch.from_numpy(P).float()
-    P = LinearP.normalize_P(P)
+    # P = LinearP.normalize_P(P)
     return P
 
 def load_implicitP_statedict(run_id, P_dir = '../logs/store/implicit_P/'):
@@ -153,7 +153,15 @@ def setup_model(args):
         elif net == "Predict-NoiseTrainedP":
             args.use_P_from_noise = True
             assert args.use_P_from_noise == True
-            P_pred = load_P_pred(find_id_for_P(args)).to(args.device)
+
+            # P_pred = load_P_pred(find_id_for_P(args)).to(args.device)
+
+            # P_pred = load_P_pred('7u75g6ai').to(args.device) # debug normalize_P
+            # P_pred = load_P_pred('3uvrx8mf').to(args.device) # debug WITHOUT normalize_P
+            manual_id = 'a8usb5wi' # debug normalize_P again
+            manual_id = 'y2xmhybx' # debug WITHOUT normalize_P again
+
+            P_pred = load_P_pred(manual_id).to(args.device) 
             net = MLP(
                 in_features = features, 
                 out_features = out_features,
@@ -206,6 +214,7 @@ def setup_model(args):
     
     criterions = {
         'mse' : nn.MSELoss(),
+        # 'mses' : [(args.lossweight_o, nn.MSELoss()), (args.lossweight_dg, nn.MSELoss()), (0., nn.MSELoss()), (0., nn.MSELoss())],
         'mses' : [(args.lossweight_o, nn.MSELoss()), (args.lossweight_dg, nn.MSELoss())],
         'bce' : nn.BCELoss(),
         'ce'  : nn.CrossEntropyLoss(),
