@@ -22,8 +22,6 @@ class BaseLearner(pl.LightningModule):
         self.lr = lr
 
         self.test_step_outs = []
-        # self.forward_keys = []
-
 
         if type(criterion) == list:
             if len(criterion) == 2:
@@ -116,40 +114,11 @@ class BaseLearner(pl.LightningModule):
         
         self.log_test_results()
         
-        # run_id = self.trainer.logger.experiment.id
-
-        # save =  NumpyUtils(dir=self.trainer.logger.experiment.dir).save
-        # pred_outs = zip(*self.test_step_outs)
-        # pred_outs = [torch.cat(pred_out).cpu().numpy() for pred_out in pred_outs]
-        # for forward_key, pred_out in zip(self.forward_keys, pred_outs):
-        #     save(forward_key, pred_out)
-
-        # TODO: Automatize this such taht it doesn't happen all the time
-        # y_preds, y_trues = pred_outs
-        # self.on_test_end_extra_regression(y_preds, y_trues)
-        # self.on_test_end_extra(y_preds, y_trues)
-
-        # for key, value in self.test_logs_method().items():
-        #     print(f'Logging {key}')
-        #     store_dir = os.path.join(self.trainer.log_dir, 'store', key)
-        #     os.makedirs(store_dir, exist_ok=True)
-        #     np.save(os.path.join(store_dir, f'{run_id}.npy'), value.cpu().numpy())
-            
     
 class PredictionLearner(BaseLearner):
     def __init__(self, net, criterion, lr, task):
         super().__init__(net, criterion, lr)
         self.task = task
-        # self.forward_keys = ['y_pred', 'y_true']
-
-        # print(f"Criterion: {criterion}", type(criterion), str(criterion))
-
-        # if criterion == str('CrossEntropyLoss()'):
-        #     self.task = 'classification'
-        # elif criterion == str('nn.MSELoss()'):
-        #     self.task = 'regression'
-        # else:
-        #     raise NotImplementedError(f"Criterion {criterion} not implemented")
 
     def forward(self, batch):
 
@@ -178,15 +147,6 @@ class PredictionLearner(BaseLearner):
         plt.close()
         wandb.log({'confusion_matrix': wandb.Image(fig)})
 
-    # def _log_regression(self, y_preds, y_trues):
-    #     fig, ax = plt.subplots(1, 1, figsize=(7, 7), tight_layout=True)
-    #     l = np.max(y_trues)*1.1
-    #     fig, ax = plt.subplots()
-    #     # ax.plot([0, l], [0, l], 'k:')
-    #     ax.plot(y_trues, y_preds, '.', alpha=0.5)
-    #     plt.close()
-    #     wandb.log({'regression_results': wandb.Image(fig)})
-        
     def _log_regression(self, y_preds, y_trues):
 
         print(y_preds.shape, y_trues.shape)
@@ -227,8 +187,6 @@ class TransformationLearner(BaseLearner, Transform):
             hidden_channels = [size, size],
         )
         return mlp
-
-
 
     def forward(self, batch):
 
