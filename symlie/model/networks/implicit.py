@@ -48,9 +48,10 @@ class LinearImplicit(nn.Module):
         implicit_in_features = implicit_out_features = self.in_features*self.out_features
         implicit_layers = [implicit_in_features] + hidden_implicit_layers + [implicit_out_features]
         layers = []
-        for i in range(len(implicit_layers)-1):
+        for i in range(len(implicit_layers)-2):
             layers.append(nn.Linear(implicit_layers[i], implicit_layers[i+1]))
             layers.append(nn.ReLU())
+        layers.append(nn.Linear(implicit_layers[-2], implicit_layers[-1]))
         implicit_P = nn.Sequential(*layers)
         return implicit_P
 
@@ -83,8 +84,9 @@ class LinearImplicit(nn.Module):
 
         # if normalize_P:
             # P = self.normalize_P(P)
-
-        if (not self.train_P) or (batch_size is None):
+        
+        if self.train_weights or (batch_size is None):
+            weight = self.weight
             weight = self.implicit_P(self.weight.flatten()).reshape(self.weight.shape)
             # weight = self.normalize_weight(weight)
             out = x @ weight.T

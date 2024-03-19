@@ -59,6 +59,8 @@ def parse_options(notebook = False):
     parser.add_argument("--lossweight_dg", type = float, default = 1.)
     parser.add_argument("--lossweight_dx", type = float, default = 1.)
     parser.add_argument("--lossweight_do", type = float, default = 1.)
+    parser.add_argument("--lossweight_do_a", type = float, default = 1.)
+    parser.add_argument("--lossweight_do_b", type = float, default = 1.)
 
     parser.add_argument("--hidden_implicit_layers", nargs='+', type=int, default=None)
 
@@ -129,6 +131,9 @@ def check_args_processed(args):
 def main(args):
     check_args_processed(args)    
     pl.seed_everything(args.seed, workers=True)
+
+    # print(args.n_splits)
+    # print('Exiting!') ; import sys; sys.exit()
     
 
     args.device = "cuda" if torch.cuda.is_available() else "cpu"

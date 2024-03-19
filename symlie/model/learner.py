@@ -24,9 +24,7 @@ class BaseLearner(pl.LightningModule):
         self.test_step_outs = []
 
         if type(criterion) == list:
-            if len(criterion) == 2:
-                self.criterion_alt = True
-            elif len(criterion) == 4: # Adding losses dx and do
+            if len(criterion) in [2, 6]:
                 self.criterion_alt = True
             else:
                 raise NotImplementedError(f"Criterion {criterion} not implemented")
@@ -56,6 +54,20 @@ class BaseLearner(pl.LightningModule):
     def step_alt(self, batch, mode):
         out = self.forward(batch)
 
+
+        out_terms = out
+        loss_terms = self.criterion
+        log_terms = ['loss_o', 'loss_dg', 'loss_dx', 'loss_do', 'loss_do_a', 'loss_do_b']
+        assert len(out_terms) == len(loss_terms) == len(log_terms)
+
+        loss = 0
+        for out, (lossweight, criterion), log_term in zip(out_terms, loss_terms, log_terms):
+            loss_term = criterion(*out)
+            loss += lossweight*loss_term
+            self.log(f"{mode}_{log_term}", loss_term, prog_bar=True, on_step=False, on_epoch=True)
+
+        self.log(f"{mode}_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
+
         # out_o, out_dg = out
         # (lossweight_o, criterion_o), (lossweight_dg, criterion_dg) = self.criterion
         
@@ -68,21 +80,37 @@ class BaseLearner(pl.LightningModule):
         # self.log(f"{mode}_loss_dg", loss_dg, prog_bar=True, on_step=False, on_epoch=True)
         # self.log(f"{mode}_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
 
-        out_o, out_dg, out_dx, out_do = out
-        (lossweight_o, criterion_o), (lossweight_dg, criterion_dg), (lossweight_dx, criterion_dx), (lossweight_do, criterion_do) = self.criterion
+        ### Vanilla tilde ####
+        # out_o, out_do_a, out_do_b = out
+        # (lossweight_o, criterion_o), (lossweight_do_a, criterion_do_a), (lossweight_do_b, criterion_do_b) = self.criterion
         
-        loss_o = criterion_o(*out_o)
-        loss_dg = criterion_dg(*out_dg)
-        loss_dx = criterion_dx(*out_dx)
-        loss_do = criterion_do(*out_do)
-        loss = lossweight_o*loss_o + lossweight_dg*loss_dg + lossweight_dx*loss_dx + lossweight_do*loss_do
+        # loss_o = criterion_o(*out_o)
+        # loss_do_a = criterion_do_a(*out_do_a)
+        # loss_do_b = criterion_do_b(*out_do_b)
+        # loss = lossweight_o*loss_o + lossweight_do_a*loss_do_a + lossweight_do_b*loss_do_b
 
-        # Log Metrics
-        self.log(f"{mode}_loss_o", loss_o, prog_bar=True, on_step=False, on_epoch=True)
-        self.log(f"{mode}_loss_dg", loss_dg, prog_bar=True, on_step=False, on_epoch=True)
-        self.log(f"{mode}_loss_dx", loss_dx, prog_bar=True, on_step=False, on_epoch=True)
-        self.log(f"{mode}_loss_do", loss_do, prog_bar=True, on_step=False, on_epoch=True)
-        self.log(f"{mode}_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
+        # # Log Metrics
+        # self.log(f"{mode}_loss_o", loss_o, prog_bar=True, on_step=False, on_epoch=True)
+        # self.log(f"{mode}_loss_do_a", loss_do_a, prog_bar=True, on_step=False, on_epoch=True)
+        # self.log(f"{mode}_loss_do_b", loss_do_b, prog_bar=True, on_step=False, on_epoch=True)
+        # self.log(f"{mode}_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
+
+        #### Four losses ####
+        # out_o, out_dg, out_dx, out_do = out
+        # (lossweight_o, criterion_o), (lossweight_dg, criterion_dg), (lossweight_dx, criterion_dx), (lossweight_do, criterion_do) = self.criterion
+        
+        # loss_o = criterion_o(*out_o)
+        # loss_dg = criterion_dg(*out_dg)
+        # loss_dx = criterion_dx(*out_dx)
+        # loss_do = criterion_do(*out_do)
+        # loss = lossweight_o*loss_o + lossweight_dg*loss_dg + lossweight_dx*loss_dx + lossweight_do*loss_do
+
+        # # Log Metrics
+        # self.log(f"{mode}_loss_o", loss_o, prog_bar=True, on_step=False, on_epoch=True)
+        # self.log(f"{mode}_loss_dg", loss_dg, prog_bar=True, on_step=False, on_epoch=True)
+        # self.log(f"{mode}_loss_dx", loss_dx, prog_bar=True, on_step=False, on_epoch=True)
+        # self.log(f"{mode}_loss_do", loss_do, prog_bar=True, on_step=False, on_epoch=True)
+        # self.log(f"{mode}_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
 
         return loss, batch, out
     
@@ -135,6 +163,7 @@ class TransformationLearner(BaseLearner, Transform):
         x, y_, centers = batch
 
         batch_size = len(x)
+        # batch_size = None
         eps = torch.randn((4,))
 
         # Reset the weights and biases as training P should not be dependent on the weight initailization
@@ -144,28 +173,30 @@ class TransformationLearner(BaseLearner, Transform):
         # Route a: Forward pass, transformation
         x_a = x
         out_a = self.net(x_a, batch_size=batch_size)
-        out_a_prime, centers_a = self.transform(out_a, centers, eps)
+        out_a_prime, _ = self.transform(out_a, centers, eps)
 
         # Route b: Transformation, forward pass
         x_b = x
-        x_b_prime, centers_b = self.transform(x_b, centers, eps)
+        x_b_prime, _ = self.transform(x_b, centers, eps)
         out_b_prime = self.net(x_b_prime, batch_size=batch_size)
 
-        # Vanilla
+        # Vanilla tilde
         weight = self.net.weight
-        out_a_tilde = x @ weight.T
+        out_a_tilde = torch.einsum('bi,boi->bo', x, weight)
+        # out_a_tilde = x @ weight.T
         out_a_prime_tilde, _ = self.transform(out_a_tilde, centers, eps)
-        out_b_prime_tilde = x_b_prime @ weight.T
-        
+        out_b_prime_tilde = torch.einsum('bi,boi->bo', x, weight)
 
-
-        assert (centers_a == centers_b).all()
         assert out_a.shape == x_b.shape
         assert out_a_prime.shape == out_b_prime.shape
         assert out_a_prime.shape == x_b_prime.shape
 
         criterion_alt = True
         if criterion_alt:
+
+            # placeholder = torch.zeros_like(out_a)
+            # return (placeholder, placeholder), (placeholder, placeholder), (placeholder, placeholder), (placeholder, placeholder), (out_a_prime, out_a_prime_tilde), (placeholder, placeholder)
+
             eps_multed = eps * self.eps_mult
             eps_multed = eps_multed.repeat(batch_size, 1).to(x_a.device)
 
@@ -174,7 +205,7 @@ class TransformationLearner(BaseLearner, Transform):
 
             dg_x = phi_x_a - x_b_prime
             dg_out = phi_out_a - out_b_prime
-            return (out_a_prime, out_b_prime), (dg_x, dg_out), (phi_x_a, x_b_prime), (phi_out_a, out_b_prime)
+            return (out_a_prime, out_b_prime), (dg_x, dg_out), (phi_x_a, x_b_prime), (phi_out_a, out_b_prime), (out_a_prime, out_a_prime_tilde), (out_b_prime, out_b_prime_tilde)
 
         return (out_a_prime, out_b_prime)
     
@@ -198,8 +229,8 @@ class TransformationLearner(BaseLearner, Transform):
         for key, value in logging_objects.items():
             print(f'Logging {key}')
             # store_dir = os.path.join(self.trainer.log_dir, 'store', key)
-            store_dir = os.path.join('temp_logs', 'store', key)
-            os.makedirs(store_dir, exist_ok=True)
+            store_dir = os.path.join('../logs', 'store', key)
+            # os.makedirs(store_dir, exist_ok=True)
             if save_format == 'numpy':
                 np.save(os.path.join(store_dir, f'{run_id}.npy'), value.cpu().numpy())
             elif save_format == 'state_dict':

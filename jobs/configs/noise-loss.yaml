@@ -1,4 +1,5 @@
 seed: 42
+# generate_data: True
 
 net: TrainImplicitP
 hidden_implicit_layers: [49, 49]
@@ -15,14 +16,18 @@ eps_mult: 0. 0. 1. 0.
 # Training
 max_epochs: 100
 lr: 0.001
-lossweight_dg: 1.
-lossweight_o: 1.
-lossweight_dx: 1.
-lossweight_do: 1.
+
+lossweight_o: 0.
+lossweight_dg: 0.
+lossweight_dx: 0.
+lossweight_do: 0.
+lossweight_do_a: 1.
+lossweight_do_b: 1.
+
 criterion: mses
 
-n_train: 10_000
+n_train: 1_00_000
 
 # Logging
 tags: [loss, dev]
-logger: None
+# logger: None

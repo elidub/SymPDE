@@ -10,6 +10,7 @@ from model.networks.linear import  LinearP
 from model.networks.implicit import LinearImplicit
 from data.dataset import FlatDataset
 from data.datamodule import BaseDataModule
+from model.loss import MMDLoss
 
 def load_P_pred(run_id, P_dir = '../logs/store/P/'):
     P = np.load(P_dir + run_id + '.npy')
@@ -214,7 +215,17 @@ def setup_model(args):
     
     criterions = {
         'mse' : nn.MSELoss(),
-        'mses' : [(args.lossweight_o, nn.MSELoss()), (args.lossweight_dg, nn.MSELoss()), (args.lossweight_dx, nn.MSELoss()), (args.lossweight_do, nn.MSELoss())],
+        'mses' : [
+            (args.lossweight_o,    nn.MSELoss()), 
+            (args.lossweight_dg,   nn.MSELoss()), 
+            (args.lossweight_dx,   nn.MSELoss()), 
+            (args.lossweight_do,   nn.MSELoss()),
+            (args.lossweight_do_a, nn.MSELoss()), 
+            (args.lossweight_do_b, nn.MSELoss()),
+            # (args.lossweight_do_a, MMDLoss()), 
+            # (args.lossweight_do_b, MMDLoss()),
+        ],
+        # 'mses' : [(args.lossweight_o, nn.MSELoss()), (args.lossweight_do_a, nn.MSELoss()), (args.lossweight_do_b, nn.MSELoss() )],
         # 'mses' : [(args.lossweight_o, nn.MSELoss()), (args.lossweight_dg, nn.MSELoss())],
         'bce' : nn.BCELoss(),
         'ce'  : nn.CrossEntropyLoss(),
