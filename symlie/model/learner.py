@@ -56,33 +56,33 @@ class BaseLearner(pl.LightningModule):
     def step_alt(self, batch, mode):
         out = self.forward(batch)
 
-        out_o, out_dg = out
-        (lossweight_o, criterion_o), (lossweight_dg, criterion_dg) = self.criterion
-        
-        loss_o = criterion_o(*out_o)
-        loss_dg = criterion_dg(*out_dg)
-        loss = lossweight_o*loss_o + lossweight_dg*loss_dg
-
-        # Log Metrics
-        self.log(f"{mode}_loss_o", loss_o, prog_bar=True, on_step=False, on_epoch=True)
-        self.log(f"{mode}_loss_dg", loss_dg, prog_bar=True, on_step=False, on_epoch=True)
-        self.log(f"{mode}_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
-
-        # out_o, out_dg, out_dx, out_do = out
-        # (lossweight_o, criterion_o), (lossweight_dg, criterion_dg), (lossweight_dx, criterion_dx), (lossweight_do, criterion_do) = self.criterion
+        # out_o, out_dg = out
+        # (lossweight_o, criterion_o), (lossweight_dg, criterion_dg) = self.criterion
         
         # loss_o = criterion_o(*out_o)
         # loss_dg = criterion_dg(*out_dg)
-        # loss_dx = criterion_dx(*out_dx)
-        # loss_do = criterion_do(*out_do)
-        # loss = lossweight_o*loss_o + lossweight_dg*loss_dg + lossweight_dx*loss_dx + lossweight_do*loss_do
+        # loss = lossweight_o*loss_o + lossweight_dg*loss_dg
 
         # # Log Metrics
         # self.log(f"{mode}_loss_o", loss_o, prog_bar=True, on_step=False, on_epoch=True)
         # self.log(f"{mode}_loss_dg", loss_dg, prog_bar=True, on_step=False, on_epoch=True)
-        # self.log(f"{mode}_loss_dx", loss_dx, prog_bar=True, on_step=False, on_epoch=True)
-        # self.log(f"{mode}_loss_do", loss_do, prog_bar=True, on_step=False, on_epoch=True)
         # self.log(f"{mode}_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
+
+        out_o, out_dg, out_dx, out_do = out
+        (lossweight_o, criterion_o), (lossweight_dg, criterion_dg), (lossweight_dx, criterion_dx), (lossweight_do, criterion_do) = self.criterion
+        
+        loss_o = criterion_o(*out_o)
+        loss_dg = criterion_dg(*out_dg)
+        loss_dx = criterion_dx(*out_dx)
+        loss_do = criterion_do(*out_do)
+        loss = lossweight_o*loss_o + lossweight_dg*loss_dg + lossweight_dx*loss_dx + lossweight_do*loss_do
+
+        # Log Metrics
+        self.log(f"{mode}_loss_o", loss_o, prog_bar=True, on_step=False, on_epoch=True)
+        self.log(f"{mode}_loss_dg", loss_dg, prog_bar=True, on_step=False, on_epoch=True)
+        self.log(f"{mode}_loss_dx", loss_dx, prog_bar=True, on_step=False, on_epoch=True)
+        self.log(f"{mode}_loss_do", loss_do, prog_bar=True, on_step=False, on_epoch=True)
+        self.log(f"{mode}_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
 
         return loss, batch, out
     
@@ -108,12 +108,103 @@ class BaseLearner(pl.LightningModule):
     
     def on_test_end(self):
 
-        if not self.trainer.logger:
-            print("No logger, skipping logging")
-            return
+        # if not self.trainer.logger:
+        #     print("No logger, skipping logging")
+        #     return
         
         self.log_test_results()
         
+class TransformationLearner(BaseLearner, Transform):
+    def __init__(self, net, criterion, lr, grid_size, transform_kwargs):
+        BaseLearner.__init__(self, net, criterion, lr)
+        Transform.__init__(self, grid_size, **transform_kwargs)
+
+        size = torch.prod(torch.tensor(grid_size)).item()
+        self.generator = self.init_generator_learner(size)
+
+    def init_generator_learner(self, size):
+        print(f'Initializing generator with size {size}')
+        mlp = torchvision.ops.MLP(
+            in_channels = size + len(self.eps_mult),
+            hidden_channels = [size, size],
+        )
+        return mlp
+
+    def forward(self, batch):
+
+        x, y_, centers = batch
+
+        batch_size = len(x)
+        eps = torch.randn((4,))
+
+        # Reset the weights and biases as training P should not be dependent on the weight initailization
+        if self.net.train_P:
+            self.net.reset_parameters(batch_size=batch_size)
+
+        # Route a: Forward pass, transformation
+        x_a = x
+        out_a = self.net(x_a, batch_size=batch_size)
+        out_a_prime, centers_a = self.transform(out_a, centers, eps)
+
+        # Route b: Transformation, forward pass
+        x_b = x
+        x_b_prime, centers_b = self.transform(x_b, centers, eps)
+        out_b_prime = self.net(x_b_prime, batch_size=batch_size)
+
+        # Vanilla
+        weight = self.net.weight
+        out_a_tilde = x @ weight.T
+        out_a_prime_tilde, _ = self.transform(out_a_tilde, centers, eps)
+        out_b_prime_tilde = x_b_prime @ weight.T
+        
+
+
+        assert (centers_a == centers_b).all()
+        assert out_a.shape == x_b.shape
+        assert out_a_prime.shape == out_b_prime.shape
+        assert out_a_prime.shape == x_b_prime.shape
+
+        criterion_alt = True
+        if criterion_alt:
+            eps_multed = eps * self.eps_mult
+            eps_multed = eps_multed.repeat(batch_size, 1).to(x_a.device)
+
+            phi_x_a   = self.generator(torch.cat([x_a, eps_multed], dim=1)) 
+            phi_out_a = self.generator(torch.cat([out_a, eps_multed], dim=1))
+
+            dg_x = phi_x_a - x_b_prime
+            dg_out = phi_out_a - out_b_prime
+            return (out_a_prime, out_b_prime), (dg_x, dg_out), (phi_x_a, x_b_prime), (phi_out_a, out_b_prime)
+
+        return (out_a_prime, out_b_prime)
+    
+    def log_test_results(self):
+        # run_id = self.trainer.logger.experiment.id
+        run_id = 'temp_runid'
+
+        if hasattr(self.net, 'svd'):
+            if self.net.svd: 
+                P = self.net.U @ torch.diag(self.net.S) @ self.net.V
+                logging_objects = {'P' : P, 'U': self.net.U, 'S': self.net.S, 'V': self.net.V}
+            else:
+                logging_objects = {'P': self.net.P}
+            save_format = 'numpy'
+        elif hasattr(self.net, 'implicit_P'):
+            logging_objects = {'implicit_P': self.net.implicit_P.state_dict()}
+            save_format = 'state_dict'
+        else:
+            raise NotImplementedError(f"Logging not implemented for {self.net}")
+
+        for key, value in logging_objects.items():
+            print(f'Logging {key}')
+            # store_dir = os.path.join(self.trainer.log_dir, 'store', key)
+            store_dir = os.path.join('temp_logs', 'store', key)
+            os.makedirs(store_dir, exist_ok=True)
+            if save_format == 'numpy':
+                np.save(os.path.join(store_dir, f'{run_id}.npy'), value.cpu().numpy())
+            elif save_format == 'state_dict':
+                torch.save(value, os.path.join(store_dir, f'{run_id}.pt'))
+
     
 class PredictionLearner(BaseLearner):
     def __init__(self, net, criterion, lr, task):
@@ -171,86 +262,3 @@ class PredictionLearner(BaseLearner):
         wandb.log({'regression_results': wandb.Image(fig)})
 
         print('Logged regression results')
-            
-class TransformationLearner(BaseLearner, Transform):
-    def __init__(self, net, criterion, lr, grid_size, transform_kwargs):
-        BaseLearner.__init__(self, net, criterion, lr)
-        Transform.__init__(self, grid_size, **transform_kwargs)
-
-        size = torch.prod(torch.tensor(grid_size)).item()
-        self.generator = self.init_generator_learner(size)
-
-    def init_generator_learner(self, size):
-        print(f'Initializing generator with size {size}')
-        mlp = torchvision.ops.MLP(
-            in_channels = size + len(self.eps_mult),
-            hidden_channels = [size, size],
-        )
-        return mlp
-
-    def forward(self, batch):
-
-        x, y_, centers = batch
-
-        batch_size = len(x)
-        eps = torch.randn((4,))
-
-        # Reset the weights and biases as training P should not be dependent on the weight initailization
-        if self.net.train_P:
-            self.net.reset_parameters(batch_size=batch_size)
-
-        # Route a: Forward pass, transformation
-        x_a = x
-        out_a = self.net(x_a, batch_size=batch_size)
-        out_a_prime, centers_a = self.transform(out_a, centers, eps)
-
-        # Route b: Transformation, forward pass
-        x_b = x
-        x_b_prime, centers_b = self.transform(x_b, centers, eps)
-        out_b_prime = self.net(x_b_prime, batch_size=batch_size)
-
-        assert (centers_a == centers_b).all()
-        assert out_a.shape == x_b.shape
-        assert out_a_prime.shape == out_b_prime.shape
-        assert out_a_prime.shape == x_b_prime.shape
-
-        criterion_alt = True
-        if criterion_alt:
-            eps_multed = eps * self.eps_mult
-            eps_multed = eps_multed.repeat(batch_size, 1).to(x_a.device)
-
-            phi_x_a   = self.generator(torch.cat([x_a, eps_multed], dim=1)) 
-            phi_out_a = self.generator(torch.cat([out_a, eps_multed], dim=1))
-            # phi_x_a   = x_a
-            # phi_out_a = out_a
-
-            dg_x = phi_x_a - x_b_prime
-            dg_out = phi_out_a - out_b_prime
-            return (out_a_prime, out_b_prime), (dg_x, dg_out)#, (phi_x_a, x_b_prime), (phi_out_a, out_b_prime)
-
-        return (out_a_prime, out_b_prime)
-    
-    def log_test_results(self):
-        run_id = self.trainer.logger.experiment.id
-
-        if hasattr(self.net, 'svd'):
-            if self.net.svd: 
-                P = self.net.U @ torch.diag(self.net.S) @ self.net.V
-                logging_objects = {'P' : P, 'U': self.net.U, 'S': self.net.S, 'V': self.net.V}
-            else:
-                logging_objects = {'P': self.net.P}
-            save_format = 'numpy'
-        elif hasattr(self.net, 'implicit_P'):
-            logging_objects = {'implicit_P': self.net.implicit_P.state_dict()}
-            save_format = 'state_dict'
-        else:
-            raise NotImplementedError(f"Logging not implemented for {self.net}")
-
-        for key, value in logging_objects.items():
-            print(f'Logging {key}')
-            store_dir = os.path.join(self.trainer.log_dir, 'store', key)
-            os.makedirs(store_dir, exist_ok=True)
-            if save_format == 'numpy':
-                np.save(os.path.join(store_dir, f'{run_id}.npy'), value.cpu().numpy())
-            elif save_format == 'state_dict':
-                torch.save(value, os.path.join(store_dir, f'{run_id}.pt'))

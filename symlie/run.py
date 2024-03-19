@@ -57,6 +57,8 @@ def parse_options(notebook = False):
 
     parser.add_argument("--lossweight_o", type = float, default = 1.)
     parser.add_argument("--lossweight_dg", type = float, default = 1.)
+    parser.add_argument("--lossweight_dx", type = float, default = 1.)
+    parser.add_argument("--lossweight_do", type = float, default = 1.)
 
     parser.add_argument("--hidden_implicit_layers", nargs='+', type=int, default=None)
 
