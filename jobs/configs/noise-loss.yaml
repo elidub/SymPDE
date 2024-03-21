@@ -1,5 +1,5 @@
 seed: 42
-# generate_data: True
+generate_data: True
 
 net: TrainImplicitP
 hidden_implicit_layers: [49, 49]
@@ -17,12 +17,16 @@ eps_mult: 0. 0. 1. 0.
 max_epochs: 100
 lr: 0.001
 
-lossweight_o: 0.
+lossweight_o: 1.
 lossweight_dg: 0.
 lossweight_dx: 0.
 lossweight_do: 0.
-lossweight_do_a: 1.
-lossweight_do_b: 1.
+lossweight_do_a: 0.
+lossweight_do_b: 0.
+lossweight_do_a_mmd: 1.
+lossweight_do_b_mmd: 1.
+
+batch_size: 512
 
 criterion: mses
 

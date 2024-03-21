@@ -18,8 +18,8 @@ def load_P_pred(run_id, P_dir = '../logs/store/P/'):
     # P = LinearP.normalize_P(P)
     return P
 
-def load_implicitP_statedict(run_id, P_dir = '../logs/store/implicit_P/'):
-    statedict = torch.load(P_dir + run_id + '.pt')
+def load_implicitP_statedict(run_id, P_dir = '../logs/store/implicit_P/', device = 'cpu'):
+    statedict = torch.load(P_dir + run_id + '.pt', map_location=torch.device(device))
     return statedict
 
 def find_id_for_P(args):
@@ -215,15 +215,25 @@ def setup_model(args):
     
     criterions = {
         'mse' : nn.MSELoss(),
+        # 'mses' : [
+        #     (args.lossweight_o,    nn.MSELoss()), 
+        #     (args.lossweight_dg,   nn.MSELoss()), 
+        #     (args.lossweight_dx,   nn.MSELoss()), 
+        #     (args.lossweight_do,   nn.MSELoss()),
+        #     (args.lossweight_do_a, nn.MSELoss()), 
+        #     (args.lossweight_do_b, nn.MSELoss()),
+        #     (args.lossweight_do_a_mmd, MMDLoss()), 
+        #     (args.lossweight_do_b_mmd, MMDLoss()),
+        # ],
         'mses' : [
             (args.lossweight_o,    nn.MSELoss()), 
             (args.lossweight_dg,   nn.MSELoss()), 
             (args.lossweight_dx,   nn.MSELoss()), 
             (args.lossweight_do,   nn.MSELoss()),
-            (args.lossweight_do_a, nn.MSELoss()), 
-            (args.lossweight_do_b, nn.MSELoss()),
-            # (args.lossweight_do_a, MMDLoss()), 
-            # (args.lossweight_do_b, MMDLoss()),
+            (args.lossweight_do_tilde, nn.MSELoss()), 
+            (args.lossweight_do_tilde, nn.MSELoss()),
+            (args.lossweight_do_tilde_mmd, MMDLoss()), 
+            (args.lossweight_do_tilde_mmd, MMDLoss()),
         ],
         # 'mses' : [(args.lossweight_o, nn.MSELoss()), (args.lossweight_do_a, nn.MSELoss()), (args.lossweight_do_b, nn.MSELoss() )],
         # 'mses' : [(args.lossweight_o, nn.MSELoss()), (args.lossweight_dg, nn.MSELoss())],

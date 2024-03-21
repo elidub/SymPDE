@@ -24,7 +24,7 @@ class BaseLearner(pl.LightningModule):
         self.test_step_outs = []
 
         if type(criterion) == list:
-            if len(criterion) in [2, 6]:
+            if len(criterion) in [2, 8]:
                 self.criterion_alt = True
             else:
                 raise NotImplementedError(f"Criterion {criterion} not implemented")
@@ -57,7 +57,7 @@ class BaseLearner(pl.LightningModule):
 
         out_terms = out
         loss_terms = self.criterion
-        log_terms = ['loss_o', 'loss_dg', 'loss_dx', 'loss_do', 'loss_do_a', 'loss_do_b']
+        log_terms = ['loss_o', 'loss_dg', 'loss_dx', 'loss_do', 'loss_do_a', 'loss_do_b', 'loss_do_a_mmd', 'loss_do_b_mmd']
         assert len(out_terms) == len(loss_terms) == len(log_terms)
 
         loss = 0
@@ -182,10 +182,10 @@ class TransformationLearner(BaseLearner, Transform):
 
         # Vanilla tilde
         weight = self.net.weight
-        out_a_tilde = torch.einsum('bi,boi->bo', x, weight)
-        # out_a_tilde = x @ weight.T
+        out_a_tilde = torch.einsum('bi,boi->bo', x_a, weight)
         out_a_prime_tilde, _ = self.transform(out_a_tilde, centers, eps)
-        out_b_prime_tilde = torch.einsum('bi,boi->bo', x, weight)
+
+        out_b_prime_tilde = torch.einsum('bi,boi->bo', x_b_prime, weight)
 
         assert out_a.shape == x_b.shape
         assert out_a_prime.shape == out_b_prime.shape
@@ -205,13 +205,22 @@ class TransformationLearner(BaseLearner, Transform):
 
             dg_x = phi_x_a - x_b_prime
             dg_out = phi_out_a - out_b_prime
-            return (out_a_prime, out_b_prime), (dg_x, dg_out), (phi_x_a, x_b_prime), (phi_out_a, out_b_prime), (out_a_prime, out_a_prime_tilde), (out_b_prime, out_b_prime_tilde)
+
+            return (out_a_prime, out_b_prime), (dg_x, dg_out), (phi_x_a, x_b_prime), (phi_out_a, out_b_prime), (out_a_prime, out_a_prime_tilde), (out_b_prime, out_b_prime_tilde), (out_a_prime, out_a_prime_tilde), (out_b_prime, out_b_prime_tilde)
+
+            dw_a = x_a - out_a
+            dw_a_tilde = x_a - out_a_tilde
+
+            dw_b_prime = x_b_prime - out_b_prime
+            dw_b_prime_tilde = x_b_prime - out_b_prime_tilde
+
+            return (out_a_prime, out_b_prime), (dg_x, dg_out), (phi_x_a, x_b_prime), (phi_out_a, out_b_prime), (dw_a, dw_a_tilde), (dw_b_prime, dw_b_prime_tilde)
 
         return (out_a_prime, out_b_prime)
     
     def log_test_results(self):
-        # run_id = self.trainer.logger.experiment.id
-        run_id = 'temp_runid'
+        run_id = self.trainer.logger.experiment.id
+        # run_id = 'temp_runid'
 
         if hasattr(self.net, 'svd'):
             if self.net.svd: 
@@ -228,9 +237,9 @@ class TransformationLearner(BaseLearner, Transform):
 
         for key, value in logging_objects.items():
             print(f'Logging {key}')
-            # store_dir = os.path.join(self.trainer.log_dir, 'store', key)
-            store_dir = os.path.join('../logs', 'store', key)
-            # os.makedirs(store_dir, exist_ok=True)
+            store_dir = os.path.join(self.trainer.log_dir, 'store', key)
+            # store_dir = os.path.join('../logs', 'store', key)
+            os.makedirs(store_dir, exist_ok=True)
             if save_format == 'numpy':
                 np.save(os.path.join(store_dir, f'{run_id}.npy'), value.cpu().numpy())
             elif save_format == 'state_dict':
