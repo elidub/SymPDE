@@ -219,8 +219,11 @@ class TransformationLearner(BaseLearner, Transform):
         return (out_a_prime, out_b_prime)
     
     def log_test_results(self):
-        run_id = self.trainer.logger.experiment.id
-        # run_id = 'temp_runid'
+        # run_id = self.trainer.logger.experiment.id
+        # log_dir = self.trainer.log_dir
+
+        run_id = 'temp_runid'
+        log_dir = '../logs'
 
         if hasattr(self.net, 'svd'):
             if self.net.svd: 
@@ -237,8 +240,7 @@ class TransformationLearner(BaseLearner, Transform):
 
         for key, value in logging_objects.items():
             print(f'Logging {key}')
-            store_dir = os.path.join(self.trainer.log_dir, 'store', key)
-            # store_dir = os.path.join('../logs', 'store', key)
+            store_dir = os.path.join(log_dir, 'store', key)
             os.makedirs(store_dir, exist_ok=True)
             if save_format == 'numpy':
                 np.save(os.path.join(store_dir, f'{run_id}.npy'), value.cpu().numpy())

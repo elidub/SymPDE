@@ -9,7 +9,7 @@ hidden_implicit_layers: [49, 49]
 data_dir: ../data/noise
 
 # Data and transform 
-grid_size: [1,7]
+grid_size: [1,3]
 noise_std: 1.
 eps_mult: 0. 0. 1. 0.
 
@@ -21,17 +21,19 @@ lossweight_o: 1.
 lossweight_dg: 0.
 lossweight_dx: 0.
 lossweight_do: 0.
-lossweight_do_a: 0.
-lossweight_do_b: 0.
-lossweight_do_a_mmd: 1.
-lossweight_do_b_mmd: 1.
+lossweight_do_tilde: 1.
+lossweight_do_tilde_mmd: 0.
+# lossweight_do_a: 1.
+# lossweight_do_b: 0.
+# lossweight_do_a_mmd: 0.
+# lossweight_do_b_mmd: 0.
 
-batch_size: 512
+batch_size: 128
 
 criterion: mses
 
-n_train: 1_00_000
+n_train: 1_000
 
 # Logging
 tags: [loss, dev]
-# logger: None
+logger: None

@@ -72,7 +72,7 @@ def new_runs(runs):
         config['tags']     = run.tags
 
         # Test loss
-        losses = ['test_loss', 'test_loss_o', 'test_loss_dg']
+        losses = ['test_loss_o', 'test_loss_dg', 'test_loss_dx', 'test_loss_do', 'test_loss_do_a', 'test_loss_do_b', 'test_loss_do_a_mmd', 'test_loss_do_b_mmd']
         # losses = ['test_loss']
         for loss in losses:
             try:
@@ -82,6 +82,7 @@ def new_runs(runs):
                 config[loss] = test_loss_history.item()
             except:
                 config[loss] = np.nan
+                print(f'Warning: {loss} not found')
 
         config_list.append(config)
 
