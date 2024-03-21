@@ -147,23 +147,58 @@ class TransformationLearner(BaseLearner, Transform):
         BaseLearner.__init__(self, net, criterion, lr)
         Transform.__init__(self, grid_size, **transform_kwargs)
 
-        size = torch.prod(torch.tensor(grid_size)).item()
-        self.generator = self.init_generator_learner(size)
+        # size = torch.prod(torch.tensor(grid_size)).item()
+        # self.generator = self.init_generator_learner(size)
 
-    def init_generator_learner(self, size):
-        print(f'Initializing generator with size {size}')
-        mlp = torchvision.ops.MLP(
-            in_channels = size + len(self.eps_mult),
-            hidden_channels = [size, size],
-        )
-        return mlp
+    # def init_generator_learner(self, size):
+    #     print(f'Initializing generator with size {size}')
+    #     mlp = torchvision.ops.MLP(
+    #         in_channels = size + len(self.eps_mult),
+    #         hidden_channels = [size, size],
+    #     )
+    #     return mlp
+    
+    def transform_stripped(self, x, size, eps):
+        shift = (eps * size).int().item()
+        return torch.roll(x, shift, 1)
 
     def forward(self, batch):
+
+        x, y_, centers_ = batch
+
+        batch_size = len(x)
+        batch_size = None
+        eps = torch.randn((4,))
+
+        # Reset the weights and biases as training P should not be dependent on the weight initailization
+        if self.net.train_P:
+            self.net.reset_parameters(batch_size=batch_size)
+
+        # Route a: Forward pass, transformation
+        x_a = x
+        out_a = self.net(x_a, batch_size)
+        # out_a_prime = self.transform_stripped(out_a, size, eps)
+        out_a_prime, _ = self.transform(out_a, centers_, eps)
+
+        # Route b: Transformation, forward pass
+        x_b = x
+        # x_b_prime = self.transform_stripped(x_b, size, eps)
+        x_b_prime, _ = self.transform(x_b, centers_, eps)
+        out_b_prime = self.net(x_b_prime, batch_size)
+
+        assert out_a.shape == x_b.shape
+        assert out_a_prime.shape == out_b_prime.shape
+        assert out_a_prime.shape == x_b_prime.shape
+
+        return (out_a_prime, out_b_prime)
+
+
+    def forward_old(self, batch):
 
         x, y_, centers = batch
 
         batch_size = len(x)
-        # batch_size = None
+        batch_size = None
         eps = torch.randn((4,))
 
         # Reset the weights and biases as training P should not be dependent on the weight initailization
@@ -233,10 +268,25 @@ class TransformationLearner(BaseLearner, Transform):
                 logging_objects = {'P': self.net.P}
             save_format = 'numpy'
         elif hasattr(self.net, 'implicit_P'):
+            print('Logging implicit_P!!')
             logging_objects = {'implicit_P': self.net.implicit_P.state_dict()}
+            print(self.net.implicit_P.state_dict())
             save_format = 'state_dict'
+        # elif hasattr(self.net, 'layers'):
+        #     print('Logging layers!!')
+        #     logging_objects = {'implicit_P': self.net.layers.state_dict()}
+        #     print(self.net.layers.state_dict())
+        #     save_format = 'state_dict'
         else:
             raise NotImplementedError(f"Logging not implemented for {self.net}")
+        
+        
+        plt.figure(figsize=(3,3))
+        size = 7
+        self.net.reset_parameters()
+        plt.imshow( self.net(torch.rand(1, size), return_weight = True).detach().cpu().numpy() )
+        plt.savefig('../notebooks_symlie/mlp_weight.png')
+        plt.close()
 
         for key, value in logging_objects.items():
             print(f'Logging {key}')
