@@ -12,6 +12,7 @@ class MLP(torch.nn.Module):
             device: str,
             activation = torch.nn.ReLU,
             linearmodules: List[Union[LinearP, nn.Linear]] = [LinearP, nn.Linear],
+            hidden_implicit_layers: List[int] = None,
             n_hidden_layers = 1,
             out_features: int = 1,
             P_init: Union[torch.Tensor, str] = 'none',
@@ -20,13 +21,20 @@ class MLP(torch.nn.Module):
         ):
         super().__init__()
 
+        linear_kwargs = dict(
+            in_features=in_features, out_features=in_features, bias=bias, device=device,
+            P_init = P_init, train_weights=train_weights, train_P=train_P,
+        )
+        if hidden_implicit_layers is not None:
+            linear_kwargs['hidden_implicit_layers'] = hidden_implicit_layers
+
         layers = []
         for _ in range(n_hidden_layers):
-            layers.append(linearmodules[0](
-                in_features=in_features, out_features=in_features, bias=bias, device=device,
-                P_init = P_init, train_weights=train_weights, train_P=train_P,
-                hidden_implicit_layers = [49, 49]
-            ))
+            layers.append(linearmodules[0]( **linear_kwargs ))
+                # in_features=in_features, out_features=in_features, bias=bias, device=device,
+                # P_init = P_init, train_weights=train_weights, train_P=train_P,
+                # hidden_implicit_layers = hidden_implicit_layers,
+            # ))
             layers.append(activation())
 
         layers.append(linearmodules[1](in_features=in_features, out_features=out_features, bias = bias))

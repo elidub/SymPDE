@@ -219,11 +219,11 @@ class TransformationLearner(BaseLearner, Transform):
         return (out_a_prime, out_b_prime)
     
     def log_test_results(self):
-        # run_id = self.trainer.logger.experiment.id
-        # log_dir = self.trainer.log_dir
+        run_id = self.trainer.logger.experiment.id
+        log_dir = self.trainer.log_dir
 
-        run_id = 'temp_runid'
-        log_dir = '../logs'
+        # run_id = 'temp_runid'
+        # log_dir = '../logs'
 
         if hasattr(self.net, 'svd'):
             if self.net.svd: 

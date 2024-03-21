@@ -177,7 +177,7 @@ def setup_model(args):
             args.use_P_from_noise = True
             assert args.use_P_from_noise == True
             # statedict_implicitP = load_implicitP_statedict(find_id_for_P(args))
-            statedict_implicitP = load_implicitP_statedict('be1v5f84')
+            statedict_implicitP = load_implicitP_statedict('v24f2hfu')
             print('statedict_implicitP', statedict_implicitP.keys())
             net = MLP(
                 in_features = features, 
@@ -187,6 +187,7 @@ def setup_model(args):
                 device = args.device,
                 P_init = statedict_implicitP,
                 linearmodules = [LinearImplicit, nn.Linear],
+                hidden_implicit_layers = args.hidden_implicit_layers,
             )
 
         elif net == "Predict-TrainedP-check":

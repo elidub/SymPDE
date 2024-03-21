@@ -32,7 +32,7 @@ batch_size: 16
 
 # criterion: mses
 
-n_train: 10_00
+n_train: 10_000
 
 # Logging
 tags: [loss, dev]
