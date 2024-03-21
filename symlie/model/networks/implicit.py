@@ -80,7 +80,7 @@ class LinearImplicit(nn.Module):
         weight_norm = ((weight - weight_mean) / weight_std) * std + mean
         return weight_norm
 
-    def forward(self, x, batch_size = None, normalize_P = True):
+    def forward(self, x, batch_size = None, return_weight = False):
 
         # if normalize_P:
             # P = self.normalize_P(P)
@@ -95,6 +95,7 @@ class LinearImplicit(nn.Module):
             # weight = self.normalize_weight(weight)
             out = torch.einsum('bi,boi->bo', x, weight)
 
+        if return_weight: return weight
 
         if self.set_bias: out = out + self.bias
         return out

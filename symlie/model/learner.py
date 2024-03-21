@@ -147,23 +147,23 @@ class TransformationLearner(BaseLearner, Transform):
         BaseLearner.__init__(self, net, criterion, lr)
         Transform.__init__(self, grid_size, **transform_kwargs)
 
-        size = torch.prod(torch.tensor(grid_size)).item()
-        self.generator = self.init_generator_learner(size)
+    #     size = torch.prod(torch.tensor(grid_size)).item()
+    #     self.generator = self.init_generator_learner(size)
 
-    def init_generator_learner(self, size):
-        print(f'Initializing generator with size {size}')
-        mlp = torchvision.ops.MLP(
-            in_channels = size + len(self.eps_mult),
-            hidden_channels = [size, size],
-        )
-        return mlp
+    # def init_generator_learner(self, size):
+    #     print(f'Initializing generator with size {size}')
+    #     mlp = torchvision.ops.MLP(
+    #         in_channels = size + len(self.eps_mult),
+    #         hidden_channels = [size, size],
+    #     )
+    #     return mlp
 
     def forward(self, batch):
 
         x, y_, centers = batch
 
         batch_size = len(x)
-        # batch_size = None
+        batch_size = None
         eps = torch.randn((4,))
 
         # Reset the weights and biases as training P should not be dependent on the weight initailization
@@ -181,17 +181,17 @@ class TransformationLearner(BaseLearner, Transform):
         out_b_prime = self.net(x_b_prime, batch_size=batch_size)
 
         # Vanilla tilde
-        weight = self.net.weight
-        out_a_tilde = torch.einsum('bi,boi->bo', x_a, weight)
-        out_a_prime_tilde, _ = self.transform(out_a_tilde, centers, eps)
+        # weight = self.net.weight
+        # out_a_tilde = torch.einsum('bi,boi->bo', x_a, weight)
+        # out_a_prime_tilde, _ = self.transform(out_a_tilde, centers, eps)
 
-        out_b_prime_tilde = torch.einsum('bi,boi->bo', x_b_prime, weight)
+        # out_b_prime_tilde = torch.einsum('bi,boi->bo', x_b_prime, weight)
 
         assert out_a.shape == x_b.shape
         assert out_a_prime.shape == out_b_prime.shape
         assert out_a_prime.shape == x_b_prime.shape
 
-        criterion_alt = True
+        criterion_alt = False
         if criterion_alt:
 
             # placeholder = torch.zeros_like(out_a)
