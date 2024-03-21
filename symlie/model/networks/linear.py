@@ -135,7 +135,7 @@ class LinearP(nn.Module, CalculatedP):
         # assert torch.allclose(P_sum, torch.ones_like(P_sum), atol=1e-5, rtol=1e-4), P_sum-torch.ones_like(P_sum)
         return P
 
-    def forward(self, x, batch_size = None, P = None, normalize_P = True):
+    def forward(self, x, batch_size = None, P = None, normalize_P = True, return_weight = False):
 
         if P is None:
             if self.svd:
@@ -152,6 +152,8 @@ class LinearP(nn.Module, CalculatedP):
         else:
             weight = (P @ self.weight.flatten(1).T).T.reshape(self.weight.shape)
             out = torch.einsum('bi,boi->bo', x, weight)
+
+        if return_weight: return weight
 
         if self.set_bias: out = out + self.bias
         return out

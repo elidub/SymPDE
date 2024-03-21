@@ -15,7 +15,7 @@ from model.loss import MMDLoss
 def load_P_pred(run_id, P_dir = '../logs/store/P/'):
     P = np.load(P_dir + run_id + '.npy')
     P = torch.from_numpy(P).float()
-    # P = LinearP.normalize_P(P)
+    P = LinearP.normalize_P(P)
     return P
 
 def load_implicitP_statedict(run_id, P_dir = '../logs/store/implicit_P/', device = 'cpu'):

@@ -1,10 +1,10 @@
 seed: 1
 # generate_data: True
 
-net: TrainImplicitP
-hidden_implicit_layers: [49, 49, 49]
+# net: TrainImplicitP
+# hidden_implicit_layers: [49, 49, 49]
 
-# net: TrainP
+net: TrainP
 
 data_dir: ../data/noise
 
@@ -21,10 +21,8 @@ lossweight_o: 1.
 
 batch_size: 16
 
-# criterion: mses
-
 n_train: 10_000
 
 # Logging
 tags: [loss, dev]
-logger: None
+# logger: None
