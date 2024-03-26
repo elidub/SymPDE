@@ -353,7 +353,7 @@ class CombiLearner(BaseLearner, TransformationBlock):
 
         y_pred = self.net(x)
 
-        return (y_pred.squeeze(1), y_true.squeeze(1)),
+        # return (y_pred.squeeze(1), y_true.squeeze(1)),
 
         out_ab_primes = []
         for grid_size, weight, layer in zip(self.grid_sizes, self.net.weights, self.net.layers):
