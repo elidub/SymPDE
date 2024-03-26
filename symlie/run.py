@@ -45,6 +45,9 @@ def parse_options(notebook = False):
     parser.add_argument("--A_low", type=float, default = None)
     parser.add_argument("--A_high", type=float, default = None)
 
+    parser.add_argument("--grid_sizes", nargs='+', type=int, default = []) 
+
+
     parser.add_argument("--y_multi", type=int, default = 1)
     # Transformation kwargs
     parser.add_argument("--eps_mult", nargs='+', type=float, default=[1., 1., 1., 1.])
@@ -55,6 +58,7 @@ def parse_options(notebook = False):
     parser.add_argument("--n_hidden_layers", type = int, default = 1)
     parser.add_argument("--svd_rank", type = int, default = None)
 
+    parser.add_argument("--lossweight_y", type = float, default = 0.)
     parser.add_argument("--lossweight_o", type = float, default = 0.)
     parser.add_argument("--lossweight_dg", type = float, default = 0.)
     parser.add_argument("--lossweight_dx", type = float, default = 0.)
@@ -83,6 +87,7 @@ def parse_options(notebook = False):
     
     parser.add_argument("--do_return", action="store_true", help="Return model, trainer, datamodule")
     parser.add_argument("--do_return_model", action="store_true", help="Return model, None, None")
+    parser.add_argument("--do_return_datamodule", action="store_true", help="Return None, None, datamodule")
 
     # parser.add_argument("--n_splits", nargs='+', default=[10_000,5_000,5_000], help="Train, val, test split")
     parser.add_argument("--n_train", type=int, default=10_000, help="Train split")
@@ -143,6 +148,9 @@ def main(args):
     args.device = "cuda" if torch.cuda.is_available() else "cpu"
 
     model, datamodule = setup_model(args)
+
+    if args.do_return_datamodule:
+        return None, None, datamodule
 
     if args.do_return_model:
         return model, None, None

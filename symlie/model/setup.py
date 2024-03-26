@@ -4,8 +4,8 @@ import torch
 import numpy as np
 import pandas as pd
 
-from model.learner import PredictionLearner, TransformationLearner
-from model.networks.mlp import MLP
+from model.learner import PredictionLearner, TransformationLearner, CombiLearner
+from model.networks.mlp import MLP, CombiMLP
 from model.networks.linear import  LinearP
 from model.networks.implicit import LinearImplicit
 from data.dataset import FlatDataset
@@ -196,6 +196,15 @@ def setup_model(args):
         else:
             raise NotImplementedError(f"Network {net} not implemented")
         learner = PredictionLearner
+    elif net.startswith("CombiTrain"):
+        net = CombiMLP(
+            implicit_layer_dims = args.implicit_layer_dims,
+            vanilla_layer_dims = args.vanilla_layer_dims,
+            bias = args.bias,
+        )
+        learner = CombiLearner
+
+
     else:
         raise NotImplementedError(f"Network {net} not implemented")
     
@@ -226,18 +235,19 @@ def setup_model(args):
         #     (args.lossweight_do_a_mmd, MMDLoss()), 
         #     (args.lossweight_do_b_mmd, MMDLoss()),
         # ],
-        'mses' : [
-            (args.lossweight_o,    nn.MSELoss()), 
-            (args.lossweight_dg,   nn.MSELoss()), 
-            (args.lossweight_dx,   nn.MSELoss()), 
-            (args.lossweight_do,   nn.MSELoss()),
-            (args.lossweight_do_tilde, nn.MSELoss()), 
-            (args.lossweight_do_tilde, nn.MSELoss()),
-            # (args.lossweight_do_tilde_mmd, MMDLoss()), 
-            # (args.lossweight_do_tilde_mmd, MMDLoss()),
-            (args.lossweight_do_tilde_mmd, nn.MSELoss()), 
-            (args.lossweight_do_tilde_mmd, nn.MSELoss()),
-        ],
+        # 'mses' : [
+        #     (args.lossweight_o,    nn.MSELoss()), 
+        #     (args.lossweight_dg,   nn.MSELoss()), 
+        #     (args.lossweight_dx,   nn.MSELoss()), 
+        #     (args.lossweight_do,   nn.MSELoss()),
+        #     (args.lossweight_do_tilde, nn.MSELoss()), 
+        #     (args.lossweight_do_tilde, nn.MSELoss()),
+        #     # (args.lossweight_do_tilde_mmd, MMDLoss()), 
+        #     # (args.lossweight_do_tilde_mmd, MMDLoss()),
+        #     (args.lossweight_do_tilde_mmd, nn.MSELoss()), 
+        #     (args.lossweight_do_tilde_mmd, nn.MSELoss()),
+        # ],
+        'mses' : [(args.lossweight_y, nn.MSELoss())] + [(args.lossweight_o, nn.MSELoss()) for _ in range(len(args.grid_sizes))],
         # 'mses' : [(args.lossweight_o, nn.MSELoss()), (args.lossweight_do_a, nn.MSELoss()), (args.lossweight_do_b, nn.MSELoss() )],
         # 'mses' : [(args.lossweight_o, nn.MSELoss()), (args.lossweight_dg, nn.MSELoss())],
         'bce' : nn.BCELoss(),
@@ -272,6 +282,8 @@ def setup_model(args):
             model = learner(net, criterion, lr=args.lr, grid_size=args.data_kwargs['grid_size'], transform_kwargs=args.transform_kwargs)
         elif learner == PredictionLearner:
             model = learner(net, criterion, lr=args.lr, task=task)
+        elif learner == CombiLearner:
+            model = learner(net, criterion, lr=args.lr, grid_sizes=args.grid_sizes, transform_kwargs=args.transform_kwargs)
         else:
             raise NotImplementedError(f"Network {net} not implemented")
 

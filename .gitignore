@@ -38,6 +38,7 @@ ext_repos/LPSDA/data
 ext_repos/Equivariant-Net/data_*
 ext_repos/Equivariant-Net/*.nc
 ext_repos/Equivariant-Net/rbc_data.pt
+ext_repos/metalearning-symmetries/data
 
 ext_repos/G-FNO/results/
 ext_repos/G-FNO/data/

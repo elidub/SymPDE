@@ -6,10 +6,11 @@ import matplotlib.pyplot as plt
 import os
 import wandb
 import torchvision
+import torch.nn.functional as F
 
 import sklearn.metrics as skm
 
-from data.transforms import Transform
+from data.transforms import Transform, TransformRefactored
 from misc.utils import NumpyUtils
 from model.networks.linear import LinearP
 from model.networks.implicit import LinearImplicit
@@ -22,6 +23,10 @@ class BaseLearner(pl.LightningModule):
         self.lr = lr
 
         self.test_step_outs = []
+
+        self.criterion_alt = True
+        return
+
 
         if type(criterion) == list:
             if len(criterion) in [2, 8]:
@@ -50,15 +55,16 @@ class BaseLearner(pl.LightningModule):
             self.log(f"{mode}_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
 
         return loss, batch, out
-    
+
     def step_alt(self, batch, mode):
         out = self.forward(batch)
 
 
         out_terms = out
         loss_terms = self.criterion
-        log_terms = ['loss_o', 'loss_dg', 'loss_dx', 'loss_do', 'loss_do_a', 'loss_do_b', 'loss_do_a_mmd', 'loss_do_b_mmd']
-        assert len(out_terms) == len(loss_terms) == len(log_terms)
+        # log_terms = ['loss_o', 'loss_dg', 'loss_dx', 'loss_do', 'loss_do_a', 'loss_do_b', 'loss_do_a_mmd', 'loss_do_b_mmd']
+        log_terms = ['loss_y'] + [f'loss_o{i}' for i in range(len(loss_terms)-1)]
+        assert len(out_terms) == len(loss_terms) == len(log_terms), f"Length mismatch: {len(out_terms)}, {len(loss_terms)}, {len(log_terms)}"
 
         loss = 0
         for out, (lossweight, criterion), log_term in zip(out_terms, loss_terms, log_terms):
@@ -67,6 +73,8 @@ class BaseLearner(pl.LightningModule):
             self.log(f"{mode}_{log_term}", loss_term, prog_bar=True, on_step=False, on_epoch=True)
 
         self.log(f"{mode}_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
+
+        out = out_terms[0] # Only select the prediction of y
 
         # out_o, out_dg = out
         # (lossweight_o, criterion_o), (lossweight_dg, criterion_dg) = self.criterion
@@ -130,6 +138,7 @@ class BaseLearner(pl.LightningModule):
         print('Print parameters in configure_optimizers')
         for name, param in self.named_parameters():
             print(name, param.requires_grad)
+        print()
 
         optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
         return optimizer
@@ -282,7 +291,88 @@ class PredictionLearner(BaseLearner):
 
     def _log_regression(self, y_preds, y_trues):
 
-        print(y_preds.shape, y_trues.shape)
+        if len(y_preds.shape) == 1:
+            y_preds = y_preds.reshape(-1, 1)
+            y_trues = y_trues.reshape(-1, 1)
+
+        n_cols = len(y_preds.T)
+        fig, axs = plt.subplots(1, n_cols, figsize=(5*n_cols, 5))
+
+        if len(y_preds.T) == 1: axs = [axs]
+
+        for ax, y_trues_i, y_preds_i in zip(axs, y_trues.T, y_preds.T):
+
+            l_min, l_max = np.min(y_trues_i)*0.9, np.max(y_trues_i)*1.1
+            ax.plot([l_min, l_max], [l_min, l_max], 'k--')
+            ax.plot(y_trues_i, y_preds_i, '.', alpha=0.5)
+        fig.supxlabel('True')
+        fig.supylabel('Predicted')
+        plt.close()
+        wandb.log({'regression_results': wandb.Image(fig)})
+
+        print('Logged regression results')
+
+class TransformationBlock(TransformRefactored):
+    def __init__(self, transform_kwargs):
+        TransformRefactored.__init__(self, eps_mult = transform_kwargs['eps_mult'])
+
+    def forward_transformation(self, batch_size, shape, weight):
+
+        if type(shape) == tuple:
+            shape = {'a':shape, 'b':shape}
+
+        eps = torch.randn((4,))
+        
+        x_a = x_b = torch.randn((batch_size, np.prod(shape['b'])))
+
+        # Route a: Forward pass, transformation
+        out_a = F.linear(x_a, weight)
+        out_a_prime = self.transform(out_a, eps, shape=shape['a'])
+
+        # Route b: Transformation, forward pass
+        x_b_prime = self.transform(x_b, eps, shape=shape['b'])
+        out_b_prime = F.linear(x_b_prime, weight)
+
+        assert out_a_prime.shape == out_b_prime.shape
+
+        return (out_a_prime, out_b_prime)
+        
+
+
+class CombiLearner(BaseLearner, TransformationBlock):
+    def __init__(self, net, criterion, lr, grid_sizes, transform_kwargs):
+        BaseLearner.__init__(self, net, criterion, lr)
+        TransformationBlock.__init__(self, transform_kwargs)
+        self.grid_sizes = grid_sizes
+
+
+    def forward(self, batch):
+
+        x, y_true, _ = batch
+        batch_size = len(x)
+
+        y_pred = self.net(x)
+
+        return (y_pred.squeeze(1), y_true.squeeze(1)),
+
+        out_ab_primes = []
+        for grid_size, weight, layer in zip(self.grid_sizes, self.net.weights, self.net.layers):
+            weight_out = layer(weight)
+            out_ab_primes.append(self.forward_transformation(batch_size, grid_size, weight_out))
+        
+
+        return (y_pred.squeeze(1), y_true.squeeze(1)), *out_ab_primes
+
+
+    def log_test_results(self):
+        pred_outs = zip(*self.test_step_outs)
+        pred_outs = [torch.cat(pred_out).cpu().numpy() for pred_out in pred_outs]
+
+        # tasks = {'classification': self._log_classification, 'regression': self._log_regression}
+        # tasks[self.task](*pred_outs)
+        self._log_regression(*pred_outs)
+
+    def _log_regression(self, y_preds, y_trues):
 
         if len(y_preds.shape) == 1:
             y_preds = y_preds.reshape(-1, 1)
@@ -304,3 +394,30 @@ class PredictionLearner(BaseLearner):
         wandb.log({'regression_results': wandb.Image(fig)})
 
         print('Logged regression results')
+            
+
+
+        # batch_size = None
+        # eps = torch.randn((4,))
+
+        # x_b = x_a = torch.randn_like(x)
+
+        # # Route a: Forward pass, transformation
+        # x_a = x
+        # out_a = self.net(x_a, batch_size=batch_size)
+        # out_a_prime, _ = self.transform(out_a, None, eps)
+
+        # # Route b: Transformation, forward pass
+        # x_b = x
+        # x_b_prime, _ = self.transform(x_b, None, eps)
+        # out_b_prime = self.net(x_b_prime, batch_size=batch_size)
+
+        # assert out_a.shape == x_b.shape
+        # assert out_a_prime.shape == out_b_prime.shape
+        # assert out_a_prime.shape == x_b_prime.shape
+
+
+        # y_pred = self.net(x.unsqueeze(1)).squeeze(1).squeeze(1)
+        # y_true = y_true.squeeze(1)
+
+        # return (out_a_prime, out_b_prime), (y_pred, y_true)

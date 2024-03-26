@@ -97,6 +97,34 @@ class CustomRandomRotation():
         x = torch.rot90(x, k=k, dims=(1,2))
         return x
     
+class TransformRefactored:
+    def __init__(self, eps_mult: List[float] = [1., 1., 1., 1.]):
+        self.eps_mult = torch.tensor(eps_mult)
+
+        self.scale = RandomScale()
+        self.rotate = CustomRandomRotation(only_flip = False)
+        self.space_translate_x = SpaceTranslate(dim = 2)
+        self.space_translate_y = SpaceTranslate(dim = 1)
+
+    def transform(self, x, epsilons, shape):
+
+        epsilons = epsilons * self.eps_mult
+
+        batch_size, features = x.shape
+        x = x.reshape(batch_size, *shape)
+
+        # x = self.scale(x, epsilons[0])
+
+        x = self.rotate(x, epsilons[1])
+
+        x, _ = self.space_translate_x(x, epsilons[2])
+        x, _ = self.space_translate_y(x, epsilons[3])
+
+        x = x.reshape(batch_size, features)
+
+        return x
+    
+
     
 
 class Transform:
@@ -150,7 +178,7 @@ class Transform:
     #     x = self.batch_space_translate(x, centers_y, shift_dir = 'y')
     #     return x
     
-    def transform(self, x, centers, epsilons):
+    def transform(self, x, centers = None, epsilons = None):
 
         epsilons = epsilons * self.eps_mult
 
