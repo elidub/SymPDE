@@ -45,8 +45,8 @@ def parse_options(notebook = False):
     parser.add_argument("--A_low", type=float, default = None)
     parser.add_argument("--A_high", type=float, default = None)
 
-    parser.add_argument("--grid_sizes", type=str, default = []) 
-    parser.add_argument("--implicit_layer_dims", type=str, default = []) 
+    parser.add_argument("--grid_sizes", type=str, default = "[]") 
+    parser.add_argument("--implicit_layer_dims", type=str, default = "[]") 
     parser.add_argument("--vanilla_layer_dims", nargs='+', type=int, default=None)
 
 
@@ -111,14 +111,17 @@ def parse_options(notebook = False):
 
     return args
 
+def printt(x):
+    print(type(x), x)
+
 def process_args(args):
     args.grid_size = tuple(args.grid_size) # Convert to tuple
     if isinstance(args.eps_mult, str): args.eps_mult = tuple([float(e_i) for e_i in args.eps_mult.split(' ')])
     if isinstance(args.eps_mult, list): args.eps_mult = tuple(args.eps_mult)
 
     if isinstance(args.vanilla_layer_dims, str): args.vanilla_layer_dims = [int(i) for i in args.vanilla_layer_dims.split(' ')]
-    if isinstance(args.implicit_layer_dims, str): args.implicit_layer_dims = ast.literal_eval(args.implicit_layer_dims.replace(' ', ','))
-    if isinstance(args.grid_sizes, str): args.grid_sizes = ast.literal_eval(args.grid_sizes.replace(' ', ','))
+    if isinstance(args.implicit_layer_dims, str): args.implicit_layer_dims = ast.literal_eval(args.implicit_layer_dims)
+    if isinstance(args.grid_sizes, str): args.grid_sizes = ast.literal_eval(args.grid_sizes)
 
     data_kwargs_keys = ['grid_size', 'noise_std', 'y_low', 'y_high', 'A_low', 'A_high']
     args.data_kwargs = {k : getattr(args, k) for k in data_kwargs_keys}
@@ -235,7 +238,7 @@ if __name__ == '__main__':
     args = process_args(args)
     print(args)
 
-    if args.generate_data:
-        generate_data(args)
-    else:
-        main(args)
+    # if args.generate_data:
+    #     generate_data(args)
+    # else:
+    #     main(args)
