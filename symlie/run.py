@@ -238,7 +238,7 @@ if __name__ == '__main__':
     args = process_args(args)
     print(args)
 
-    # if args.generate_data:
-    #     generate_data(args)
-    # else:
-    #     main(args)
+    if args.generate_data:
+        generate_data(args)
+    else:
+        main(args)

@@ -51,7 +51,7 @@ def generate_combinations(dictionary):
     for value in values:
         if key in ['implicit_layer_dims', 'grid_sizes']:
             value = value.replace(' ', ',')
-            value = f"'{value}'"
+            # value = f"'{value}'"
         for combination in combinations:
             if value == 'True':
                 value = ''

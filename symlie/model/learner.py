@@ -323,7 +323,7 @@ class TransformationBlock(TransformRefactored):
 
         eps = torch.randn((4,))
         
-        x_a = x_b = torch.randn((batch_size, np.prod(shape['b'])))
+        x_a = x_b = torch.randn((batch_size, np.prod(shape['b'])), device = weight.device)
 
         # Route a: Forward pass, transformation
         out_a = F.linear(x_a, weight)
