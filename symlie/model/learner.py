@@ -69,8 +69,8 @@ class BaseLearner(pl.LightningModule):
         loss = 0
         for out, (lossweight, criterion), log_term in zip(out_terms, loss_terms, log_terms):
             loss_term = criterion(*out)
-            loss += lossweight*loss_term
             self.log(f"{mode}_{log_term}", loss_term, prog_bar=True, on_step=False, on_epoch=True)
+            loss += lossweight*loss_term
 
         self.log(f"{mode}_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
 
@@ -318,8 +318,8 @@ class TransformationBlock(TransformRefactored):
 
     def forward_transformation(self, batch_size, shape, weight):
 
-        if type(shape) == tuple:
-            shape = {'a':shape, 'b':shape}
+        assert len(shape) == 2
+        shape = {'a':shape[0], 'b':shape[1]}
 
         eps = torch.randn((4,))
         

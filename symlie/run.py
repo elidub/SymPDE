@@ -6,7 +6,7 @@ import logging
 import wandb
 import os, sys
 import yaml
-
+import ast
 
 from model.setup import setup_model
 from data.generate_2d import sine1d, sine2d, flower, mnist, noise
@@ -45,7 +45,9 @@ def parse_options(notebook = False):
     parser.add_argument("--A_low", type=float, default = None)
     parser.add_argument("--A_high", type=float, default = None)
 
-    parser.add_argument("--grid_sizes", nargs='+', type=int, default = []) 
+    parser.add_argument("--grid_sizes", type=str, default = []) 
+    parser.add_argument("--implicit_layer_dims", type=str, default = []) 
+    parser.add_argument("--vanilla_layer_dims", nargs='+', type=int, default=None)
 
 
     parser.add_argument("--y_multi", type=int, default = 1)
@@ -114,6 +116,10 @@ def process_args(args):
     if isinstance(args.eps_mult, str): args.eps_mult = tuple([float(e_i) for e_i in args.eps_mult.split(' ')])
     if isinstance(args.eps_mult, list): args.eps_mult = tuple(args.eps_mult)
 
+    if isinstance(args.vanilla_layer_dims, str): args.vanilla_layer_dims = [int(i) for i in args.vanilla_layer_dims.split(' ')]
+    if isinstance(args.implicit_layer_dims, str): args.implicit_layer_dims = ast.literal_eval(args.implicit_layer_dims.replace(' ', ','))
+    if isinstance(args.grid_sizes, str): args.grid_sizes = ast.literal_eval(args.grid_sizes.replace(' ', ','))
+
     data_kwargs_keys = ['grid_size', 'noise_std', 'y_low', 'y_high', 'A_low', 'A_high']
     args.data_kwargs = {k : getattr(args, k) for k in data_kwargs_keys}
     for data_kwargs_key in data_kwargs_keys:
@@ -141,9 +147,8 @@ def main(args):
     check_args_processed(args)    
     pl.seed_everything(args.seed, workers=True)
 
-    # print(args.n_splits)
-    # print('Exiting!') ; import sys; sys.exit()
-    
+    if args.n_train >= 1000:
+        args.max_epochs = 100
 
     args.device = "cuda" if torch.cuda.is_available() else "cpu"
 

@@ -87,7 +87,7 @@ class CombiMLP(torch.nn.Module):
         super().__init__()
         
         assert bias == False, 'Not implemented'
-        assert len(implicit_layer_dims) == len(vanilla_layer_dims)-1
+        assert len(implicit_layer_dims) == len(vanilla_layer_dims)-1, f"len(implicit_layer_dims): {len(implicit_layer_dims)}, len(vanilla_layer_dims): {len(vanilla_layer_dims)}, implicit_layer_dims: {implicit_layer_dims}, vanilla_layer_dims: {vanilla_layer_dims}"
 
         self.activation = activation()
 

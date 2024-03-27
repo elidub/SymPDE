@@ -18,4 +18,5 @@ mnist-noise-predict,"mnist-noise-predict, dev",16,100,,,,,,0.1,7 7,0. 1. 1. 1.,.
 sine1d-noise-predict,"sine1d-noise-predict, dev",16,100,1,3,,,,0.5,1 7,0. 0. 1. 0.,../data/sine1d,"[Predict-NoneP, Predict-CalculatedP, Predict-TrainedP, Predict-NoiseTrainedP]","[1, 2, 3]","[100, 1000, 10000]","[0.01, 0.001]",,,,,,,,,,,,,,,,,
 sine1d-noise-svd-predict,"sine1d-noise-predict, svd, dev, inspect",16,100,1,3,,,,0.5,1 7,0. 0. 1. 0.,../data/sine1d,Predict-NoiseTrainedP,"[1, 2, 3]","[100, 1000, 10000]","[0.1, 0.01, 0.001]",,,,,,"[3, 14, 30]",,,,,,,,,,,
 noise1d-loss,"dev, noise1d-loss",512,10,,,,,,1.,1 7,0. 0. 1. 0.,../data/noise,TrainImplicitP,"[1, 2]",100000,0.001,,mses,,,,,49 49,,,,,"[0, 0.1, 1.]",,"[0, 0.1, 1.]",,"[0, 0.1, 1.]",
-combi,"dev, combi",16,100,1,3,,,,0.5,1 7,0. 0. 1. 0.,../data/sine1d,CombiTrain,"[1, 2, 3]","[10, 100, 1000]","[0.1, 0.01, 0.001]",,mses,,,,,,[[49 49 49 49] [7 7 7]],7 7 1,"[1 7] {'a':[1 1] 'b':[1,7]",,,,,,,
+combi,"dev, combi",16,1000,1,3,,,,0.5,1 7,0. 0. 1. 0.,../data/sine1d,CombiTrain,"[1, 2, 3]","[10, 100, 1000]",0.001,,mses,,,,,,[[49 49 49 49] [7 7 7]],7 7 1,[[[1 7] [1 7]] [[1 1] [1 7]]],"[0.1, 1., 10.]","[0.1, 1., 10.]",,,,,
+combi-vanilla,"dev, combi",16,1000,1,3,,,,0.5,1 7,0. 0. 1. 0.,../data/sine1d,CombiTrain,"[1, 2, 3]","[10, 100, 1000]",0.001,,mses,,,,,,[[0] [0]],7 7 1,,"[0.1, 1., 10.]",,,,,,

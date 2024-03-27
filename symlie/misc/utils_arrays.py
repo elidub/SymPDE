@@ -44,13 +44,22 @@ def generate_combinations(dictionary):
 
     # Generate all possible combinations with the current key-value pair
     output_lines = []
+
+    # if key == 'implicit_layer_dims':
+        # print(values)
+
     for value in values:
+        if key in ['implicit_layer_dims', 'grid_sizes']:
+            print(key, value)
+            value = f'"{value}"'
         for combination in combinations:
             if value == 'True':
                 value = ''
             if value is None:
                 line = combination
             elif combination == "":
+                # if key in ['implicit_layer_dims', 'grid_sizes']:
+                    # value = f'"{value}"'
                 line = f"--{key} {value}" 
             else:
                 if isinstance(value, list):
