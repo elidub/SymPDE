@@ -72,7 +72,8 @@ def new_runs(runs):
         config['tags']     = run.tags
 
         # Test loss
-        losses = ['test_loss_o', 'test_loss_dg', 'test_loss_dx', 'test_loss_do', 'test_loss_do_a', 'test_loss_do_b', 'test_loss_do_a_mmd', 'test_loss_do_b_mmd']
+        # losses = ['test_loss_o', 'test_loss_dg', 'test_loss_dx', 'test_loss_do', 'test_loss_do_a', 'test_loss_do_b', 'test_loss_do_a_mmd', 'test_loss_do_b_mmd']
+        losses = ['test_loss_o0', 'test_loss_o1', 'test_loss_y']
         # losses = ['test_loss']
         for loss in losses:
             try:

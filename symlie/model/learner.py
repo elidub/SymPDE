@@ -16,7 +16,7 @@ from model.networks.linear import LinearP
 from model.networks.implicit import LinearImplicit
 
 class BaseLearner(pl.LightningModule):
-    def __init__(self, net, criterion, lr):
+    def __init__(self, net, criterion, lr, **kwargs):
         super().__init__()
         self.net = net
         self.criterion = criterion
@@ -145,9 +145,9 @@ class BaseLearner(pl.LightningModule):
     
     def on_test_end(self):
 
-        # if not self.trainer.logger:
-        #     print("No logger, skipping logging")
-        #     return
+        if not self.trainer.logger:
+            print("No logger, skipping logging")
+            return
         
         self.log_test_results()
         
@@ -313,12 +313,12 @@ class PredictionLearner(BaseLearner):
         print('Logged regression results')
 
 class TransformationBlock(TransformRefactored):
-    def __init__(self, transform_kwargs):
+    def __init__(self, transform_kwargs, **kwargs):
         TransformRefactored.__init__(self, eps_mult = transform_kwargs['eps_mult'])
 
     def forward_transformation(self, batch_size, shape, weight):
 
-        assert len(shape) == 2
+        assert len(shape) == 2, shape
         shape = {'a':shape[0], 'b':shape[1]}
 
         eps = torch.randn((4,))
@@ -341,8 +341,14 @@ class TransformationBlock(TransformRefactored):
 
 class CombiLearner(BaseLearner, TransformationBlock):
     def __init__(self, net, criterion, lr, grid_sizes, transform_kwargs):
+        kwargs = {'net': net, 'criterion': criterion, 'lr': lr, 'transform_kwargs': transform_kwargs}
+        super().__init__(**kwargs)
+        # print('Combilearner init')
         BaseLearner.__init__(self, net, criterion, lr)
         TransformationBlock.__init__(self, transform_kwargs)
+        # super(BaseLearner, self).__init__(net, criterion, lr)
+        # super(TransformationBlock, self).__init__(transform_kwargs)
+        # super().__init__(net, criterion, lr, transform_kwargs)
         self.grid_sizes = grid_sizes
 
 
@@ -352,16 +358,28 @@ class CombiLearner(BaseLearner, TransformationBlock):
         batch_size = len(x)
 
         y_pred = self.net(x)
+        out_y = (y_pred.squeeze(1), y_true.squeeze(1))
 
         # return (y_pred.squeeze(1), y_true.squeeze(1)),
 
-        out_ab_primes = []
-        for grid_size, weight, layer in zip(self.grid_sizes, self.net.weights, self.net.layers):
-            weight_out = layer(weight)
-            out_ab_primes.append(self.forward_transformation(batch_size, grid_size, weight_out))
-        
+        # out_ab_primes = []
+        # for grid_size, weight, layer in zip(self.grid_sizes, self.net.weights, self.net.layers):
+        #     weight_out = layer(weight)
+        #     out_ab_primes.append(self.forward_transformation(batch_size, grid_size, weight_out))
 
-        return (y_pred.squeeze(1), y_true.squeeze(1)), *out_ab_primes
+        out_ab_primes = []
+        if len(self.grid_sizes) > 0:
+            assert len(self.grid_sizes) == len(self.net.implicit_layers) == len(self.net.vanilla_layers), f"{len(self.grid_sizes)}, {len(self.net.implicit_layers)}, {len(self.net.vanilla_layers)}"
+
+            for grid_size, implicit_layer, vanilla_layer_weight, vanilla_layer2 in zip(self.grid_sizes, self.net.implicit_layers, self.net.vanilla_layers, self.net.vanilla_layers2):
+                # weight_out  = implicit_layer(vanilla_layer_weight)
+                weight_out = implicit_layer(vanilla_layer2.weight)
+                # print(torch.allclose(weight_out, weight_out2))
+                # print('Exiting!') ; import sys; sys.exit()
+                out_ab_primes.append(self.forward_transformation(batch_size, grid_size, weight_out))
+            
+
+        return out_y, *out_ab_primes
 
 
     def log_test_results(self):

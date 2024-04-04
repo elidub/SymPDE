@@ -98,7 +98,12 @@ def parse_options(notebook = False):
 
     args = parser.parse_args([]) if notebook else parser.parse_args()
 
+    return args
 
+def printt(x):
+    print(type(x), x)
+
+def process_args(args):
     #read yaml file
     config_dir = '../jobs/configs/'
     if args.config:
@@ -108,13 +113,7 @@ def parse_options(notebook = False):
         #update args with yaml file
         for key, value in yaml_config.items():
             setattr(args, key, value)
-
-    return args
-
-def printt(x):
-    print(type(x), x)
-
-def process_args(args):
+    
     args.grid_size = tuple(args.grid_size) # Convert to tuple
     if isinstance(args.eps_mult, str): args.eps_mult = tuple([float(e_i) for e_i in args.eps_mult.split(' ')])
     if isinstance(args.eps_mult, list): args.eps_mult = tuple(args.eps_mult)
@@ -150,8 +149,8 @@ def main(args):
     check_args_processed(args)    
     pl.seed_everything(args.seed, workers=True)
 
-    if args.n_train >= 1000:
-        args.max_epochs = 100
+    # if args.n_train >= 1000:
+        # args.max_epochs = 100
 
     args.device = "cuda" if torch.cuda.is_available() else "cpu"
 

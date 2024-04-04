@@ -3,6 +3,9 @@ import torchvision
 from torch import nn
 from typing import List, Union
 import torch.nn.functional as F
+import math
+
+from emlp.nn.pytorch import EMLP, MLP as EMLP_MLP
 
 from model.networks.linear import LinearP
 
@@ -76,6 +79,12 @@ class View(nn.Module):
         '''
         out = x.view(*self.shape)
         return out
+    
+def MLPBlock(cin,cout):
+    return nn.Sequential(nn.Linear(cin,cout),nn.ReLU())
+
+
+
         
 class CombiMLP(torch.nn.Module):
     def __init__(self, 
@@ -91,50 +100,104 @@ class CombiMLP(torch.nn.Module):
 
         self.activation = activation()
 
-        self.layers = nn.ParameterList()
-        self.weights = nn.ParameterList()
-        self.weights_out = []
+        self.vanilla_layers = nn.ParameterList()
+        self.implicit_layers = nn.ModuleList()
+        self.vanilla_layers2 = nn.ModuleList()
+        
         for layer_idx, (implicit_layer_dim, vanilla_layer_dim) in enumerate(zip(implicit_layer_dims, vanilla_layer_dims)):
             in_features, out_features = vanilla_layer_dim, vanilla_layer_dims[layer_idx+1]
 
             if implicit_layer_dim == [0]:
-                layer = nn.Identity() 
+                implicit_layer = nn.Identity() 
             else: 
                 n_features = in_features * out_features
                 assert n_features == implicit_layer_dim[0],  f"n_features: {n_features}, implicit_layer_dim[0]: {implicit_layer_dim[0]}"
                 assert n_features == implicit_layer_dim[-1], f"n_features: {n_features}, implicit_layer_dim[-1]: {implicit_layer_dim[-1]}"
 
-                layer = nn.Sequential(
+                implicit_layer = nn.Sequential(
                     View((n_features,)),
                     torchvision.ops.MLP(in_channels=implicit_layer_dim[0], hidden_channels=implicit_layer_dim[1:]),
                     View((out_features, in_features)), 
                 ) 
-            self.layers.append(layer)
-            self.weights.append( nn.Parameter(torch.rand(out_features, in_features)) )
 
-        
+            self.implicit_layers.append(implicit_layer)
+
+            vanilla_layer = nn.Linear(in_features, out_features, bias=bias)
+            self.vanilla_layers.append(vanilla_layer.weight.data.clone())
+            self.vanilla_layers2.append(vanilla_layer)
+
+            # self.phi[f'layer_{layer_idx}_weight'] = weight.weight.data.clone()
+            # self.psi[f'layer_{layer_idx}'] = implicit_layer
+
+            # self.vanilla_layers2.append(weight)
+
+            # weight = nn.Parameter(torch.rand(out_features, in_features))
+            # nn.init.kaiming_normal_(weight, nonlinearity='relu')
+            # self.vanilla_layers.append(weight)
+
+            # self.layers.append(implicit_layer)
+            # self.weights.append( nn.Parameter(torch.rand(out_features, in_features)) )
+
         
 
     def forward(self, x: torch.Tensor) -> List[torch.Tensor]:
 
-        outs = [x]
-
-        for layer_idx, (layer, weight) in enumerate(zip(self.layers, self.weights)):
-            weight_out = layer(weight)
-            self.weights_out.append(weight_out)
-
-            x = F.linear(x, weight_out)
-
+        for layer_idx, (implicit_layer, vanilla_layer_weight, vanilla_layer2) in enumerate(zip(self.implicit_layers, self.vanilla_layers, self.vanilla_layers2)):
             
-            if layer_idx != len(self.layers)-1:
+            x_in = x
+            # weight_out = implicit_layer(vanilla_layer_weight)
+            # x = F.linear(x, weight_out)
+
+            weight_out = implicit_layer(vanilla_layer2.weight)
+            x = F.linear(x_in, weight_out) 
+
+            # vanilla_layer2.weight.data = implicit_layer(vanilla_layer2.weight)
+            # x2 = vanilla_layer2(x_in)
+            # print(torch.allclose(x, x2))
+
+            # weight_sim = torch.allclose(vanilla_layer_weight, vanilla_layer2.weight)
+            # print('weight_sim in mlp', weight_sim)
+
+            if layer_idx != len(self.vanilla_layers)-1:
                 x = self.activation(x)
 
-            outs.append(x)
 
         return x
 
 
+    # def forward(self, x: torch.Tensor) -> List[torch.Tensor]:
+
+    #     outs = [x]
+
+    #     for layer_idx, (layer, weight) in enumerate(zip(self.layers, self.weights)):
+    #         weight_out = layer(weight)
+    #         self.weights_out.append(weight_out)
+
+    #         x = F.linear(x, weight_out)
+
+            
+    #         if layer_idx != len(self.layers)-1:
+    #             x = self.activation(x)
+
+    #         outs.append(x)
+
+    #     return x
 
 
+class EMLP_wrapper(EMLP_MLP):
+    def __init__(
+            self,
+            implicit_layer_dims: List[List[int]],
+            vanilla_layer_dims: List[int],
+            bias: bool,
+            activation = torch.nn.ReLU,
+            **kwargs,
+        ):
+        assert len(implicit_layer_dims) == 0
+        ch = vanilla_layer_dims[1:-1]
+        repin, repout, group = kwargs['repin'], kwargs['repout'], kwargs['group']
+        print(repin, repout, group, ch)
+        super().__init__(rep_in=repin, rep_out=repout, group=group, ch=ch, num_layers=None, bias=bias)
+    
 
 

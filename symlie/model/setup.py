@@ -4,8 +4,11 @@ import torch
 import numpy as np
 import pandas as pd
 
+from emlp.reps import V
+from emlp.groups import Z
+
 from model.learner import PredictionLearner, TransformationLearner, CombiLearner
-from model.networks.mlp import MLP, CombiMLP
+from model.networks.mlp import MLP, CombiMLP, EMLP_wrapper
 from model.networks.linear import  LinearP
 from model.networks.implicit import LinearImplicit
 from data.dataset import FlatDataset
@@ -203,6 +206,20 @@ def setup_model(args):
             bias = args.bias,
         )
         learner = CombiLearner
+    elif net.startswith("EMLP"):
+        group = Z(7)
+        repin = V(group)
+        repout = V**0
+        net = EMLP_wrapper(
+            implicit_layer_dims = args.implicit_layer_dims,
+            vanilla_layer_dims = args.vanilla_layer_dims,
+            bias = args.bias,
+            repin = repin,
+            repout = repout,
+            group = group,
+        )
+        learner = CombiLearner
+
 
 
     else:

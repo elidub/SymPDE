@@ -1,0 +1,33 @@
+seed: 1
+
+net: EMLP
+
+vanilla_layer_dims: [7, 7, 1]
+# implicit_layer_dims: [[49, 49], [7, 7]]
+# grid_sizes: [[[1,7], [1,7]], [[1,1], [1,7]]]
+
+# vanilla_layer_dims: [7, 7, 7, 1]
+# implicit_layer_dims: [[0], [0], [0]]
+# vanilla_layer_dims: [7, 49, 49, 1]
+# implicit_layer_dims: [[0], [0], [0]]
+
+criterion: mses
+lossweight_y: 1.0
+lossweight_o: 0.0
+
+data_dir: ../data/sine1d
+
+grid_size: [1,7]
+noise_std: 0.5
+y_low: 1
+y_high: 3
+
+eps_mult: 0. 0. 1. 0.
+
+max_epochs: 200
+n_train: 100
+n_val: 1000
+n_test: 1000
+
+# logger: None
+tags: [dev, combidev]
