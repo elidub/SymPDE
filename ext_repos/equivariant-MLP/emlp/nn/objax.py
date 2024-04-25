@@ -70,11 +70,14 @@ def gated(ch_rep:Rep) -> Rep:
     """ Returns the rep with an additional scalar 'gate' for each of the nonscalars and non regular
         reps in the input. To be used as the output for linear (and or bilinear) layers directly
         before a :func:`GatedNonlinearity` to produce its scalar gates. """
+    # print(ch_rep)
+    # print(ch_rep.G)
+    # print('Exiting!') ; import sys; sys.exit()
     if isinstance(ch_rep,SumRep):
-        logging.info(f"Adding gates to {ch_rep}, chrep is SumRep")
+        print(f"Adding gates to {ch_rep}, chrep is SumRep")
         return ch_rep+sum([Scalar(rep.G) for rep in ch_rep if rep!=Scalar and not rep.is_permutation])
     else:
-        logging.info(f"Adding gates to {ch_rep}, chrep is not SumRep")
+        print(f"Adding gates to {ch_rep}, chrep is not SumRep")
         return ch_rep+Scalar(ch_rep.G) if not ch_rep.is_permutation else ch_rep
 
 @export

@@ -18,9 +18,15 @@ log_levels = {'critical': logging.CRITICAL,'error': logging.ERROR,
                         'warn': logging.WARNING,'warning': logging.WARNING,
                         'info': logging.INFO,'debug': logging.DEBUG}
 
-def makeTrainer(*,dataset=Inertia,network=EMLP,num_epochs=300,ndata=1000+2000,seed=2021,aug=False,
-                bs=500,lr=3e-3,device='cuda',split={'train':-1,'val':1000,'test':1000},
-                net_config={'num_layers':3,'ch':384,'group':None},log_level='info',
+# def makeTrainer(*,dataset=Inertia,network=EMLP,num_epochs=300,ndata=1000+2000,seed=2021,aug=False,
+#                 bs=500,lr=3e-3,device='cuda',split={'train':-1,'val':1000,'test':1000},
+#                 net_config={'num_layers':3,'ch':384,'group':None},log_level='info',
+#                 trainer_config={'log_dir':None,'log_args':{'minPeriod':.02,'timeFrac':.75},
+#                 'early_stop_metric':'val_MSE'},save=False,):
+    
+def makeTrainer(*,dataset=Inertia,network=EMLP,num_epochs=30,ndata=300,seed=0,aug=False,
+                bs=50,lr=3e-3,device='cuda',split={'train':-1,'val':100,'test':100},
+                net_config={'num_layers':3,'ch':24,'group':None},log_level='info',
                 trainer_config={'log_dir':None,'log_args':{'minPeriod':.02,'timeFrac':.75},
                 'early_stop_metric':'val_MSE'},save=False,):
     

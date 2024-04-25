@@ -5,10 +5,11 @@ import numpy as np
 import pandas as pd
 
 from emlp.reps import V
-from emlp.groups import Z
+from emlp.groups import Z, O
+from emlp.datasets import O5Synthetic
 
 from model.learner import PredictionLearner, TransformationLearner, CombiLearner
-from model.networks.mlp import MLP, CombiMLP, EMLP_wrapper
+from model.networks.mlp import MLP, CombiMLP, EMLP_wrapper, EMLP_MLP_wrapper
 from model.networks.linear import  LinearP
 from model.networks.implicit import LinearImplicit
 from data.dataset import FlatDataset
@@ -207,20 +208,38 @@ def setup_model(args):
         )
         learner = CombiLearner
     elif net.startswith("EMLP"):
-        group = Z(7)
-        repin = V(group)
-        repout = V**0
-        net = EMLP_wrapper(
-            implicit_layer_dims = args.implicit_layer_dims,
-            vanilla_layer_dims = args.vanilla_layer_dims,
-            bias = args.bias,
-            repin = repin,
-            repout = repout,
-            group = group,
-        )
-        learner = CombiLearner
 
+        # Manually select params for EMLP
 
+        # Sine1d
+        # group, repin, repout = Z(7), V(group), V**0 
+        
+        # O5Synthetic
+        set = O5Synthetic(N = 1)
+        group, repin, repout = O(5), set.rep_in, set.rep_out
+
+        if net == "EMLP":
+            net = EMLP_wrapper(
+                implicit_layer_dims = args.implicit_layer_dims,
+                vanilla_layer_dims = args.vanilla_layer_dims,
+                bias = args.bias,
+                repin = repin,
+                repout = repout,
+                group = group,
+            )
+            learner = CombiLearner
+        elif net == "EMLP_MLP":
+            net = EMLP_MLP_wrapper(
+                implicit_layer_dims = args.implicit_layer_dims,
+                vanilla_layer_dims = args.vanilla_layer_dims,
+                bias = args.bias,
+                repin = repin,
+                repout = repout,
+                group = group,
+            )
+            learner = CombiLearner
+        else:
+            raise NotImplementedError(f"Network {net} not implemented")
 
     else:
         raise NotImplementedError(f"Network {net} not implemented")
@@ -265,6 +284,7 @@ def setup_model(args):
         #     (args.lossweight_do_tilde_mmd, nn.MSELoss()),
         # ],
         'mses' : [(args.lossweight_y, nn.MSELoss())] + [(args.lossweight_o, nn.MSELoss()) for _ in range(len(args.grid_sizes))],
+        # 'mses' : [(1., nn.MSELoss()), (1., nn.MSELoss()), (0., nn.MSELoss()) ],
         # 'mses' : [(args.lossweight_o, nn.MSELoss()), (args.lossweight_do_a, nn.MSELoss()), (args.lossweight_do_b, nn.MSELoss() )],
         # 'mses' : [(args.lossweight_o, nn.MSELoss()), (args.lossweight_dg, nn.MSELoss())],
         'bce' : nn.BCELoss(),

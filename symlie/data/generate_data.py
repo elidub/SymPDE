@@ -14,6 +14,8 @@ from data.generate_2d import Create2dData
 from data.generate_2d import sine1d, sine2d, flower, mnist, noise
 from misc.viz import plot1d, plot2d
 
+from emlp.datasets import O5Synthetic
+
 def save_splits(create_sample_func: Callable, data_kwargs: dict, transform_kwargs: dict, data_dir: str, n_splits: dict = {'train': 400,'val': 1_000,'test': 1_000}) -> None:
     """Create and save train, val, and test splits of a dataset.
 
@@ -22,7 +24,7 @@ def save_splits(create_sample_func: Callable, data_kwargs: dict, transform_kwarg
         n_splits: Dictionary with number of samples in each split.
         data_dir: Directory to save the splits.
     """
-    create_data = Create2dData(create_sample_func, data_kwargs, transform_kwargs)
+    # create_data = Create2dData(create_sample_func, data_kwargs, transform_kwargs)
 
     data_kwargs_name = '_'.join([f'{k}={v}' for k, v in data_kwargs.items()])
     transform_kwargs_name = '_'.join([f'{k}={v}' for k, v in transform_kwargs.items()])
@@ -30,7 +32,9 @@ def save_splits(create_sample_func: Callable, data_kwargs: dict, transform_kwarg
     for split, n_samples in zip(['train', 'val', 'test'], n_splits):
         print(f"Creating {n_samples} for {split}.")
 
-        outs = create_data(N = n_samples, split = split)
+        # outs = create_data(N = n_samples, split = split)
+        x, y = O5Synthetic(N = n_samples)[:]
+        outs = {'x': x, 'y': y, 'centers': np.zeros((n_samples, 2))}
 
         split_dir = os.path.join(data_dir, split) 
         os.makedirs(split_dir, exist_ok=True)
@@ -39,6 +43,7 @@ def save_splits(create_sample_func: Callable, data_kwargs: dict, transform_kwarg
         for k, v in outs.items():
             assert type(v) == np.ndarray, f"Expected numpy array, got type of {k} = {type(v)}"
             np.save(os.path.join(split_dir, f'{k}_{data_kwargs_name}_{transform_kwargs_name}.npy'), v)
+
 
 
 datasets = {

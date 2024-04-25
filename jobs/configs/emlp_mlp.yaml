@@ -1,10 +1,10 @@
 seed: 1
 
-net: EMLP
+net: EMLP_MLP
 
 criterion: mses
-# lossweight_y: 1.0
-# lossweight_o: 0.0
+lossweight_y: 1.0
+lossweight_o: 0.0
 
 # vanilla_layer_dims: [7, 7, 1]
 # data_dir: ../data/sine1d
@@ -28,7 +28,7 @@ grid_size: [1,10]
 eps_mult: 0. 0. 0. 0.
 
 
-max_epochs: 1000
+max_epochs: 50
 n_train: 1000
 n_val: 1000
 n_test: 1000

@@ -79,9 +79,17 @@ class Linear(nn.Linear):
         self.proj_b = torchify_fn(jit(lambda b: Pb@b))
         self.proj_w = torchify_fn(jit(lambda w:(Pw@w.reshape(-1)).reshape(nout,nin)))
         logging.info(f"Linear W components:{rep_W.size()} rep:{rep_W}")
+        # print('Warning doing simple Linear!')
 
     def forward(self, x): # (cin) -> (cout)
-        return F.linear(x,self.proj_w(self.weight),self.proj_b(self.bias))
+        # print()
+        # print('linear.forward self.weight, self.bias', self.weight.shape, self.bias.shape)
+        # print('linear.forward', x.shape,self.proj_w(self.weight).shape,self.proj_b(self.bias).shape)
+        # return F.linear(x,self.weight,self.bias)
+        w, b = self.proj_w(self.weight),self.proj_b(self.bias)
+        # print('w,b',w.shape,b.shape)
+        # print('Exiting!') ; import sys; sys.exit()
+        return F.linear(x,w,b)
 
 @export
 class BiLinear(nn.Module):
@@ -108,9 +116,13 @@ class GatedNonlinearity(nn.Module): #TODO: add support for mixed tensors and non
     def __init__(self,rep):
         super().__init__()
         self.rep=rep
+        print('Adaption: using ReLu instead of Swish in GatedNonlinearity!')
     def forward(self,values):
         gate_scalars = values[..., gate_indices(self.rep)]
         activations = gate_scalars.sigmoid() * values[..., :self.rep.size()]
+        # activations = F.relu(gate_scalars) * values[..., :self.rep.size()]
+        # activations = F.relu(gate_scalars * values[..., :self.rep.size()] )
+        # activations = F.relu(values[..., :self.rep.size()] )
         return activations
 
 @export
@@ -119,6 +131,7 @@ class EMLPBlock(nn.Module):
         and gated nonlinearity. """
     def __init__(self,rep_in,rep_out):
         super().__init__()
+        print('EMLPBlock repin, repout', rep_in, rep_out)
         self.linear = Linear(rep_in,gated(rep_out))
         self.bilinear = BiLinear(gated(rep_out),gated(rep_out))
         self.nonlinearity = GatedNonlinearity(rep_out)
@@ -126,7 +139,34 @@ class EMLPBlock(nn.Module):
     def forward(self,x):
         lin = self.linear(x)
         preact =self.bilinear(lin)+lin
-        return self.nonlinearity(preact)
+        # preact = lin
+        out = self.nonlinearity(preact)
+        # print('x',x.shape)
+        # print('lin',lin.shape)
+        # print('preact',preact.shape)
+        # print('out',out.shape)
+        return out
+    
+@export
+class EMLPBlock_simple(nn.Module):
+    """ Basic building block of EMLP consisting of G-Linear, biLinear,
+        and gated nonlinearity. """
+    def __init__(self,rep_in,rep_out):
+        super().__init__()
+        print('Warning! Doing simple EMPLBlock!')
+        self.linear = Linear(rep_in,rep_out)
+        # self.linear = nn.Linear(rep_in.size(),rep_out.size())
+        # self.bilinear = BiLinear(gated(rep_out),gated(rep_out))
+        self.nonlinearity = nn.ReLU()
+
+    def forward(self,x):
+        lin = self.linear(x)
+        # preact =self.bilinear(lin)+lin
+        out = self.nonlinearity(lin)
+        # print('x',x.shape)
+        # print('lin',lin.shape)
+        # print('out',out.shape)
+        return out
 
 @export
 class EMLP(nn.Module):
@@ -145,7 +185,9 @@ class EMLP(nn.Module):
 
         Returns:
             Module: the EMLP objax module."""
-    def __init__(self,rep_in,rep_out,group,ch=384,num_layers=3):
+    def __init__(self,rep_in,rep_out,group,ch=384,num_layers=3, bias: bool = True):
+        print("Initing EMLP (PyTorch)")
+        assert bias == True, "EMLP currently only supports bias=True"
         super().__init__()
         logging.info("Initing EMLP (PyTorch)")
         self.rep_in =rep_in(group)
@@ -153,14 +195,29 @@ class EMLP(nn.Module):
         
         self.G=group
         # Parse ch as a single int, a sequence of ints, a single Rep, a sequence of Reps
-        if isinstance(ch,int): middle_layers = num_layers*[uniform_rep(ch,group)]#[uniform_rep(ch,group) for _ in range(num_layers)]
-        elif isinstance(ch,Rep): middle_layers = num_layers*[ch(group)]
-        else: middle_layers = [(c(group) if isinstance(c,Rep) else uniform_rep(c,group)) for c in ch]
+        print('ch', ch, isinstance(ch,int), isinstance(ch,Rep))
+        if isinstance(ch,int): 
+            middle_layers = num_layers*[uniform_rep(ch,group)]#[uniform_rep(ch,group) for _ in range(num_layers)]
+        elif isinstance(ch,Rep): 
+            middle_layers = num_layers*[ch(group)]
+        else: 
+            print('middle layers!')
+            for c in ch:
+                print(f'isinstance(c, Rep): {c}', isinstance(c, Rep))
+            middle_layers = [(c(group) if isinstance(c,Rep) else uniform_rep(c,group)) for c in ch]
         #assert all((not rep.G is None) for rep in middle_layers[0].reps)
         reps = [self.rep_in]+middle_layers
         #logging.info(f"Reps: {reps}")
+        print('reps:', reps)
+        print('self.rep_out', self.rep_out)
+        # print('for loop')
+        # for rin, rout in zip(reps,reps[1:]):
+        #     print(rin, rout)
+        #     print(rin.size(), rout.size())
+        # print('Exiting!') ; import sys; sys.exit()
         self.network = nn.Sequential(
             *[EMLPBlock(rin,rout) for rin,rout in zip(reps,reps[1:])],
+            # *[EMLPBlock_simple(rin,rout) for rin,rout in zip(reps,reps[1:])],
             Linear(reps[-1],self.rep_out)
         )
     def forward(self,x):
@@ -170,23 +227,25 @@ class Swish(nn.Module):
     def forward(self,x):
         return x.sigmoid()*x
 
-def MLPBlock(cin,cout):
-    return nn.Sequential(nn.Linear(cin,cout),Swish())#,nn.BatchNorm0D(cout,momentum=.9),swish)#,
+def MLPBlock(cin,cout,bias):
+    # return nn.Sequential(nn.Linear(cin,cout),Swish())#,nn.BatchNorm0D(cout,momentum=.9),swish)#,
+    return nn.Sequential(nn.Linear(cin,cout,bias),nn.ReLU())#,nn.BatchNorm0D(cout,momentum=.9),swish)#,
 
 @export
 class MLP(nn.Module):
     """ Standard baseline MLP. Representations and group are used for shapes only. """
-    def __init__(self,rep_in,rep_out,group,ch=384,num_layers=3):
+    def __init__(self,rep_in,rep_out,group,ch=384,num_layers=3, bias: bool = True):
         super().__init__()
         self.rep_in =rep_in(group)
         self.rep_out = rep_out(group)
         self.G = group
-        chs = [self.rep_in.size()] + num_layers*[ch]
+        # chs = [self.rep_in.size()] + num_layers*[ch]
+        chs = [self.rep_in.size()] + ch # Adaption
         cout = self.rep_out.size()
         logging.info("Initing MLP")
         self.net = nn.Sequential(
-            *[MLPBlock(cin,cout) for cin,cout in zip(chs,chs[1:])],
-            nn.Linear(chs[-1],cout)
+            *[MLPBlock(cin,cout, bias) for cin,cout in zip(chs,chs[1:])],
+            nn.Linear(chs[-1],cout, bias=bias)
         )
 
     def forward(self,x):

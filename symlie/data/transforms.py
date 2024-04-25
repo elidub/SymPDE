@@ -63,9 +63,10 @@ class SpaceTranslate():
     def __repr__(self) -> str:
         return f'SpaceTranslate_{self.dim}'
 
-    def __call__(self, x, eps):
+    def __call__(self, x, rng):
         grid_size = x.shape[self.dim]
-        shift = int(grid_size*eps)
+        # shift = int(grid_size*eps)
+        shift = int(grid_size*torch.rand((1,), generator=rng).item())
         x = torch.roll(x, shifts = shift, dims = self.dim)
         if self.return_shift:
             shifts = torch.full(size=(len(x),), fill_value=shift)
@@ -97,6 +98,18 @@ class CustomRandomRotation():
         x = torch.rot90(x, k=k, dims=(1,2))
         return x
     
+class RandomPermute():
+    def __init__(self, dim: int):
+        self.dim = dim
+        assert self.dim == 3, "Only dim = 3 is supported"
+
+    def __call__(self, x, rng):
+        # return x
+        return x[:, :, :, torch.randperm(x.shape[self.dim], generator=rng, 
+                                        #  dtype=x.dtype, 
+                                        #  requires_grad=True
+                                         )]
+    
 class TransformRefactored:
     def __init__(self, eps_mult: List[float] = [1., 1., 1., 1.]):
         self.eps_mult = torch.tensor(eps_mult)
@@ -106,25 +119,49 @@ class TransformRefactored:
         self.space_translate_x = SpaceTranslate(dim = 2)
         self.space_translate_y = SpaceTranslate(dim = 1)
 
-    def transform(self, x, epsilons, shape):
+        self.random_permute = RandomPermute(dim = 3)
 
-        epsilons = epsilons * self.eps_mult
+    # def transform(self, x, epsilons, shape):
+
+    #     epsilons = epsilons * self.eps_mult
+
+    #     batch_size, features = x.shape
+    #     x = x.reshape(batch_size, *shape)
+
+    #     # x = self.scale(x, epsilons[0])
+
+    #     x = self.rotate(x, epsilons[1])
+
+    #     x, _ = self.space_translate_x(x, epsilons[2])
+    #     x, _ = self.space_translate_y(x, epsilons[3])
+
+    #     x = x.reshape(batch_size, features)
+
+    #     return x
+
+    def transform(self, x, rng, shape):
 
         batch_size, features = x.shape
         x = x.reshape(batch_size, *shape)
 
-        # x = self.scale(x, epsilons[0])
-
-        x = self.rotate(x, epsilons[1])
-
-        x, _ = self.space_translate_x(x, epsilons[2])
-        x, _ = self.space_translate_y(x, epsilons[3])
+        x, _ = self.space_translate_x(x, rng)
 
         x = x.reshape(batch_size, features)
 
         return x
-    
 
+
+    # def transform(self, x, rng, shape):
+
+    #     batch_size, features = x.shape
+    #     x = x.reshape(batch_size, *shape)
+
+    #     x = self.random_permute(x, rng)
+
+    #     x = x.reshape(batch_size, features)
+
+    #     return x
+    
     
 
 class Transform:

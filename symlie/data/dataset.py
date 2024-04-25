@@ -43,7 +43,6 @@ class FlatDataset(Dataset):
 
 
 
-
         x, y, centers = data['x'], data['y'], data['centers']
 
         N = x.shape[0] if N == -1 else N
@@ -63,6 +62,10 @@ class FlatDataset(Dataset):
             self.y = torch.stack([self.y*(1+y_range_i) for y_range_i in range(args.y_multi)]).T
 
         self.centers = torch.from_numpy(centers[:N])
+
+        if self.y.shape[0] == 1:
+            self.y = self.y.squeeze(0)
+
 
 
     def __getitem__(self, index):

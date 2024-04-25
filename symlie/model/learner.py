@@ -15,6 +15,9 @@ from misc.utils import NumpyUtils
 from model.networks.linear import LinearP
 from model.networks.implicit import LinearImplicit
 
+from softadapt import SoftAdapt, NormalizedSoftAdapt, LossWeightedSoftAdapt
+
+
 class BaseLearner(pl.LightningModule):
     def __init__(self, net, criterion, lr, **kwargs):
         super().__init__()
@@ -25,6 +28,21 @@ class BaseLearner(pl.LightningModule):
         self.test_step_outs = []
 
         self.criterion_alt = True
+
+        # Change 1: Create a SoftAdapt object (with your desired variant)
+        # self.softadapt_object = LossWeightedSoftAdapt(beta=0.1)
+
+        # Change 2: Define how often SoftAdapt calculate weights for the loss components
+        # self.epochs_to_make_updates = 5
+
+        # Change 3: Initialize lists to keep track of loss values over the epochs we defined above
+        # self.values_of_components = [[], [], []]
+        # self.losses = [[], [], []]
+        # Initializing adaptive weights to all ones.
+        # self.adapt_weights = torch.tensor([1,1,1])
+
+        # self.automatic_optimization = False
+
         return
 
 
@@ -42,6 +60,11 @@ class BaseLearner(pl.LightningModule):
     
     def log_test_results(self):
         pass
+
+
+    # def step(self, batch, mode):
+        # out_y = self.forward_vanilla(batch)
+        # out_ab_primes = self.forward_implicit(batch)
 
     def step(self, batch, mode):
 
@@ -66,15 +89,52 @@ class BaseLearner(pl.LightningModule):
         log_terms = ['loss_y'] + [f'loss_o{i}' for i in range(len(loss_terms)-1)]
         assert len(out_terms) == len(loss_terms) == len(log_terms), f"Length mismatch: {len(out_terms)}, {len(loss_terms)}, {len(log_terms)}"
 
+
         loss = 0
-        for out, (lossweight, criterion), log_term in zip(out_terms, loss_terms, log_terms):
+        losses = []
+        for i, (out, (lossweight, criterion), log_term) in enumerate(zip(out_terms, loss_terms, log_terms)):
             loss_term = criterion(*out)
+            # if mode == 'train':
+                # self.values_of_components[i].append(loss_term.item())
+            losses.append(loss_term)
             self.log(f"{mode}_{log_term}", loss_term, prog_bar=True, on_step=False, on_epoch=True)
             loss += lossweight*loss_term
+            # loss += self.adapt_weights[i]*loss_term
+
+
+        # loss = sum([lossweight*loss_term for lossweight, loss_term in zip(self.adapt_weights, losses)])
+        
 
         self.log(f"{mode}_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
 
         out = out_terms[0] # Only select the prediction of y
+
+        if mode == 'train' and not self.automatic_optimization:
+
+            print('Exiting!') ; import sys; sys.exit()
+
+            opt_vanilla, opt_implicit = self.optimizers()
+
+            loss_vanilla = losses[0]
+            loss_implicit = sum(losses[1:])
+
+            opt_vanilla.zero_grad()
+            self.manual_backward(loss_vanilla)
+            opt_vanilla.step()
+
+            # opt_implicit.zero_grad()
+            # self.manual_backward(loss_implicit)
+            # opt_implicit.step()
+
+            # opt_implicit.zero_grad()
+
+            # loss_vanilla.backward(retain_graph=True)
+            # loss_implicit.backward()
+
+            # opt_vanilla.step()
+            # opt_implicit.step()
+
+
 
         # out_o, out_dg = out
         # (lossweight_o, criterion_o), (lossweight_dg, criterion_dg) = self.criterion
@@ -122,6 +182,7 @@ class BaseLearner(pl.LightningModule):
 
         return loss, batch, out
     
+    
     def training_step(self, batch, batch_idx=0):
         loss, batch, _ = self.step(batch, "train")
         return loss
@@ -133,7 +194,7 @@ class BaseLearner(pl.LightningModule):
         loss, batch, out = self.step(batch, "test")
         self.test_step_outs.append(out)
 
-    def configure_optimizers(self):
+    def configure_optimizers_solo(self):
 
         print('Print parameters in configure_optimizers')
         for name, param in self.named_parameters():
@@ -142,6 +203,57 @@ class BaseLearner(pl.LightningModule):
 
         optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
         return optimizer
+
+    def configure_optimizers_multi(self):
+
+        print('Vanilla layers')
+        for name, param in self.net.vanilla_layers.named_parameters():
+            print(name, param.requires_grad)
+        print()
+
+        print('Implicit layers')
+        for name, param in self.net.implicit_layers.named_parameters():
+            print(name, param.requires_grad)
+        print()
+
+        opt_vanilla = torch.optim.Adam(self.net.vanilla_layers.parameters(), lr=self.lr)
+        opt_implicit = torch.optim.Adam(self.net.implicit_layers.parameters(), lr=self.lr)
+        return opt_vanilla, opt_implicit
+    
+    def configure_optimizers(self):
+        # return self.configure_optimizers_multi()
+        return self.configure_optimizers_solo()
+    
+
+    # def on_train_epoch_start(self) -> None:
+
+
+    #     if self.current_epoch % self.epochs_to_make_updates == 0 and self.current_epoch != 0:
+
+    #         print(len(self.values_of_components), len(self.values_of_components[0]), len(self.values_of_components[1]), len(self.values_of_components[2]))
+    #         print(len(self.losses), len(self.losses[0]), len(self.losses[1]), len(self.losses[2]))
+
+    #         self.adapt_weights = self.softadapt_object.get_component_weights(
+    #             torch.tensor(self.values_of_components[0]), 
+    #             torch.tensor(self.values_of_components[1]), 
+    #             torch.tensor(self.values_of_components[2]),
+    #             verbose=True,
+    #         )  
+
+    #         # Change 3: Initialize lists to keep track of loss values over the epochs we defined above
+    #         self.values_of_components = [[], [], []]
+    #         self.losses = [[], [], []]
+
+
+    # def on_train_epoch_end(self) -> None:
+
+    #     # # TODO: take batch size into account
+    #     # self.losses[0].append(torch.mean(torch.tensor(self.values_of_components[0])))
+    #     # self.losses[1].append(torch.mean(torch.tensor(self.values_of_components[1])))
+    #     # self.losses[2].append(torch.mean(torch.tensor(self.values_of_components[2])))
+
+    #     print("epoch end!")
+    #     return super().on_train_epoch_end()
     
     def on_test_end(self):
 
@@ -312,28 +424,70 @@ class PredictionLearner(BaseLearner):
 
         print('Logged regression results')
 
+# class TransformationBlock(TransformRefactored):
+#     def __init__(self, transform_kwargs, **kwargs):
+#         TransformRefactored.__init__(self, eps_mult = transform_kwargs['eps_mult'])
+
+#     def forward_transformation(self, batch_size, shape, weight, bias):
+
+#         assert len(shape) == 2, shape
+#         shape = {'a':shape[0], 'b':shape[1]}
+
+#         eps = torch.randn((4,))
+        
+#         x_a = x_b = torch.randn((batch_size, np.prod(shape['b'])), device = weight.device)
+
+#         # Route a: Forward pass, transformation
+#         out_a = F.linear(x_a, weight, bias)
+#         out_a_prime = self.transform(out_a, eps, shape=shape['a'])
+
+#         # Route b: Transformation, forward pass
+#         x_b_prime = self.transform(x_b, eps, shape=shape['b'])
+#         out_b_prime = F.linear(x_b_prime, weight, bias)
+
+#         assert out_a_prime.shape == out_b_prime.shape
+
+#         return (out_a_prime, out_b_prime)
+
 class TransformationBlock(TransformRefactored):
     def __init__(self, transform_kwargs, **kwargs):
         TransformRefactored.__init__(self, eps_mult = transform_kwargs['eps_mult'])
 
-    def forward_transformation(self, batch_size, shape, weight):
+        self.rng_a, self.rng_b = torch.Generator(), torch.Generator()
+
+        print('Init rng')
+
+    def forward_transformation(self, batch_size, shape, weight, bias):
+
+        # seed = torch.randint(0, 100000, (1,)).item()
+        # self.rng_a.manual_seed(seed)
+        # self.rng_b.manual_seed(seed)
+
+        self.rng_b.set_state(self.rng_a.get_state())
+
+        # if weight.shape == (1,10):
+        #     weight = torch.ones(1,10)
+        # elif weight.shape == (10,10):
+        #     weight = torch.eye(10)
+        # else:
+        #     raise NotImplementedError(f"Weight shape {weight.shape} not implemented")
 
         assert len(shape) == 2, shape
         shape = {'a':shape[0], 'b':shape[1]}
 
-        eps = torch.randn((4,))
-        
         x_a = x_b = torch.randn((batch_size, np.prod(shape['b'])), device = weight.device)
+        # x_a = x_b = batch_size.clone()
 
         # Route a: Forward pass, transformation
-        out_a = F.linear(x_a, weight)
-        out_a_prime = self.transform(out_a, eps, shape=shape['a'])
+        out_a = F.linear(x_a, weight, bias)
+        out_a_prime = self.transform(out_a, self.rng_a, shape=shape['a'])
 
         # Route b: Transformation, forward pass
-        x_b_prime = self.transform(x_b, eps, shape=shape['b'])
-        out_b_prime = F.linear(x_b_prime, weight)
+        x_b_prime = self.transform(x_b, self.rng_b, shape=shape['b'])
+        out_b_prime = F.linear(x_b_prime, weight, bias)
 
         assert out_a_prime.shape == out_b_prime.shape
+        
 
         return (out_a_prime, out_b_prime)
         
@@ -371,16 +525,48 @@ class CombiLearner(BaseLearner, TransformationBlock):
         if len(self.grid_sizes) > 0:
             assert len(self.grid_sizes) == len(self.net.implicit_layers) == len(self.net.vanilla_layers), f"{len(self.grid_sizes)}, {len(self.net.implicit_layers)}, {len(self.net.vanilla_layers)}"
 
-            for grid_size, implicit_layer, vanilla_layer_weight, vanilla_layer2 in zip(self.grid_sizes, self.net.implicit_layers, self.net.vanilla_layers, self.net.vanilla_layers2):
+
+            assert len(self.grid_sizes) == len(self.net.x_ins), f"{len(self.grid_sizes)}, {len(self.net.x_ins)}"
+
+            for x_in, grid_size, implicit_layer, vanilla_layer in zip(self.net.x_ins, self.grid_sizes, self.net.implicit_layers, self.net.vanilla_layers):
+                
+                weight, bias = implicit_layer(vanilla_layer.weight, vanilla_layer.bias)
+
                 # weight_out  = implicit_layer(vanilla_layer_weight)
-                weight_out = implicit_layer(vanilla_layer2.weight)
+                # weight_out = implicit_layer(vanilla_layer.weight)
                 # print(torch.allclose(weight_out, weight_out2))
                 # print('Exiting!') ; import sys; sys.exit()
-                out_ab_primes.append(self.forward_transformation(batch_size, grid_size, weight_out))
+                out_ab_primes.append(self.forward_transformation(batch_size, grid_size, weight, bias))
+                # out_ab_primes.append(self.forward_transformation(x_in, grid_size, weight, bias))
             
 
         return out_y, *out_ab_primes
+    
+    def forward_vanilla(self, batch):
 
+        x, y_true, _ = batch
+
+        y_pred = self.net(x)
+        out_y = (y_pred.squeeze(1), y_true.squeeze(1))
+
+        return out_y
+    
+    def forward_implicit(self, batch):
+
+        x, _, _ = batch
+        batch_size = len(x)
+            
+        out_ab_primes = []
+        if len(self.grid_sizes) == 0:
+            return out_ab_primes
+        
+        assert len(self.grid_sizes) == len(self.net.implicit_layers) == len(self.net.vanilla_layers), f"{len(self.grid_sizes)}, {len(self.net.implicit_layers)}, {len(self.net.vanilla_layers)}"
+        assert len(self.grid_sizes) == len(self.net.x_ins), f"{len(self.grid_sizes)}, {len(self.net.x_ins)}"
+
+        for x_in, grid_size, implicit_layer, vanilla_layer in zip(self.net.x_ins, self.grid_sizes, self.net.implicit_layers, self.net.vanilla_layers):
+            weight, bias = implicit_layer(vanilla_layer.weight, vanilla_layer.bias)
+            out_ab_primes.append(self.forward_transformation(batch_size, grid_size, weight, bias))
+        return out_ab_primes
 
     def log_test_results(self):
         pred_outs = zip(*self.test_step_outs)
@@ -403,9 +589,9 @@ class CombiLearner(BaseLearner, TransformationBlock):
 
         for ax, y_trues_i, y_preds_i in zip(axs, y_trues.T, y_preds.T):
 
-            l_min, l_max = np.min(y_trues_i)*0.9, np.max(y_trues_i)*1.1
-            ax.plot([l_min, l_max], [l_min, l_max], 'k--')
+            l_min, l_max = np.min(y_trues_i), np.max(y_trues_i)*1.1
             ax.plot(y_trues_i, y_preds_i, '.', alpha=0.5)
+            ax.plot([l_min, l_max], [l_min, l_max], 'k--')
         fig.supxlabel('True')
         fig.supylabel('Predicted')
         plt.close()
