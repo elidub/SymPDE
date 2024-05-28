@@ -16,7 +16,11 @@ criterion: mses
 
 # eps_mult: 0. 0. 1. 0.
 
-vanilla_layer_dims: [10, 10, 1]
+# vanilla_layer_dims: [6, 6, 1]
+# vanilla_layer_dims: [10, 10, 10, 10, 1]
+# vanilla_layer_dims: [10, 10, 1]
+# vanilla_layer_dims: [12, 12, 1]
+# vanilla_layer_dims: [6, 6, 6, 6, 6, 6, 6, 1]
 data_dir: ../data/o5synth
 
 # grid_size: [1,7]
@@ -28,10 +32,11 @@ grid_size: [1,10]
 eps_mult: 0. 0. 0. 0.
 
 
-max_epochs: 1000
+max_epochs: 100
 n_train: 1000
 n_val: 1000
 n_test: 1000
 
 # logger: None
 tags: [dev, combidev]
+

@@ -12,6 +12,8 @@ from model.setup import setup_model
 from data.generate_2d import sine1d, sine2d, flower, mnist, noise
 from data.generate_data import save_splits
 
+torch.autograd.set_detect_anomaly(True)
+
 def parse_options(notebook = False):
     parser = argparse.ArgumentParser(description='SymLie')
 
@@ -48,6 +50,9 @@ def parse_options(notebook = False):
     parser.add_argument("--grid_sizes", type=str, default = "[]") 
     parser.add_argument("--implicit_layer_dims", type=str, default = "[]") 
     parser.add_argument("--vanilla_layer_dims", nargs='+', type=int, default=None)
+
+    parser.add_argument("--pretrained", default=False)
+
 
 
     parser.add_argument("--y_multi", type=int, default = 1)
@@ -219,11 +224,15 @@ def generate_data(args):
         'sine2d' : {'create_sample_func' : sine2d},
         'flower' : {'create_sample_func' : flower},
         'MNIST'  : {'create_sample_func' : mnist},
+        'o5synth' : {'create_sample_func' : None},
     }
     
     dataset_key = args.data_dir.split('/')[-1]
     print(f"Generating data for {dataset_key}!")
     dataset = datasets[dataset_key]
+
+    assert dataset_key == 'o5synth', dataset_key
+    
 
     save_splits(
         create_sample_func = dataset['create_sample_func'],

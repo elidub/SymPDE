@@ -74,7 +74,7 @@ def gated(ch_rep:Rep) -> Rep:
     # print(ch_rep.G)
     # print('Exiting!') ; import sys; sys.exit()
     if isinstance(ch_rep,SumRep):
-        print(f"Adding gates to {ch_rep}, chrep is SumRep")
+        # print(f"Adding gates to {ch_rep}, chrep is SumRep")
         return ch_rep+sum([Scalar(rep.G) for rep in ch_rep if rep!=Scalar and not rep.is_permutation])
     else:
         print(f"Adding gates to {ch_rep}, chrep is not SumRep")

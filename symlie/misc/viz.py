@@ -1,7 +1,13 @@
+import sys, os
 from matplotlib import pyplot as plt
 import numpy as np
+import torch
 
-def plot2d(x, y = None, l = 1, set_axis_off = True, max_grid = None):
+sys.path.append(os.path.join(os.getcwd(), '../sympdee/sympde/viz'))
+from sympdee.sympde.viz.general_plots import savefig 
+
+
+def plot2d(x, y = None, l = 1, set_axis_off = True, max_grid = None, savename = None):
     N_plot = len(x)
     fig, axs = plt.subplots(1, N_plot, figsize = (N_plot*l, l), sharey=True, sharex=True)
     if N_plot == 1:
@@ -10,11 +16,12 @@ def plot2d(x, y = None, l = 1, set_axis_off = True, max_grid = None):
         x_i = x[i] if max_grid is None else x[i][:max_grid, :max_grid]
         ax.imshow(x_i, aspect='auto')
         if set_axis_off: ax.set_axis_off()
-        if y is not None: axs[i].set_title(f'y = {y[i]}')
+        # if y is not None: axs[i].set_title(f'y = {y[i]}')
+    if savefig is not None: savefig(fig, savename, subdir = 'datasets')
     plt.show()
 
 
-def plot1d(x, y = None, l=1):
+def plot1d(x, y = None, l=1, savename = None):
     x = x.squeeze(1)
 
     # n_y = y.shape[1] if len(y.shape) > 1 else 1
@@ -51,5 +58,27 @@ def plot1d(x, y = None, l=1):
         val = normalize(y_i, y.min(), y.max())
         plt.plot(x_i, color = cmap(val), alpha = 0.5)
     plt.axis('off')
+    if savefig is not None: savefig(fig, savename, subdir = 'datasets')
     plt.show()
 
+
+
+def wb_plot_pred(w, b, title=None,figsize = (4, 3)):
+
+    if b == None:
+        wb = w.detach().numpy()
+    else:
+
+        b = b.view(-1, 1)
+
+        wb = torch.cat([
+            w,
+            torch.full_like(b, torch.nan),
+            b,
+        ], dim = 1).detach().numpy()
+
+    plt.figure(figsize=figsize, tight_layout=True)
+    plt.title(title)
+    plt.imshow(wb)
+    plt.colorbar()
+    plt.show()

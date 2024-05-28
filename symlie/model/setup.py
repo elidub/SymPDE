@@ -3,12 +3,13 @@ import torch.nn as nn
 import torch
 import numpy as np
 import pandas as pd
+import torchvision
 
 from emlp.reps import V
 from emlp.groups import Z, O
 from emlp.datasets import O5Synthetic
 
-from model.learner import PredictionLearner, TransformationLearner, CombiLearner
+from model.learner import PredictionLearner, TransformationLearner, CombiLearner, MLPLearner
 from model.networks.mlp import MLP, CombiMLP, EMLP_wrapper, EMLP_MLP_wrapper
 from model.networks.linear import  LinearP
 from model.networks.implicit import LinearImplicit
@@ -205,8 +206,18 @@ def setup_model(args):
             implicit_layer_dims = args.implicit_layer_dims,
             vanilla_layer_dims = args.vanilla_layer_dims,
             bias = args.bias,
+            pretrained=args.pretrained,
         )
         learner = CombiLearner
+
+    elif net.startswith("VanillaPredict"):
+        net = torchvision.ops.MLP(
+            in_channels = args.vanilla_layer_dims[0],
+            hidden_channels= args.vanilla_layer_dims[1:],
+            bias=args.bias,
+        )
+        learner = MLPLearner
+
     elif net.startswith("EMLP"):
 
         # Manually select params for EMLP
@@ -217,6 +228,9 @@ def setup_model(args):
         # O5Synthetic
         set = O5Synthetic(N = 1)
         group, repin, repout = O(5), set.rep_in, set.rep_out
+
+        # Test case
+        # group, repin, repout = Z(6), V(group), V(group)
 
         if net == "EMLP":
             net = EMLP_wrapper(
@@ -320,7 +334,9 @@ def setup_model(args):
         elif learner == PredictionLearner:
             model = learner(net, criterion, lr=args.lr, task=task)
         elif learner == CombiLearner:
-            model = learner(net, criterion, lr=args.lr, grid_sizes=args.grid_sizes, transform_kwargs=args.transform_kwargs)
+            model = learner(net, criterion, lr=args.lr, grid_sizes=args.grid_sizes, transform_kwargs=args.transform_kwargs, optimizer_setting=args.optimizer_setting)
+        elif learner == MLPLearner:
+            model = learner(net, criterion, lr=args.lr)
         else:
             raise NotImplementedError(f"Network {net} not implemented")
 

@@ -63,10 +63,20 @@ class SpaceTranslate():
     def __repr__(self) -> str:
         return f'SpaceTranslate_{self.dim}'
 
-    def __call__(self, x, rng):
+    # def __call__(self, x, rng):
+    #     grid_size = x.shape[self.dim]
+    #     # shift = int(grid_size*eps)
+    #     shift = int(grid_size*torch.rand((1,), generator=rng).item())
+    #     x = torch.roll(x, shifts = shift, dims = self.dim)
+    #     if self.return_shift:
+    #         shifts = torch.full(size=(len(x),), fill_value=shift)
+    #         return x, shifts
+    #     else:
+    #         return x
+        
+    def __call__(self, x, eps):
         grid_size = x.shape[self.dim]
-        # shift = int(grid_size*eps)
-        shift = int(grid_size*torch.rand((1,), generator=rng).item())
+        shift = int(grid_size*eps)
         x = torch.roll(x, shifts = shift, dims = self.dim)
         if self.return_shift:
             shifts = torch.full(size=(len(x),), fill_value=shift)
@@ -139,16 +149,31 @@ class TransformRefactored:
 
     #     return x
 
-    def transform(self, x, rng, shape):
+    def transform(self, x, rng = 0, shape = None):
+
+        if rng == 0:
+            return x
+
+        # if rng is None:
+        if type(rng) == int:
+            rng_seed = rng
+            rng = torch.Generator()
+            rng.manual_seed(rng_seed)
+
+        
 
         batch_size, features = x.shape
         x = x.reshape(batch_size, *shape)
 
         x, _ = self.space_translate_x(x, rng)
+        # x = self.random_permute(x, rng)
 
         x = x.reshape(batch_size, features)
 
         return x
+    
+    def __call__(self, *args, **kwargs):
+        return self.transform(*args, **kwargs)
 
 
     # def transform(self, x, rng, shape):

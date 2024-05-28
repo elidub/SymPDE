@@ -49,6 +49,8 @@ class FlatDataset(Dataset):
 
         # y = y[:, 1]
 
+        assert len(x) >= N, f"Only {len(x)} samples available, requested {N} samples."
+
         self.x = torch.from_numpy(x[:N]).float()
         self.y = torch.from_numpy(y[:N]).float()
 

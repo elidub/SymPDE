@@ -72,6 +72,7 @@ class Linear(nn.Linear):
     def __init__(self, repin, repout):
         nin,nout = repin.size(),repout.size()
         super().__init__(nin,nout)
+        self.repin_l, self.repout_l = repin, repout
         rep_W = repout*repin.T
         rep_bias = repout
         Pw = rep_W.equivariant_projector()
@@ -116,7 +117,7 @@ class GatedNonlinearity(nn.Module): #TODO: add support for mixed tensors and non
     def __init__(self,rep):
         super().__init__()
         self.rep=rep
-        print('Adaption: using ReLu instead of Swish in GatedNonlinearity!')
+        # print('Adaption: using ReLu instead of Swish in GatedNonlinearity!')
     def forward(self,values):
         gate_scalars = values[..., gate_indices(self.rep)]
         activations = gate_scalars.sigmoid() * values[..., :self.rep.size()]
@@ -131,7 +132,7 @@ class EMLPBlock(nn.Module):
         and gated nonlinearity. """
     def __init__(self,rep_in,rep_out):
         super().__init__()
-        print('EMLPBlock repin, repout', rep_in, rep_out)
+        # print('EMLPBlock repin, repout', rep_in, rep_out)
         self.linear = Linear(rep_in,gated(rep_out))
         self.bilinear = BiLinear(gated(rep_out),gated(rep_out))
         self.nonlinearity = GatedNonlinearity(rep_out)
@@ -195,21 +196,21 @@ class EMLP(nn.Module):
         
         self.G=group
         # Parse ch as a single int, a sequence of ints, a single Rep, a sequence of Reps
-        print('ch', ch, isinstance(ch,int), isinstance(ch,Rep))
+        print(f'ch={ch}', f'isinstance(ch,int)={isinstance(ch,int)}', f'isinstance(ch,Rep)={isinstance(ch,Rep)}', )
         if isinstance(ch,int): 
             middle_layers = num_layers*[uniform_rep(ch,group)]#[uniform_rep(ch,group) for _ in range(num_layers)]
         elif isinstance(ch,Rep): 
             middle_layers = num_layers*[ch(group)]
         else: 
-            print('middle layers!')
+            # print('middle layers!')
             for c in ch:
                 print(f'isinstance(c, Rep): {c}', isinstance(c, Rep))
             middle_layers = [(c(group) if isinstance(c,Rep) else uniform_rep(c,group)) for c in ch]
         #assert all((not rep.G is None) for rep in middle_layers[0].reps)
         reps = [self.rep_in]+middle_layers
         #logging.info(f"Reps: {reps}")
-        print('reps:', reps)
-        print('self.rep_out', self.rep_out)
+        # print('reps:', reps)
+        # print('self.rep_out', self.rep_out)
         # print('for loop')
         # for rin, rout in zip(reps,reps[1:]):
         #     print(rin, rout)

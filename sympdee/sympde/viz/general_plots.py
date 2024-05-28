@@ -75,7 +75,9 @@ def simple_imshow(x, l = 1, print_values = False, precision = 2, title = None, i
             for j in range(x.shape[1]):
                 ax.text(j, i, f'{x[i, j]:.{precision}f}', ha='center', va='center', color='white')
 
-    ax.axis('off')
+    # ax.axis('off')
+    ax.set_xticks([])
+    ax.set_yticks([])
     plt.show()
     return fig
 
@@ -84,7 +86,15 @@ def imshow(x, figsize = (3,3), l = 1):
     plt.imshow(x)
     plt.show()
 
-def savefig(fig, name, subdir = '', path = '/Users/elias/EliasMBA/Projects/Uni/Thesis/ai_thesis/figures/code', tight_layout = True, **kwargs):
-    if not hasattr(kwargs, 'dpi'): kwargs['dpi'] = fig.dpi
+def savefig(fig: plt.figure, name: str, subdir: str = '', path: str = '/Users/elias/EliasMBA/Projects/Uni/Thesis/ai_thesis/figures/code', tight_layout = True, **kwargs):
+    """
+    fig (plt.figure): figure object to save
+    name (str): name of the file
+    subdir (str): subdirectory to save the file in
+    path (str): path to save the file in (default: '/Users/elias/EliasMBA/Projects/Uni/Thesis/ai_thesis/figures/code')
+    
+    
+    """
+    # if not hasattr(kwargs, 'dpi'): kwargs['dpi'] = fig.dpi
     os.makedirs(os.path.join(path, subdir), exist_ok = True)
     fig.savefig(os.path.join(path, subdir, f'{name}.png'), **kwargs)

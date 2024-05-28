@@ -28,7 +28,7 @@ grid_size: [1,10]
 eps_mult: 0. 0. 0. 0.
 
 
-max_epochs: 50
+max_epochs: 100
 n_train: 1000
 n_val: 1000
 n_test: 1000

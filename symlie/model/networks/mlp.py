@@ -5,6 +5,8 @@ from typing import List, Union
 import torch.nn.functional as F
 import math
 from torch import nn
+import os
+
 
 from emlp.nn.pytorch import MLP as EMLP_MLP
 from emlp.nn.pytorch import EMLP
@@ -82,26 +84,64 @@ class View(nn.Module):
         out = x.view(*self.shape)
         return out
     
+class BinaryLinear(nn.Module):
+    def __init__(self, input_features, output_features):
+        super(BinaryLinear, self).__init__()
+        # Initialize the weights as a Parameter
+        self.weights = nn.Parameter(torch.randn(output_features, input_features, requires_grad=True))
+
+    def forward(self, x):
+        # Binarize the weights to 0 or 1
+        binary_weights = torch.where(self.weights > 0, torch.ones_like(self.weights), torch.zeros_like(self.weights))
+        
+        # Forward pass with binarized weights
+        out = F.linear(x, binary_weights)
+        
+        # Straight-through estimator trick for the backward pass
+        # Connect the gradients of binary weights to the gradients of original weights
+        # binary_weights = (binary_weights - self.weights).detach() + self.weights
+        binary_weights.register_hook(lambda grad: grad)
+
+        return out
+    
 class ImplicitLayer(nn.Module):
-    def __init__(self, implicit_layer_dim, in_features, out_features):
+    def __init__(self, implicit_layer_dim, in_features, out_features, pretrained = False):
         super().__init__()
 
-        self.n_features = in_features * out_features + out_features
+        self.n_features = in_features * out_features + out_features # dim of w and b
         self.in_features = in_features
         self.out_features = out_features
 
 
+        binary_layer = False
+
         if implicit_layer_dim == [0]:
             self.implicit_layer = nn.Identity() 
         else:
-            self.implicit_layer = torchvision.ops.MLP(
-                in_channels=implicit_layer_dim[0], 
-                hidden_channels=implicit_layer_dim[1:]
-            )
+            if binary_layer:
+                # assert implicit_layer_dim[0] == implicit_layer_dim[1] == self.n_features, f"implicit_layer_dim: {implicit_layer_dim}, self.n_features: {self.n_features}"
+                assert len(implicit_layer_dim) == 2, f"len(implicit_layer_dim): {len(implicit_layer_dim)}"
+                self.implicit_layer = BinaryLinear(implicit_layer_dim[0], implicit_layer_dim[1])
+            else:
+                self.implicit_layer = torchvision.ops.MLP(
+                    in_channels=implicit_layer_dim[0], 
+                    hidden_channels=implicit_layer_dim[1:]
+                )
 
         n = 7
-        self.wp1 = torch.zeros((7,))
-        self.wp2 = self.get_space_translation(7)
+        self.wp1 = torch.zeros((n,))
+        self.wp2 = self.get_space_translation(n)
+
+
+        if pretrained:
+            dims_layer0 = [[56, 56, 56, 56], [47, 47, 47, 47], [49, 49, 49, 49], [110, 110, 110, 110]]
+            dims_layer1 = [[8, 8, 8], [7, 7, 7], [11, 11, 11, 11]]
+            if implicit_layer_dim in dims_layer0:
+                print('loading statedict layer0')
+                self.implicit_layer.load_state_dict(torch.load('implicit_layer0.pt'))
+            if implicit_layer_dim in dims_layer1:
+                print('loading statedict layer1')
+                self.implicit_layer.load_state_dict(torch.load('implicit_layer1.pt'))
 
 
         # self.implicit_layer = nn.Sequential(
@@ -123,6 +163,7 @@ class ImplicitLayer(nn.Module):
 
 
     def forward_train(self, w: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
+        # return w, b
         if type(b) == nn.Parameter or type(b) == torch.Tensor:
             wb = torch.cat([w, b.view(-1, 1)], dim=1).flatten()
 
@@ -189,11 +230,10 @@ class ImplicitLayer(nn.Module):
     
     def forward_analytic_sine1d(self, w: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
 
-        assert b == None
-
         n = 7
         if w.shape == (1, n):# and b.shape == (1,):
             w = (w.flatten()[self.wp1.flatten().long()]).reshape(w.shape)
+            b = b
 
             # wp = torch.cat([torch.zeros(nn), torch.ones(nn)])
             # wb = torch.tensor([0])
@@ -201,6 +241,9 @@ class ImplicitLayer(nn.Module):
             
         elif w.shape == (n, n):# and b.shape == (n,):
             w = ( self.wp2 @ w.flatten() ).reshape(w.shape)
+            
+            if b is not None:
+                b = (b.flatten()[self.wp1.flatten().long()]).reshape(b.shape)
 
         else:
             raise ValueError(f'Unknown type of b: {b}: {type(b)}')
@@ -222,9 +265,9 @@ class ImplicitLayer(nn.Module):
         # return w, b
     
     def forward(self, w: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
-        # return self.forward_analytic_05synth(w, b)
+        return self.forward_analytic_05synth(w, b)
         # return self.forward_analytic_sine1d(w, b)
-        return self.forward_train(w, b)
+        # return self.forward_train(w, b)
 
         
 class CombiMLP(torch.nn.Module):
@@ -233,6 +276,7 @@ class CombiMLP(torch.nn.Module):
             vanilla_layer_dims: List[int],
             bias: bool,
             activation = torch.nn.ReLU,
+            pretrained = False,
             # activation = torch.nn.SiLU,
         ):
         super().__init__()
@@ -254,7 +298,7 @@ class CombiMLP(torch.nn.Module):
             #     # n_features = in_features * out_features + out_features
             #     # assert n_features == implicit_layer_dim[0]+ out_features,  f"n_features: {n_features}, implicit_layer_dim[0]: {implicit_layer_dim[0]}"
             #     # assert n_features == implicit_layer_dim[-1]+ out_features, f"n_features: {n_features}, implicit_layer_dim[-1]: {implicit_layer_dim[-1]}"
-            implicit_layer = ImplicitLayer(implicit_layer_dim, in_features, out_features)
+            implicit_layer = ImplicitLayer(implicit_layer_dim, in_features, out_features, pretrained=pretrained)
 
             self.implicit_layers.append(implicit_layer)
 
@@ -273,6 +317,15 @@ class CombiMLP(torch.nn.Module):
             # self.layers.append(implicit_layer)
             # self.weights.append( nn.Parameter(torch.rand(out_features, in_features)) )
 
+        # reset_parameters
+        self.reset_parameters_vanilla()
+
+
+
+    def reset_parameters_vanilla(self):
+        for layer in self.vanilla_layers:
+            layer.reset_parameters()
+
         
 
     def forward(self, x: torch.Tensor) -> List[torch.Tensor]:
@@ -285,7 +338,9 @@ class CombiMLP(torch.nn.Module):
             # x = F.linear(x, weight_out)
             # bias = vanilla_layer.bias
 
-            self.x_ins.append(x)
+
+            with torch.no_grad():
+                self.x_ins.append(x)
 
 
             weight, bias = implicit_layer(vanilla_layer.weight, vanilla_layer.bias)
@@ -336,7 +391,8 @@ class EMLP_wrapper(EMLP):
         assert len(implicit_layer_dims) == 0
         ch = vanilla_layer_dims[1:-1]
         repin, repout, group = kwargs['repin'], kwargs['repout'], kwargs['group']
-        print(repin, repout, group, ch)
+        # print(implicit_layer_dims, vanilla_layer_dims)
+        # print(repin, repout, group, ch)
         super().__init__(rep_in=repin, rep_out=repout, group=group, ch=ch, num_layers=None, bias=bias)
     
 class EMLP_MLP_wrapper(EMLP_MLP):

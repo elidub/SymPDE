@@ -17,9 +17,10 @@ from model.networks.implicit import LinearImplicit
 
 from softadapt import SoftAdapt, NormalizedSoftAdapt, LossWeightedSoftAdapt
 
+torch.autograd.set_detect_anomaly(True)
 
 class BaseLearner(pl.LightningModule):
-    def __init__(self, net, criterion, lr, **kwargs):
+    def __init__(self, net, criterion, lr, optimizer_setting, **kwargs):
         super().__init__()
         self.net = net
         self.criterion = criterion
@@ -28,6 +29,7 @@ class BaseLearner(pl.LightningModule):
         self.test_step_outs = []
 
         self.criterion_alt = True
+        self.optimizer_setting = optimizer_setting
 
         # Change 1: Create a SoftAdapt object (with your desired variant)
         # self.softadapt_object = LossWeightedSoftAdapt(beta=0.1)
@@ -41,7 +43,6 @@ class BaseLearner(pl.LightningModule):
         # Initializing adaptive weights to all ones.
         # self.adapt_weights = torch.tensor([1,1,1])
 
-        # self.automatic_optimization = False
 
         return
 
@@ -72,14 +73,84 @@ class BaseLearner(pl.LightningModule):
             loss, batch, out = self.step_alt(batch, mode)
         else:
             out = self.forward(batch)
-            loss = self.criterion(*out)
+            
+            try:
+                _, criterion = self.criterion[0]
+            except:
+                criterion = self.criterion
+
+            loss = criterion(*out)
 
             # Log Metrics
-            self.log(f"{mode}_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
+            self.log(f"{mode}_loss_y", loss, prog_bar=True, on_step=False, on_epoch=True)
 
         return loss, batch, out
 
     def step_alt(self, batch, mode):
+
+
+
+        if self.optimizer_setting == 'solo':
+
+            assert len(self.criterion) == 1, self.criterion
+            lossweight_y, criterion_y = self.criterion[0]
+
+            out_y = self.forward_vanilla(batch)
+            loss_y = criterion_y(*out_y)
+
+            self.log(f"{mode}_loss_y", loss_y, prog_bar=True, on_step=False, on_epoch=True)
+
+            return loss_y, batch, out_y
+
+        loss = 0
+
+        opt_vanilla, opt_implicit = self.optimizers()
+
+        (lossweight_y, criterion_y), (lossweight_o, criterion_o), _ = self.criterion
+
+        self.net.reset_parameters_vanilla()
+
+
+        ## Vanilla, y ##
+
+        self.set_grad(grad_false = self.net.implicit_layers.parameters(), grad_true = self.net.vanilla_layers.parameters())
+        out_y = self.forward_vanilla(batch)
+        loss_y = criterion_y(*out_y)
+
+        if lossweight_y > 0. and mode == 'train' and not self.automatic_optimization: 
+            opt_vanilla.zero_grad()
+            self.manual_backward(loss_y, retain_graph=True)
+            opt_vanilla.step()
+
+        loss += lossweight_y*loss_y
+        self.log(f"{mode}_loss_y", loss_y, prog_bar=True, on_step=False, on_epoch=True)
+
+        ## Implicit, o ##
+
+        self.set_grad(grad_true = self.net.implicit_layers.parameters(), grad_false = self.net.vanilla_layers.parameters())
+
+        out_ab_primes = self.forward_implicit(batch)
+
+        loss_os = 0
+        for i, (out_a_prime, out_b_prime) in enumerate(out_ab_primes):
+            loss_o = criterion_o(out_a_prime, out_b_prime)
+            loss += lossweight_o*loss_o
+            loss_os += loss_o
+            self.log(f"{mode}_loss_o{i}", loss_o, prog_bar=True, on_step=False, on_epoch=True)
+
+        if lossweight_o > 0. and mode == 'train' and not self.automatic_optimization:
+            opt_implicit.zero_grad()
+            self.manual_backward(loss_os)
+            opt_implicit.step()
+
+
+        return loss, batch, out_y
+
+
+        
+
+
+    def step_alt_old(self, batch, mode):
         out = self.forward(batch)
 
 
@@ -111,20 +182,31 @@ class BaseLearner(pl.LightningModule):
 
         if mode == 'train' and not self.automatic_optimization:
 
-            print('Exiting!') ; import sys; sys.exit()
+            with torch.autograd.set_detect_anomaly(True):
 
-            opt_vanilla, opt_implicit = self.optimizers()
+                (lossweight_y, _), (lossweight_o, _), _ = loss_terms
 
-            loss_vanilla = losses[0]
-            loss_implicit = sum(losses[1:])
+                # print('Exiting!') ; import sys; sys.exit()
 
-            opt_vanilla.zero_grad()
-            self.manual_backward(loss_vanilla)
-            opt_vanilla.step()
+                opt_vanilla, opt_implicit = self.optimizers()
 
-            # opt_implicit.zero_grad()
-            # self.manual_backward(loss_implicit)
-            # opt_implicit.step()
+                loss_vanilla = losses[0]
+                loss_implicit = sum(losses[1:])
+
+                if lossweight_o > 0.:
+                    self.set_grad(grad_true = self.net.implicit_layers.parameters(), grad_false = self.net.vanilla_layers.parameters())
+                    opt_implicit.zero_grad()
+                    self.manual_backward(loss_implicit, retain_graph=False)
+                    opt_implicit.step()
+
+                if lossweight_y > 0.:
+                    self.set_grad(grad_false = self.net.implicit_layers.parameters(), grad_true = self.net.vanilla_layers.parameters())
+                    opt_vanilla.zero_grad()
+                    self.manual_backward(loss_vanilla, retain_graph=False)
+                    opt_vanilla.step()
+
+
+
 
             # opt_implicit.zero_grad()
 
@@ -202,9 +284,12 @@ class BaseLearner(pl.LightningModule):
         print()
 
         optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
+        # optimizer = torch.optim.Adam(self.net.vanilla_layers.parameters(), lr=self.lr)
         return optimizer
 
     def configure_optimizers_multi(self):
+
+        self.automatic_optimization = False
 
         print('Vanilla layers')
         for name, param in self.net.vanilla_layers.named_parameters():
@@ -219,11 +304,20 @@ class BaseLearner(pl.LightningModule):
         opt_vanilla = torch.optim.Adam(self.net.vanilla_layers.parameters(), lr=self.lr)
         opt_implicit = torch.optim.Adam(self.net.implicit_layers.parameters(), lr=self.lr)
         return opt_vanilla, opt_implicit
+        
+        # except:
+        #     return opt_vanilla
+        
     
     def configure_optimizers(self):
-        # return self.configure_optimizers_multi()
-        return self.configure_optimizers_solo()
-    
+
+        if self.optimizer_setting == 'solo':
+            print('Configuring solo optimizer')
+            return self.configure_optimizers_solo()
+        elif self.optimizer_setting == 'multi':
+            print('Configuring multi optimizer')
+            return self.configure_optimizers_multi()
+
 
     # def on_train_epoch_start(self) -> None:
 
@@ -368,6 +462,20 @@ class TransformationLearner(BaseLearner, Transform):
             elif save_format == 'state_dict':
                 torch.save(value, os.path.join(store_dir, f'{run_id}.pt'))
 
+class MLPLearner(BaseLearner):
+    def __init__(self, net, criterion, lr):
+        super().__init__(net, criterion, lr, optimizer_setting='solo')
+
+        self.criterion_alt = False
+
+    def forward(self, batch):
+
+        x, y_true, _ = batch
+
+        y_pred = self.net(x)
+        out_y = (y_pred.squeeze(1), y_true.squeeze(1))
+
+        return out_y
     
 class PredictionLearner(BaseLearner):
     def __init__(self, net, criterion, lr, task):
@@ -457,7 +565,13 @@ class TransformationBlock(TransformRefactored):
 
         print('Init rng')
 
-    def forward_transformation(self, batch_size, shape, weight, bias):
+    def forward_transformation(self, batch_size, x_in, shape, weight, bias):
+
+        # print('batch_size', batch_size)
+        # print('x_in', x_in.shape)
+        # print('shape', shape)
+        # print('weight', weight.shape)
+        # print('bias', bias.shape)
 
         # seed = torch.randint(0, 100000, (1,)).item()
         # self.rng_a.manual_seed(seed)
@@ -476,6 +590,7 @@ class TransformationBlock(TransformRefactored):
         shape = {'a':shape[0], 'b':shape[1]}
 
         x_a = x_b = torch.randn((batch_size, np.prod(shape['b'])), device = weight.device)
+        # x_a = x_b = x_in
         # x_a = x_b = batch_size.clone()
 
         # Route a: Forward pass, transformation
@@ -494,11 +609,11 @@ class TransformationBlock(TransformRefactored):
 
 
 class CombiLearner(BaseLearner, TransformationBlock):
-    def __init__(self, net, criterion, lr, grid_sizes, transform_kwargs):
-        kwargs = {'net': net, 'criterion': criterion, 'lr': lr, 'transform_kwargs': transform_kwargs}
+    def __init__(self, net, criterion, lr, grid_sizes, transform_kwargs, optimizer_setting):
+        kwargs = {'net': net, 'criterion': criterion, 'lr': lr, 'transform_kwargs': transform_kwargs, 'optimizer_setting': optimizer_setting}
         super().__init__(**kwargs)
         # print('Combilearner init')
-        BaseLearner.__init__(self, net, criterion, lr)
+        BaseLearner.__init__(self, net, criterion, lr, optimizer_setting)
         TransformationBlock.__init__(self, transform_kwargs)
         # super(BaseLearner, self).__init__(net, criterion, lr)
         # super(TransformationBlock, self).__init__(transform_kwargs)
@@ -506,11 +621,29 @@ class CombiLearner(BaseLearner, TransformationBlock):
         self.grid_sizes = grid_sizes
 
 
+    def set_grad(self, grad_true, grad_false):
+        try:
+            for param in grad_true:
+                param.requires_grad = True
+            for param in grad_false:
+                param.requires_grad = False
+        except:
+            pass
+
     def forward(self, batch):
+
+        # self.net.reset_parameters_vanilla()
+
 
         x, y_true, _ = batch
         batch_size = len(x)
 
+        # for param in self.net.parameters():
+        #     param.requires_grad = True
+
+        # disable grad of implicit layers but keep grad of vanilla layers
+        self.set_grad(grad_false = self.net.implicit_layers.parameters(), grad_true = self.net.vanilla_layers.parameters())
+        
         y_pred = self.net(x)
         out_y = (y_pred.squeeze(1), y_true.squeeze(1))
 
@@ -521,6 +654,9 @@ class CombiLearner(BaseLearner, TransformationBlock):
         #     weight_out = layer(weight)
         #     out_ab_primes.append(self.forward_transformation(batch_size, grid_size, weight_out))
 
+        # disable grad of implicit layers but keep grad of vanilla layers
+        self.set_grad(grad_true = self.net.implicit_layers.parameters(), grad_false = self.net.vanilla_layers.parameters())
+
         out_ab_primes = []
         if len(self.grid_sizes) > 0:
             assert len(self.grid_sizes) == len(self.net.implicit_layers) == len(self.net.vanilla_layers), f"{len(self.grid_sizes)}, {len(self.net.implicit_layers)}, {len(self.net.vanilla_layers)}"
@@ -530,15 +666,16 @@ class CombiLearner(BaseLearner, TransformationBlock):
 
             for x_in, grid_size, implicit_layer, vanilla_layer in zip(self.net.x_ins, self.grid_sizes, self.net.implicit_layers, self.net.vanilla_layers):
                 
+
                 weight, bias = implicit_layer(vanilla_layer.weight, vanilla_layer.bias)
 
                 # weight_out  = implicit_layer(vanilla_layer_weight)
                 # weight_out = implicit_layer(vanilla_layer.weight)
                 # print(torch.allclose(weight_out, weight_out2))
-                # print('Exiting!') ; import sys; sys.exit()
-                out_ab_primes.append(self.forward_transformation(batch_size, grid_size, weight, bias))
+                out_ab_primes.append(self.forward_transformation(batch_size, x_in, grid_size, weight, bias))
                 # out_ab_primes.append(self.forward_transformation(x_in, grid_size, weight, bias))
             
+
 
         return out_y, *out_ab_primes
     
@@ -565,7 +702,7 @@ class CombiLearner(BaseLearner, TransformationBlock):
 
         for x_in, grid_size, implicit_layer, vanilla_layer in zip(self.net.x_ins, self.grid_sizes, self.net.implicit_layers, self.net.vanilla_layers):
             weight, bias = implicit_layer(vanilla_layer.weight, vanilla_layer.bias)
-            out_ab_primes.append(self.forward_transformation(batch_size, grid_size, weight, bias))
+            out_ab_primes.append(self.forward_transformation(batch_size, x_in, grid_size, weight, bias))
         return out_ab_primes
 
     def log_test_results(self):

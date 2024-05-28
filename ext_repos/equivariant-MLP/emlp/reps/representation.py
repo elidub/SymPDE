@@ -460,7 +460,7 @@ def bilinear_weights(out_rep,in_rep):
 #     return (bparams@x[...,bids].T.reshape(bparams.shape[-1],-1)).reshape(-1,b).T
 
 @export
-def vis(repin,repout,cluster=True):
+def vis(repin,repout,cluster=True, plot = True):
     """ A function to visualize the basis of equivariant maps repin>>repout
         as an image. Only use cluster=True if you know Pv will only have
         r distinct values (true for G<S(n) but not true for many continuous groups)."""
@@ -471,8 +471,12 @@ def vis(repin,repout,cluster=True):
     v = np.round(P@v,decimals=4)  # project onto equivariant subspace (and round)
     if cluster: # cluster nearby values for better color separation in plot
         v = KMeans(n_clusters=Q.shape[-1]).fit(v.reshape(-1,1)).labels_
-    plt.imshow(v.reshape(repout.size(),repin.size()))
-    plt.axis('off')
+    if plot:
+        plt.figure(figsize=(10,10))
+        plt.imshow(v.reshape(repout.size(),repin.size()))
+        plt.axis('off')
+    # plt.imshow(v.reshape(repout.size(),repin.size()))
+    # plt.axis('off')
     return v.reshape(repout.size(),repin.size())
 
 

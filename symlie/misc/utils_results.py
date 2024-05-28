@@ -1,3 +1,4 @@
+import sys, os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -8,13 +9,15 @@ from data.generate_2d import Create2dData
 from misc.utils import Args
 from model.setup import find_id_for_P, load_P_pred
 
+sys.path.append(os.path.join(os.getcwd(), '../sympdee/sympde/viz'))
+from sympdee.sympde.viz.general_plots import savefig 
 
-def plot_data(dataset, data_kwargs_list=['data_kwargs_show', 'data_kwargs'], N_plot=5, l=1):
+def plot_data(dataset_name, dataset, data_kwargs_list=['data_kwargs_show', 'data_kwargs'], N_plot=5, l=1):
     for data_kwargs in data_kwargs_list:
         create_data = Create2dData(dataset['create_sample_func'], dataset[data_kwargs], dataset['transform_kwargs'])
         out = create_data(N = N_plot)
         x, y = out['x'].reshape(N_plot, *dataset[data_kwargs]['grid_size']), out['y']
-        dataset['plot_func'](x, y, l)
+        dataset['plot_func'](x, y, l, savename = f'{dataset_name}_{data_kwargs}')
 
 def assert_unique(df_map_new):
     df_map_new = df_map_new.copy()
@@ -170,7 +173,7 @@ def plot_best(ddd_mean, ddd_std):
 
     n_plot = len(d_min)
     # fig, axs = plt.subplots(nrows=n_plot, figsize=(3, 3*n_plot))
-    fig, axs = plt.subplots(ncols=n_plot, figsize=(2.5*n_plot, 2.5), tight_layout = True, sharex=True, sharey=False)
+    fig, axs = plt.subplots(ncols=n_plot, figsize=(2.*n_plot, 2.), tight_layout = True, sharex=True, sharey=False)
 
     for ax, (index, row) in zip(axs, d_min.iterrows()):
 
@@ -179,11 +182,21 @@ def plot_best(ddd_mean, ddd_std):
         for net_name in d_min.columns.get_level_values(0).unique():
 
             title = title_dict['dataset'][dataset] + ', ' + title_dict['eps_mult'][eps_mult]
-            row[net_name].plot(marker = 'o', logx=True, logy=True, ax = ax, label = net_name, title = title)
-    axs[0].legend()
+            row[net_name].plot(marker = 'o', logx=True, logy=True, ax = ax, label = net_name, title = title)  
+
+    handles, labels = ax.get_legend_handles_labels()
+    labels = ['Vanilla', r'Trained weight processor $\psi_P$']
+    fig.legend(handles, labels, loc='upper center', bbox_to_anchor=(0.55, 1.15), ncol = 2)
+
+    # Using axs instead of suplabel for alignment
     axs[0].set_ylabel('Test loss')
-    fig.supxlabel('Train size')
+    axs[n_plot//2].set_xlabel('Train size')
+    # plt.tight_layout()
+    # fig.supylabel('Test loss')
+    # fig.supxlabel('Train size')
     plt.show()
+
+    savefig(fig, 'best_weightmapping', '5-experiments', bbox_inches = 'tight')
 
 def return_table(df: pd.DataFrame, step: int, group_params: List[str], hyper_params: List[str]):
 
