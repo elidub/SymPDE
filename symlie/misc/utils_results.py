@@ -185,7 +185,8 @@ def plot_best(ddd_mean, ddd_std):
             row[net_name].plot(marker = 'o', logx=True, logy=True, ax = ax, label = net_name, title = title)  
 
     handles, labels = ax.get_legend_handles_labels()
-    labels = ['Vanilla', r'Trained weight processor $\psi_P$']
+    # labels = ['Vanilla network', r'Trained weight processor $\psi_P$']
+    labels = ['Vanilla network', 'ELL network']
     fig.legend(handles, labels, loc='upper center', bbox_to_anchor=(0.55, 1.15), ncol = 2)
 
     # Using axs instead of suplabel for alignment

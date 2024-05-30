@@ -86,7 +86,7 @@ def imshow(x, figsize = (3,3), l = 1):
     plt.imshow(x)
     plt.show()
 
-def savefig(fig: plt.figure, name: str, subdir: str = '', path: str = '/Users/elias/EliasMBA/Projects/Uni/Thesis/ai_thesis/figures/code', tight_layout = True, **kwargs):
+def savefig(fig: plt.figure, name: str, subdir: str = '', path: str = '/Users/elias/EliasMBA/Projects/Uni/Thesis/ai_thesis/figures/code', tight_layout = True,bbox_inches='tight', **kwargs):
     """
     fig (plt.figure): figure object to save
     name (str): name of the file
@@ -97,4 +97,4 @@ def savefig(fig: plt.figure, name: str, subdir: str = '', path: str = '/Users/el
     """
     # if not hasattr(kwargs, 'dpi'): kwargs['dpi'] = fig.dpi
     os.makedirs(os.path.join(path, subdir), exist_ok = True)
-    fig.savefig(os.path.join(path, subdir, f'{name}.png'), **kwargs)
+    fig.savefig(os.path.join(path, subdir, f'{name}.png'), bbox_inches=bbox_inches, **kwargs)
