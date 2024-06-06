@@ -105,7 +105,7 @@ class BinaryLinear(nn.Module):
         return out
     
 class ImplicitLayer(nn.Module):
-    def __init__(self, implicit_layer_dim, in_features, out_features, pretrained = False):
+    def __init__(self, implicit_layer_dim, in_features, out_features, forward_type, pretrained = False):
         super().__init__()
 
         self.n_features = in_features * out_features + out_features # dim of w and b
@@ -143,6 +143,12 @@ class ImplicitLayer(nn.Module):
                 print('loading statedict layer1')
                 self.implicit_layer.load_state_dict(torch.load('implicit_layer1.pt'))
 
+        forward_type_dict = {
+            '05synth': self.forward_analytic_05synth,
+            'sine1d': self.forward_analytic_sine1d,
+            'train': self.forward_train,
+        }
+        self.forward = forward_type_dict[forward_type]
 
         # self.implicit_layer = nn.Sequential(
         #         View((self.n_features,)),
@@ -264,8 +270,8 @@ class ImplicitLayer(nn.Module):
         #     raise ValueError(f'Unknown type of b: {b}: {type(b)}')
         # return w, b
     
-    def forward(self, w: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
-        return self.forward_analytic_05synth(w, b)
+    # def forward(self, w: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
+        # return self.forward_analytic_05synth(w, b)
         # return self.forward_analytic_sine1d(w, b)
         # return self.forward_train(w, b)
 
@@ -277,11 +283,13 @@ class CombiMLP(torch.nn.Module):
             bias: bool,
             activation = torch.nn.ReLU,
             pretrained = False,
+            forward_type = None,
             # activation = torch.nn.SiLU,
         ):
         super().__init__()
         
         # assert bias == False, 'Not implemented'
+        assert forward_type is not None
         assert len(implicit_layer_dims) == len(vanilla_layer_dims)-1, f"len(implicit_layer_dims): {len(implicit_layer_dims)}, len(vanilla_layer_dims): {len(vanilla_layer_dims)}, implicit_layer_dims: {implicit_layer_dims}, vanilla_layer_dims: {vanilla_layer_dims}"
 
         self.activation = activation()
@@ -298,7 +306,7 @@ class CombiMLP(torch.nn.Module):
             #     # n_features = in_features * out_features + out_features
             #     # assert n_features == implicit_layer_dim[0]+ out_features,  f"n_features: {n_features}, implicit_layer_dim[0]: {implicit_layer_dim[0]}"
             #     # assert n_features == implicit_layer_dim[-1]+ out_features, f"n_features: {n_features}, implicit_layer_dim[-1]: {implicit_layer_dim[-1]}"
-            implicit_layer = ImplicitLayer(implicit_layer_dim, in_features, out_features, pretrained=pretrained)
+            implicit_layer = ImplicitLayer(implicit_layer_dim, in_features, out_features, forward_type=forward_type, pretrained=pretrained)
 
             self.implicit_layers.append(implicit_layer)
 

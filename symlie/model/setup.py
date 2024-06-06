@@ -9,7 +9,7 @@ from emlp.reps import V
 from emlp.groups import Z, O
 from emlp.datasets import O5Synthetic
 
-from model.learner import PredictionLearner, TransformationLearner, CombiLearner, MLPLearner
+from model.learner import CombiLearner
 from model.networks.mlp import MLP, CombiMLP, EMLP_wrapper, EMLP_MLP_wrapper
 from model.networks.linear import  LinearP
 from model.networks.implicit import LinearImplicit
@@ -102,132 +102,27 @@ def setup_model(args):
             out_features = 2
         assert out_features == args.out_features, f"Expected out_features = {out_features}, got {args.out_features}"
 
-    if net.startswith("Train"):
-        if net == "TrainP":
-            net = LinearP(
-                in_features = features,
-                out_features = features,
-                bias = False,
-                device = args.device,
-                P_init = 'randn',
-                train_weights = False,
-                train_P = True,
-                svd_rank = args.svd_rank,
-            )
-        elif net == "TrainImplicitP":
-            net = LinearImplicit(
-                in_features = features,
-                out_features = features,
-                bias = False,
-                hidden_implicit_layers = args.hidden_implicit_layers,
-                device = args.device,
-                train_weights = False,
-                train_P = True,
-            )
-        learner = TransformationLearner
 
-    elif net.startswith("Predict-"):
-        if net == "Predict-NoneP":
-            net = MLP(
-                in_features = features, 
-                out_features = out_features,
-                bias = args.bias,
-                n_hidden_layers = args.n_hidden_layers,
-                device = args.device,
-                P_init = 'none',
-            )
-        elif net == "Predict-CalculatedP":
-            net = MLP(
-                in_features = features, 
-                out_features = out_features,
-                bias = args.bias,
-                n_hidden_layers = args.n_hidden_layers,
-                device = args.device,
-                P_init = 'space_translation',
-            )
-        elif net == "Predict-TrainedP":
-            assert args.use_P_from_noise == False
-            P_pred = load_P_pred(find_id_for_P(args)).to(args.device)
-            net = MLP(
-                in_features = features, 
-                out_features = out_features,
-                bias = args.bias,
-                n_hidden_layers = args.n_hidden_layers,
-                device = args.device,
-                P_init = P_pred,
-            )
-        elif net == "Predict-NoiseTrainedP":
-            args.use_P_from_noise = True
-            assert args.use_P_from_noise == True
-
-            # P_pred = load_P_pred(find_id_for_P(args)).to(args.device)
-
-            # P_pred = load_P_pred('7u75g6ai').to(args.device) # debug normalize_P
-            # P_pred = load_P_pred('3uvrx8mf').to(args.device) # debug WITHOUT normalize_P
-            manual_id = 'a8usb5wi' # debug normalize_P again
-            manual_id = 'y2xmhybx' # debug WITHOUT normalize_P again
-
-            P_pred = load_P_pred(manual_id).to(args.device) 
-            net = MLP(
-                in_features = features, 
-                out_features = out_features,
-                bias = args.bias,
-                n_hidden_layers = args.n_hidden_layers,
-                device = args.device,
-                P_init = P_pred,
-                linearmodules=[LinearP, nn.Linear],
-            )
-
-        elif net == "Predict-NoiseTrainedImplicitP":
-            args.use_P_from_noise = True
-            assert args.use_P_from_noise == True
-            # statedict_implicitP = load_implicitP_statedict(find_id_for_P(args))
-            statedict_implicitP = load_implicitP_statedict('v24f2hfu')
-            print('statedict_implicitP', statedict_implicitP.keys())
-            net = MLP(
-                in_features = features, 
-                out_features = out_features,
-                bias = args.bias,
-                n_hidden_layers = args.n_hidden_layers,
-                device = args.device,
-                P_init = statedict_implicitP,
-                linearmodules = [LinearImplicit, nn.Linear],
-                hidden_implicit_layers = args.hidden_implicit_layers,
-            )
-
-        elif net == "Predict-TrainedP-check":
-            find_id_for_P(args)
-            sys.exit()
-        else:
-            raise NotImplementedError(f"Network {net} not implemented")
-        learner = PredictionLearner
-    elif net.startswith("CombiTrain"):
+    if net.startswith("CombiTrain"):
         net = CombiMLP(
             implicit_layer_dims = args.implicit_layer_dims,
             vanilla_layer_dims = args.vanilla_layer_dims,
             bias = args.bias,
             pretrained=args.pretrained,
+            forward_type = args.forward_type,
         )
         learner = CombiLearner
-
-    elif net.startswith("VanillaPredict"):
-        net = torchvision.ops.MLP(
-            in_channels = args.vanilla_layer_dims[0],
-            hidden_channels= args.vanilla_layer_dims[1:],
-            bias=args.bias,
-        )
-        learner = MLPLearner
 
     elif net.startswith("EMLP"):
 
         # Manually select params for EMLP
 
         # Sine1d
-        # group, repin, repout = Z(7), V(group), V**0 
+        group, repin, repout = Z(7), V(group), V**0 
         
         # O5Synthetic
-        set = O5Synthetic(N = 1)
-        group, repin, repout = O(5), set.rep_in, set.rep_out
+        # set = O5Synthetic(N = 1)
+        # group, repin, repout = O(5), set.rep_in, set.rep_out
 
         # Test case
         # group, repin, repout = Z(6), V(group), V(group)
@@ -275,32 +170,8 @@ def setup_model(args):
     
     criterions = {
         'mse' : nn.MSELoss(),
-        # 'mses' : [
-        #     (args.lossweight_o,    nn.MSELoss()), 
-        #     (args.lossweight_dg,   nn.MSELoss()), 
-        #     (args.lossweight_dx,   nn.MSELoss()), 
-        #     (args.lossweight_do,   nn.MSELoss()),
-        #     (args.lossweight_do_a, nn.MSELoss()), 
-        #     (args.lossweight_do_b, nn.MSELoss()),
-        #     (args.lossweight_do_a_mmd, MMDLoss()), 
-        #     (args.lossweight_do_b_mmd, MMDLoss()),
-        # ],
-        # 'mses' : [
-        #     (args.lossweight_o,    nn.MSELoss()), 
-        #     (args.lossweight_dg,   nn.MSELoss()), 
-        #     (args.lossweight_dx,   nn.MSELoss()), 
-        #     (args.lossweight_do,   nn.MSELoss()),
-        #     (args.lossweight_do_tilde, nn.MSELoss()), 
-        #     (args.lossweight_do_tilde, nn.MSELoss()),
-        #     # (args.lossweight_do_tilde_mmd, MMDLoss()), 
-        #     # (args.lossweight_do_tilde_mmd, MMDLoss()),
-        #     (args.lossweight_do_tilde_mmd, nn.MSELoss()), 
-        #     (args.lossweight_do_tilde_mmd, nn.MSELoss()),
-        # ],
         'mses' : [(args.lossweight_y, nn.MSELoss())] + [(args.lossweight_o, nn.MSELoss()) for _ in range(len(args.grid_sizes))],
-        # 'mses' : [(1., nn.MSELoss()), (1., nn.MSELoss()), (0., nn.MSELoss()) ],
-        # 'mses' : [(args.lossweight_o, nn.MSELoss()), (args.lossweight_do_a, nn.MSELoss()), (args.lossweight_do_b, nn.MSELoss() )],
-        # 'mses' : [(args.lossweight_o, nn.MSELoss()), (args.lossweight_dg, nn.MSELoss())],
+        # 'mses' : [(args.lossweight_y, nn.MSELoss()), (args.lossweight_o, nn.MSELoss())],
         'bce' : nn.BCELoss(),
         'ce'  : nn.CrossEntropyLoss(),
     }
@@ -309,35 +180,9 @@ def setup_model(args):
 
     # Load model
     if args.run_id is not None:
-        assert args.version != None, "Version not specified!"
-        # ckpt_path = os.path.join(args.log_dir, args.name, args.version, "checkpoints")
-        ckpt_path = os.path.join(args.log_dir, 'symlie', args.run_id, "checkpoints")
-        print(ckpt_path)
-        assert len(os.listdir(ckpt_path)) == 1, "Multiple checkpoints found!"
-        ckpt = os.listdir(ckpt_path)[0]
-        print(ckpt)
-        if learner == TransformationLearner:
-            model = learner.load_from_checkpoint(
-                os.path.join(ckpt_path, ckpt), net=net, criterion=criterion, lr=args.lr, grid_size=args.data_kwargs['grid_size'], transform_kwargs=args.transform_kwargs,
-                map_location=torch.device('cpu')
-            )
-        if learner == PredictionLearner:
-            model = learner.load_from_checkpoint(
-                os.path.join(ckpt_path, ckpt), net=net, criterion=criterion, lr=args.lr, task=task,
-                map_location=torch.device('cpu')
-            )
-        print(f"Loaded model from {ckpt_path}")
+        raise NotImplementedError("Loading model from run_id not implemented")
 
-    else:
-        if learner == TransformationLearner:
-            model = learner(net, criterion, lr=args.lr, grid_size=args.data_kwargs['grid_size'], transform_kwargs=args.transform_kwargs)
-        elif learner == PredictionLearner:
-            model = learner(net, criterion, lr=args.lr, task=task)
-        elif learner == CombiLearner:
-            model = learner(net, criterion, lr=args.lr, grid_sizes=args.grid_sizes, transform_kwargs=args.transform_kwargs, optimizer_setting=args.optimizer_setting)
-        elif learner == MLPLearner:
-            model = learner(net, criterion, lr=args.lr)
-        else:
-            raise NotImplementedError(f"Network {net} not implemented")
+    assert learner == CombiLearner
+    model = learner(net, criterion, lr=args.lr, grid_sizes=args.grid_sizes, transform_kwargs=args.transform_kwargs, optimizer_setting=args.optimizer_setting)
 
     return model, datamodule

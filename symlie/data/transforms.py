@@ -63,26 +63,26 @@ class SpaceTranslate():
     def __repr__(self) -> str:
         return f'SpaceTranslate_{self.dim}'
 
-    # def __call__(self, x, rng):
-    #     grid_size = x.shape[self.dim]
-    #     # shift = int(grid_size*eps)
-    #     shift = int(grid_size*torch.rand((1,), generator=rng).item())
-    #     x = torch.roll(x, shifts = shift, dims = self.dim)
-    #     if self.return_shift:
-    #         shifts = torch.full(size=(len(x),), fill_value=shift)
-    #         return x, shifts
-    #     else:
-    #         return x
-        
-    def __call__(self, x, eps):
+    def __call__(self, x, rng):
         grid_size = x.shape[self.dim]
-        shift = int(grid_size*eps)
+        # shift = int(grid_size*eps)
+        shift = int(grid_size*torch.rand((1,), generator=rng).item())
         x = torch.roll(x, shifts = shift, dims = self.dim)
         if self.return_shift:
             shifts = torch.full(size=(len(x),), fill_value=shift)
             return x, shifts
         else:
             return x
+        
+    # def __call__(self, x, eps):
+    #     grid_size = x.shape[self.dim]
+    #     shift = int(grid_size*eps)
+    #     x = torch.roll(x, shifts = shift, dims = self.dim)
+    #     if self.return_shift:
+    #         shifts = torch.full(size=(len(x),), fill_value=shift)
+    #         return x, shifts
+    #     else:
+    #         return x
     
 class RandomScale():
     def __init__(self, l = 2):

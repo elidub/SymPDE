@@ -53,6 +53,8 @@ def parse_options(notebook = False):
 
     parser.add_argument("--pretrained", default=False)
 
+    parser.add_argument("--optimizer_setting", type=str, default = 'multi')
+
 
 
     parser.add_argument("--y_multi", type=int, default = 1)

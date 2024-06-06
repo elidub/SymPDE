@@ -1,15 +1,14 @@
 seed: 1
 
-
 bias: False
 vanilla_layer_dims: [7, 7, 1]
 
 net: CombiTrain
 # implicit_layer_dims: [[49, 49, 49, 49], [7, 7, 7]]
-# implicit_layer_dims: [[56, 56], [8, 8]]
-implicit_layer_dims: [[49, 49], [7, 7]]
-# implicit_layer_dims: [[56, 56, 56, 56], [8, 8, 8]]
-grid_sizes: [[[1,7], [1,7]], [[1,1], [1,7]]]
+# # implicit_layer_dims: [[56, 56], [8, 8]]
+# implicit_layer_dims: [[49, 49], [7, 7]]
+# # implicit_layer_dims: [[56, 56, 56, 56], [8, 8, 8]]
+# grid_sizes: [[[1,7], [1,7]], [[1,1], [1,7]]]
 
 # net: VanillaPredict
 # implicit_layer_dims: [[0], [0]]
@@ -17,9 +16,9 @@ grid_sizes: [[[1,7], [1,7]], [[1,1], [1,7]]]
 # vanilla_layer_dims: [7, 49, 49, 1]
 # implicit_layer_dims: [[0], [0], [0]]
 
-criterion: mses
+# criterion: mses
 # lossweight_y: 1.0
-# lossweight_o: 1.0
+# lossweight_o: 0.0
 
 data_dir: ../data/sine1d
 
@@ -30,8 +29,8 @@ y_high: 3
 
 eps_mult: 0. 0. 1. 0.
 
-max_epochs: 300
-n_train: 100
+max_epochs: 100
+n_train: 10000
 n_val: 1000
 n_test: 1000
 
