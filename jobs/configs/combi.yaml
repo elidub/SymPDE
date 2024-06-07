@@ -16,7 +16,8 @@ net: CombiTrain
 # vanilla_layer_dims: [7, 49, 49, 1]
 # implicit_layer_dims: [[0], [0], [0]]
 
-# criterion: mses
+criterion: mses
+optimizer_setting: solo
 # lossweight_y: 1.0
 # lossweight_o: 0.0
 
@@ -29,8 +30,8 @@ y_high: 3
 
 eps_mult: 0. 0. 1. 0.
 
-max_epochs: 100
-n_train: 10000
+max_epochs: 200
+n_train: 100
 n_val: 1000
 n_test: 1000
 

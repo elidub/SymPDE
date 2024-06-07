@@ -3,6 +3,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 import torch
 
+sys.path.append(os.path.join(os.getcwd(), '../'))
 sys.path.append(os.path.join(os.getcwd(), '../sympdee/sympde/viz'))
 from sympdee.sympde.viz.general_plots import savefig 
 

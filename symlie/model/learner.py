@@ -19,6 +19,8 @@ from softadapt import SoftAdapt, NormalizedSoftAdapt, LossWeightedSoftAdapt
 
 torch.autograd.set_detect_anomaly(True)
 
+OLD_COMMIT = True # edeb8f0 (https://github.com/elidub/SymPDE/blob/edeb8f01e039cbc1a0b1a4926df1dd72dc60b736/symlie/model/learner.py)
+
 class BaseLearner(pl.LightningModule):
     def __init__(self, net, criterion, lr, optimizer_setting, **kwargs):
         super().__init__()
@@ -57,8 +59,8 @@ class BaseLearner(pl.LightningModule):
     def step(self, batch, mode):
 
         if self.criterion_alt:
-            # loss, batch, out = self.step_alt(batch, mode)
-            loss, batch, out = self.step_alt_old(batch, mode)
+            loss, batch, out = self.step_alt(batch, mode)
+            # loss, batch, out = self.step_alt_old(batch, mode)
         else:
             out = self.forward(batch)
             
@@ -75,6 +77,27 @@ class BaseLearner(pl.LightningModule):
         return loss, batch, out
 
     def step_alt(self, batch, mode):
+
+        if OLD_COMMIT:
+            out = self.forward(batch)
+
+            out_terms = out
+            loss_terms = self.criterion
+            log_terms = ['loss_y'] + [f'loss_o{i}' for i in range(len(loss_terms)-1)]
+            assert len(out_terms) == len(loss_terms) == len(log_terms), f"Length mismatch: {len(out_terms)}, {len(loss_terms)}, {len(log_terms)}"
+
+            loss = 0
+            for out, (lossweight, criterion), log_term in zip(out_terms, loss_terms, log_terms):
+                loss_term = criterion(*out)
+                self.log(f"{mode}_{log_term}", loss_term, prog_bar=True, on_step=False, on_epoch=True)
+                loss += lossweight*loss_term
+
+            self.log(f"{mode}_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
+
+            out = out_terms[0] # Only select the prediction of y
+
+            return loss, batch, out
+
 
 
 
@@ -291,6 +314,11 @@ class CombiLearner(BaseLearner, TransformationBlock):
             pass
 
     def forward(self, batch):
+
+        if OLD_COMMIT:
+            out_y = self.forward_vanilla(batch)
+            out_ab_primes = self.forward_implicit(batch)
+            return out_y, *out_ab_primes
 
         # self.net.reset_parameters_vanilla()
 
