@@ -1,6 +1,6 @@
 seed: 1
 
-bias: False
+# bias: False
 vanilla_layer_dims: [7, 7, 1]
 
 net: CombiTrain

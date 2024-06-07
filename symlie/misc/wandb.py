@@ -83,7 +83,9 @@ def new_runs(runs):
                 config[loss] = test_loss_history.item()
             except:
                 config[loss] = np.nan
-                print(f'Warning: {loss} not found')
+                if loss == 'test_loss_y':
+                    # break
+                    print(f'Warning: {loss} not found')
 
         config_list.append(config)
 

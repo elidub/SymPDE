@@ -23,7 +23,8 @@ def parse_options(notebook = False):
     parser.add_argument("--net", type=str, default='MLP', help="Name of the network")
     # parser.add_argument("--transform_type", type=str, default='space_translation', help="Type of the transformation")
     # parser.add_argument("--linearmodules", nargs='+', default=['MyLinearPw', 'nn.Linear'], help="Linearmodules")
-    parser.add_argument("--bias", action="store_true", help="Bias")
+    # parser.add_argument("--bias", action="store_true", help="Bias")
+    parser.add_argument("--bias", type=bool, default=False)
 
     parser.add_argument("--criterion", type=str, default='mse', help="Criterion")
     parser.add_argument("--out_features", type=int, default=1, help="Out features")

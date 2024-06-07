@@ -84,26 +84,6 @@ class View(nn.Module):
         out = x.view(*self.shape)
         return out
     
-class BinaryLinear(nn.Module):
-    def __init__(self, input_features, output_features):
-        super(BinaryLinear, self).__init__()
-        # Initialize the weights as a Parameter
-        self.weights = nn.Parameter(torch.randn(output_features, input_features, requires_grad=True))
-
-    def forward(self, x):
-        # Binarize the weights to 0 or 1
-        binary_weights = torch.where(self.weights > 0, torch.ones_like(self.weights), torch.zeros_like(self.weights))
-        
-        # Forward pass with binarized weights
-        out = F.linear(x, binary_weights)
-        
-        # Straight-through estimator trick for the backward pass
-        # Connect the gradients of binary weights to the gradients of original weights
-        # binary_weights = (binary_weights - self.weights).detach() + self.weights
-        binary_weights.register_hook(lambda grad: grad)
-
-        return out
-    
 class ImplicitLayer(nn.Module):
     def __init__(self, implicit_layer_dim, in_features, out_features, forward_type, pretrained = False):
         super().__init__()
@@ -113,20 +93,13 @@ class ImplicitLayer(nn.Module):
         self.out_features = out_features
 
 
-        binary_layer = False
-
         if implicit_layer_dim == [0]:
             self.implicit_layer = nn.Identity() 
         else:
-            if binary_layer:
-                # assert implicit_layer_dim[0] == implicit_layer_dim[1] == self.n_features, f"implicit_layer_dim: {implicit_layer_dim}, self.n_features: {self.n_features}"
-                assert len(implicit_layer_dim) == 2, f"len(implicit_layer_dim): {len(implicit_layer_dim)}"
-                self.implicit_layer = BinaryLinear(implicit_layer_dim[0], implicit_layer_dim[1])
-            else:
-                self.implicit_layer = torchvision.ops.MLP(
-                    in_channels=implicit_layer_dim[0], 
-                    hidden_channels=implicit_layer_dim[1:]
-                )
+            self.implicit_layer = torchvision.ops.MLP(
+                in_channels=implicit_layer_dim[0], 
+                hidden_channels=implicit_layer_dim[1:]
+            )
 
         n = 7
         self.wp1 = torch.zeros((n,))
