@@ -7,6 +7,7 @@ import wandb
 import os, sys
 import yaml
 import ast
+import pandas as pd
 
 from model.setup import setup_model
 from data.generate_2d import sine1d, sine2d, flower, mnist, noise
@@ -24,9 +25,9 @@ def parse_options(notebook = False):
     # parser.add_argument("--transform_type", type=str, default='space_translation', help="Type of the transformation")
     # parser.add_argument("--linearmodules", nargs='+', default=['MyLinearPw', 'nn.Linear'], help="Linearmodules")
     # parser.add_argument("--bias", action="store_true", help="Bias")
-    parser.add_argument("--bias", type=bool, default=False)
+    parser.add_argument("--bias", type=bool, default=True)
 
-    parser.add_argument("--criterion", type=str, default='mse', help="Criterion")
+    parser.add_argument("--criterion", type=str, default='mses', help="Criterion")
     parser.add_argument("--out_features", type=int, default=1, help="Out features")
     parser.add_argument("--n_classes", type=int, default=None, help="Number of classes")
 
@@ -122,7 +123,22 @@ def process_args(args):
         #update args with yaml file
         for key, value in yaml_config.items():
             setattr(args, key, value)
-    
+
+
+    # overwrite args with n_train_lookup values
+
+    store_dir = '../store'
+    n_train_lookup = pd.read_csv(os.path.join(store_dir, 'n_train_lookup.csv'), index_col = 'n_train')
+
+    vals = n_train_lookup.loc[args.n_train]
+
+    for key  in ['max_epochs']:
+        value = vals[key]
+        if key in ['max_epochs']:
+            value = int(value)
+        print(f'Overwriting {key} = {getattr(args, key)} to {value}')
+        setattr(args, key, value)
+
     args.grid_size = tuple(args.grid_size) # Convert to tuple
     if isinstance(args.eps_mult, str): args.eps_mult = tuple([float(e_i) for e_i in args.eps_mult.split(' ')])
     if isinstance(args.eps_mult, list): args.eps_mult = tuple(args.eps_mult)
