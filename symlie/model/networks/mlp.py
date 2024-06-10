@@ -102,8 +102,11 @@ class ImplicitLayer(nn.Module):
             )
 
         n = 7
-        self.wp1 = torch.zeros((n,))
-        self.wp2 = self.get_space_translation(n)
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+        n = 7
+        self.wp1 = torch.zeros((n,)).to(device)
+        self.wp2 = self.get_space_translation(n).to(device)
 
 
         if pretrained:

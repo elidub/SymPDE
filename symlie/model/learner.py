@@ -15,8 +15,6 @@ from misc.utils import NumpyUtils
 from model.networks.linear import LinearP
 from model.networks.implicit import LinearImplicit
 
-from softadapt import SoftAdapt, NormalizedSoftAdapt, LossWeightedSoftAdapt
-
 torch.autograd.set_detect_anomaly(True)
 
 OLD_COMMIT = True # edeb8f0 (https://github.com/elidub/SymPDE/blob/edeb8f01e039cbc1a0b1a4926df1dd72dc60b736/symlie/model/learner.py)
