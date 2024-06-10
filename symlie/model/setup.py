@@ -118,8 +118,8 @@ def setup_model(args):
         # Manually select params for EMLP
 
         # Sine1d
-        group, repin, repout = Z(7), V(group), V**0 
-        
+        group = Z(7)
+        repin, repout =  V(group), V**0 
         # O5Synthetic
         # set = O5Synthetic(N = 1)
         # group, repin, repout = O(5), set.rep_in, set.rep_out

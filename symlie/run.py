@@ -54,7 +54,7 @@ def parse_options(notebook = False):
 
     parser.add_argument("--pretrained", default=False)
 
-    parser.add_argument("--optimizer_setting", type=str)
+    parser.add_argument("--optimizer_setting", type=str, default = 'solo')
     parser.add_argument("--forward_type", type=str)
 
 
@@ -157,6 +157,8 @@ def check_args_processed(args):
 def main(args):
     check_args_processed(args)    
     pl.seed_everything(args.seed, workers=True)
+
+    print(args.implicit_layer_dims)
 
 
     # if args.n_train >= 1000:
