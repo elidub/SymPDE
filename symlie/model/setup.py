@@ -102,6 +102,15 @@ def setup_model(args):
             out_features = 2
         assert out_features == args.out_features, f"Expected out_features = {out_features}, got {args.out_features}"
 
+    if args.data_dir == '../data/sine1d':
+        transform_type = 'sine1d'
+        # args.grid_sizes = [[[1,2,5], [1,2,5]], [[1,1,1], [1,2,5]]]
+    elif args.data_dir == '../data/o5synth':
+        transform_type = 'o5synth'
+        # args.grid_sizes = [[[1,2,5], [1,2,5]], [[1,1,1], [1,2,5]]]
+    else:
+        raise NotImplementedError(f"transform_type for data_dir={args.data_dir} not implemented")
+
 
     if net.startswith("CombiTrain"):
         net = CombiMLP(
@@ -117,15 +126,16 @@ def setup_model(args):
 
         # Manually select params for EMLP
 
-        # Sine1d
-        group = Z(7)
-        repin, repout =  V(group), V**0 
-        # O5Synthetic
-        # set = O5Synthetic(N = 1)
-        # group, repin, repout = O(5), set.rep_in, set.rep_out
-
-        # Test case
-        # group, repin, repout = Z(6), V(group), V(group)
+        if args.data_dir == '../data/sine1d':
+            group = Z(7)
+            repin, repout =  V(group), V**0
+        elif args.data_dir == '../data/o5synth':
+            set = O5Synthetic(N = 1)
+            group, repin, repout = O(5), set.rep_in, set.rep_out
+        else:
+            # Test case
+            # group, repin, repout = Z(6), V(group), V(group)
+            raise NotImplementedError(f"(group, repin, repout) not implemented for data_dir={args.data_dir} not implemented")
 
         if net == "EMLP":
             net = EMLP_wrapper(
@@ -183,6 +193,6 @@ def setup_model(args):
         raise NotImplementedError("Loading model from run_id not implemented")
 
     assert learner == CombiLearner
-    model = learner(net, criterion, lr=args.lr, grid_sizes=args.grid_sizes, transform_kwargs=args.transform_kwargs, optimizer_setting=args.optimizer_setting)
+    model = learner(net, criterion, lr=args.lr, grid_sizes=args.grid_sizes, transform_kwargs=args.transform_kwargs, optimizer_setting=args.optimizer_setting, transform_type=transform_type)
 
     return model, datamodule

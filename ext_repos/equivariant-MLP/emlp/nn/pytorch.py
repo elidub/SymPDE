@@ -69,12 +69,13 @@ def torchify_fn(function):
 @export
 class Linear(nn.Linear):
     """ Basic equivariant Linear layer from repin to repout."""
-    def __init__(self, repin, repout):
+    def __init__(self, repin, repout, bias: bool = True):
         nin,nout = repin.size(),repout.size()
         super().__init__(nin,nout)
         self.repin_l, self.repout_l = repin, repout
         rep_W = repout*repin.T
         rep_bias = repout
+        self.bias_custom = bias
 
 
         Pw = rep_W.equivariant_projector()
@@ -90,7 +91,8 @@ class Linear(nn.Linear):
         # print('linear.forward', x.shape,self.proj_w(self.weight).shape,self.proj_b(self.bias).shape)
         # return F.linear(x,self.weight,self.bias)
         w, b = self.proj_w(self.weight),self.proj_b(self.bias)
-        b = None
+        if not self.bias_custom:
+            b = None
         return F.linear(x,w,b)
 
 @export
@@ -131,10 +133,10 @@ class GatedNonlinearity(nn.Module): #TODO: add support for mixed tensors and non
 class EMLPBlock(nn.Module):
     """ Basic building block of EMLP consisting of G-Linear, biLinear,
         and gated nonlinearity. """
-    def __init__(self,rep_in,rep_out):
+    def __init__(self,rep_in,rep_out, bias):
         super().__init__()
         # print('EMLPBlock repin, repout', rep_in, rep_out)
-        self.linear = Linear(rep_in,gated(rep_out))
+        self.linear = Linear(rep_in,gated(rep_out), bias)
         self.bilinear = BiLinear(gated(rep_out),gated(rep_out))
         self.nonlinearity = GatedNonlinearity(rep_out)
 
@@ -218,9 +220,9 @@ class EMLP(nn.Module):
         #     print(rin.size(), rout.size())
         # print('Exiting!') ; import sys; sys.exit()
         self.network = nn.Sequential(
-            *[EMLPBlock(rin,rout) for rin,rout in zip(reps,reps[1:])],
+            *[EMLPBlock(rin,rout, bias) for rin,rout in zip(reps,reps[1:])],
             # *[EMLPBlock_simple(rin,rout) for rin,rout in zip(reps,reps[1:])],
-            Linear(reps[-1],self.rep_out)
+            Linear(reps[-1],self.rep_out, bias)
         )
     def forward(self,x):
         return self.network(x)

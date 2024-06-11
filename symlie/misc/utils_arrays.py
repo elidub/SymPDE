@@ -51,10 +51,10 @@ def generate_combinations(dictionary):
     for value in values:
         if key in ['implicit_layer_dims', 'grid_sizes']:
             value = value.replace(' ', ',')
-            # value = f"'{value}'" # Comment for batch runs !?!?, uncomment for local runs
+            value = f"'{value}'" # Comment for batch runs !?!?, uncomment for local runs
         for combination in combinations:
-            if value == 'True':
-                value = ''
+            # if value == 'True':
+                # value = ''
             if value is None:
                 line = combination
             elif combination == "":

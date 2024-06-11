@@ -25,7 +25,7 @@ def parse_options(notebook = False):
     # parser.add_argument("--transform_type", type=str, default='space_translation', help="Type of the transformation")
     # parser.add_argument("--linearmodules", nargs='+', default=['MyLinearPw', 'nn.Linear'], help="Linearmodules")
     # parser.add_argument("--bias", action="store_true", help="Bias")
-    parser.add_argument("--bias", type=bool, default=False)
+    parser.add_argument("--bias", type=str, default=False)
 
     parser.add_argument("--criterion", type=str, default='mses', help="Criterion")
     parser.add_argument("--out_features", type=int, default=1, help="Out features")
@@ -139,7 +139,10 @@ def process_args(args):
         print(f'Overwriting {key} = {getattr(args, key)} to {value}')
         setattr(args, key, value)
 
-    args.grid_size = tuple(args.grid_size) # Convert to tuple
+    try:
+        args.grid_size = tuple(args.grid_size) # Convert to tuple
+    except:
+        pass
     if isinstance(args.eps_mult, str): args.eps_mult = tuple([float(e_i) for e_i in args.eps_mult.split(' ')])
     if isinstance(args.eps_mult, list): args.eps_mult = tuple(args.eps_mult)
 
@@ -153,9 +156,15 @@ def process_args(args):
         if args.data_kwargs[data_kwargs_key] is None:
             del args.data_kwargs[data_kwargs_key]
 
-    if not isinstance(args.data_kwargs['grid_size'], tuple):
-        print('Warning grid_size should already be tuple')
-        args.data_kwargs['grid_size'] = tuple(args.data_kwargs['grid_size']) # Convert to tuple
+    try:
+        if not isinstance(args.data_kwargs['grid_size'], tuple):
+            print('Warning grid_size should already be tuple')
+            args.data_kwargs['grid_size'] = tuple(args.data_kwargs['grid_size']) # Convert to tuple
+    except:
+        pass
+
+    if type(args.bias) == str:
+        args.bias = ast.literal_eval(args.bias)
 
     transform_kwargs_keys = ['eps_mult', 'only_flip']
     args.transform_kwargs = {k : getattr(args, k) for k in transform_kwargs_keys} 
@@ -173,9 +182,6 @@ def check_args_processed(args):
 def main(args):
     check_args_processed(args)    
     pl.seed_everything(args.seed, workers=True)
-
-    print(args.implicit_layer_dims)
-
 
     # if args.n_train >= 1000:
         # args.max_epochs = 100

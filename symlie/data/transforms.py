@@ -121,7 +121,7 @@ class RandomPermute():
                                          )]
     
 class TransformRefactored:
-    def __init__(self, eps_mult: List[float] = [1., 1., 1., 1.]):
+    def __init__(self, transform_type, eps_mult: List[float] = [1., 1., 1., 1.]):
         self.eps_mult = torch.tensor(eps_mult)
 
         self.scale = RandomScale()
@@ -130,6 +130,8 @@ class TransformRefactored:
         self.space_translate_y = SpaceTranslate(dim = 1)
 
         self.random_permute = RandomPermute(dim = 3)
+
+        self.transform_type = transform_type
 
     # def transform(self, x, epsilons, shape):
 
@@ -165,8 +167,12 @@ class TransformRefactored:
         batch_size, features = x.shape
         x = x.reshape(batch_size, *shape)
 
-        x, _ = self.space_translate_x(x, rng)
-        # x = self.random_permute(x, rng)
+        if self.transform_type == 'sine1d':
+            x, _ = self.space_translate_x(x, rng)
+        elif self.transform_type == 'o5synth':
+            x = self.random_permute(x, rng)
+        else:
+            raise NotImplementedError(f"transform_type {self.transform_type} not implemented")
 
         x = x.reshape(batch_size, features)
 

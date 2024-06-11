@@ -2,17 +2,15 @@ seed: 1
 
 net: CombiTrain
 
-criterion: mses
+# criterion: mses
 # lossweight_y: 1.0
 # lossweight_o: 1.0
-
-bias: True
 
 # implicit_layer_dims: [[110, 110, 110, 110], [11, 11, 11, 11]]
 # implicit_layer_dims: [[110, 110], [11, 11]]
 # grid_sizes: [[[1,2,5], [1,2,5]], [[1,1,1], [1,2,5]]]
 
-implicit_layer_dims: [[0], [0]]
+# implicit_layer_dims: [[0], [0]]
 
 
 # vanilla_layer_dims: [7, 7, 1]
@@ -38,7 +36,7 @@ eps_mult: 0. 0. 0. 0.
 
 
 # max_epochs: 1000
-max_epochs: 100
+max_epochs: 10
 n_train: 1000
 n_val: 1000
 n_test: 1000

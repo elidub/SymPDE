@@ -6,7 +6,7 @@ import torch.nn.functional as F
 import math
 from torch import nn
 import os
-
+import numpy as np
 
 from emlp.nn.pytorch import MLP as EMLP_MLP
 from emlp.nn.pytorch import EMLP
@@ -108,6 +108,11 @@ class ImplicitLayer(nn.Module):
         self.wp1 = torch.zeros((n,)).to(device)
         self.wp2 = self.get_space_translation(n).to(device)
 
+        wp1_o5synth, wb1_o5synth, wp2_o5synth, wb2_o5synth = self.create_o5synth_analytic()
+        self.wp1_o5synth = wp1_o5synth.to(device)
+        self.wb1_o5synth = wb1_o5synth.to(device)
+        self.wp2_o5synth = wp2_o5synth.to(device)
+        self.wb2_o5synth = wb2_o5synth.to(device)
 
         if pretrained:
             dims_layer0 = [[56, 56, 56, 56], [47, 47, 47, 47], [49, 49, 49, 49], [110, 110, 110, 110]]
@@ -120,7 +125,7 @@ class ImplicitLayer(nn.Module):
                 self.implicit_layer.load_state_dict(torch.load('implicit_layer1.pt'))
 
         forward_type_dict = {
-            '05synth': self.forward_analytic_05synth,
+            'o5synth': self.forward_analytic_05synth,
             'sine1d': self.forward_analytic_sine1d,
             'train': self.forward_train,
         }
@@ -131,6 +136,36 @@ class ImplicitLayer(nn.Module):
         #         torchvision.ops.MLP(in_channels=implicit_layer_dim[0], hidden_channels=implicit_layer_dim[1:]),
         #         View((out_features, in_features+1)), 
         # ) 
+
+    def create_o5synth_analytic(self):
+
+        n = 10
+        nn = n // 2
+
+        wp = torch.cat([torch.zeros(nn), torch.ones(nn)])
+
+        wb = torch.tensor([0])
+
+        wp1_o5synth = wp.flatten().long()
+        wb1_o5synth = wb.long()
+
+
+
+        i1 = torch.zeros(nn)
+        i1[0] = 1
+        i2 = torch.cat([i1])
+        i3 = torch.stack([torch.roll(i2, j, 0) for j in range(nn)])
+        i4 = i3 + 2
+        i5 = torch.cat([i3, i4], dim=1)
+        i6 = i5 + 4
+        wp = torch.cat([i5, i6], dim=0)
+
+        wb = torch.cat([torch.zeros(nn), torch.ones(nn)])
+
+        wp2_o5synth = wp.flatten().long()
+        wb2_o5synth = wb.long()
+
+        return wp1_o5synth, wb1_o5synth, wp2_o5synth, wb2_o5synth
 
     def get_space_translation(self, size):
         w1 = torch.zeros(size)
@@ -145,7 +180,6 @@ class ImplicitLayer(nn.Module):
 
 
     def forward_train(self, w: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
-        # return w, b
         if type(b) == nn.Parameter or type(b) == torch.Tensor:
             wb = torch.cat([w, b.view(-1, 1)], dim=1).flatten()
 
@@ -164,46 +198,16 @@ class ImplicitLayer(nn.Module):
     
     def forward_analytic_05synth(self, w: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
 
-
         n = 10
-        nn = n // 2
-        if w.shape == (1, n) and b.shape == (1,):
-
-            wp = torch.cat([torch.zeros(nn), torch.ones(nn)])
-
-            wb = torch.tensor([0])
-
-            w, b = (w.flatten()[wp.flatten().long()]).reshape(w.shape), b.flatten()[wb.long()]
+        if w.shape == (1, n):# and b.shape == (1,):
+            w = (w.flatten()[self.wp1_o5synth]).reshape(w.shape)
             
+            if b is not None: b = b.flatten()[self.wb1_o5synth]
 
-        elif w.shape == (n, n) and b.shape == (n,):
-
-            i1 = torch.zeros(nn)
-            i1[0] = 1
-            i2 = torch.cat([i1])
-            i3 = torch.stack([torch.roll(i2, j, 0) for j in range(nn)])
-            i4 = i3 + 2
-            i5 = torch.cat([i3, i4], dim=1)
-            i6 = i5 + 4
-            wp = torch.cat([i5, i6], dim=0)
-
-            wb = torch.cat([torch.zeros(nn), torch.ones(nn)])
-
-
-            w, b = (w.flatten()[wp.flatten().long()]).reshape(w.shape), b.flatten()[wb.long()]
-
-        # if type(b) == nn.Parameter or type(b) == torch.Tensor:
-        #     wb = torch.cat([w, b.view(-1, 1)], dim=1).flatten()
-
-        #     wb = self.implicit_layer(wb)
-        #     wb = wb.view(self.out_features, self.in_features+1)
-        #     w, b = wb[:, :-1], wb[:, -1]
-
-        # elif b is None:
-        #     assert b == None
-        #     w = w.flatten()
-        #     w = self.implicit_layer(w)
-        #     w = w.view(self.out_features, self.in_features)
+        elif w.shape == (n, n):# and b.shape == (n,):
+            w = (w.flatten()[self.wp2_o5synth]).reshape(w.shape)
+            
+            if b is not None: b = b.flatten()[self.wb2_o5synth]
 
         else:
             raise ValueError(f'Unknown type of b: {b}: {type(b)}')
@@ -266,6 +270,12 @@ class CombiMLP(torch.nn.Module):
         
         # assert bias == False, 'Not implemented'
         assert forward_type is not None
+
+        print('implicit_layer_dims', type(implicit_layer_dims), implicit_layer_dims)
+        implicit_layer_dims = self.convert_implicit_layer_dims(implicit_layer_dims, vanilla_layer_dims, bias)
+        print('implicit_layer_dims', type(implicit_layer_dims), implicit_layer_dims)
+
+
         assert len(implicit_layer_dims) == len(vanilla_layer_dims)-1, f"len(implicit_layer_dims): {len(implicit_layer_dims)}, len(vanilla_layer_dims): {len(vanilla_layer_dims)}, implicit_layer_dims: {implicit_layer_dims}, vanilla_layer_dims: {vanilla_layer_dims}"
 
         self.activation = activation()
@@ -304,6 +314,18 @@ class CombiMLP(torch.nn.Module):
         # reset_parameters
         self.reset_parameters_vanilla()
 
+    def convert_implicit_layer_dims(self, implicit_layer_dims, vanilla_layer_dims, bias):
+        if np.array(implicit_layer_dims).sum() == 0:
+            return np.array(implicit_layer_dims).reshape(-1, 1).tolist()
+
+        vanilla_layer_dims = np.array(vanilla_layer_dims)
+
+        implicit_layer_dims2 = vanilla_layer_dims[:-1] * vanilla_layer_dims[1:]
+        if bias:
+            implicit_layer_dims2 += vanilla_layer_dims[1:]
+        implicit_layer_dims2 = implicit_layer_dims2#.reshape(-1, 1).tolist()
+
+        return [[implicit_layer_dim2] * implicit_layer_dim for implicit_layer_dim, implicit_layer_dim2 in zip(implicit_layer_dims, implicit_layer_dims2)]
 
 
     def reset_parameters_vanilla(self):

@@ -265,8 +265,8 @@ class BaseLearner(pl.LightningModule):
         self.log_test_results()
 
 class TransformationBlock(TransformRefactored):
-    def __init__(self, transform_kwargs, **kwargs):
-        TransformRefactored.__init__(self, eps_mult = transform_kwargs['eps_mult'])
+    def __init__(self, transform_type, transform_kwargs, **kwargs):
+        TransformRefactored.__init__(self, transform_type, eps_mult = transform_kwargs['eps_mult'])
         self.rng_a, self.rng_b = torch.Generator(), torch.Generator()
         print('Init rng')
 
@@ -294,11 +294,11 @@ class TransformationBlock(TransformRefactored):
 
 
 class CombiLearner(BaseLearner, TransformationBlock):
-    def __init__(self, net, criterion, lr, grid_sizes, transform_kwargs, optimizer_setting):
+    def __init__(self, net, criterion, lr, grid_sizes, transform_kwargs, optimizer_setting, transform_type):
         kwargs = {'net': net, 'criterion': criterion, 'lr': lr, 'transform_kwargs': transform_kwargs, 'optimizer_setting': optimizer_setting}
         super().__init__(**kwargs)
         BaseLearner.__init__(self, net, criterion, lr, optimizer_setting)
-        TransformationBlock.__init__(self, transform_kwargs)
+        TransformationBlock.__init__(self, transform_type, transform_kwargs)
         self.grid_sizes = grid_sizes
 
 
