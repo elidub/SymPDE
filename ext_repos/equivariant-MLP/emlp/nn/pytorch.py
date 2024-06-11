@@ -75,6 +75,8 @@ class Linear(nn.Linear):
         self.repin_l, self.repout_l = repin, repout
         rep_W = repout*repin.T
         rep_bias = repout
+
+
         Pw = rep_W.equivariant_projector()
         Pb = rep_bias.equivariant_projector()
         self.proj_b = torchify_fn(jit(lambda b: Pb@b))
@@ -88,8 +90,7 @@ class Linear(nn.Linear):
         # print('linear.forward', x.shape,self.proj_w(self.weight).shape,self.proj_b(self.bias).shape)
         # return F.linear(x,self.weight,self.bias)
         w, b = self.proj_w(self.weight),self.proj_b(self.bias)
-        # print('w,b',w.shape,b.shape)
-        # print('Exiting!') ; import sys; sys.exit()
+        b = None
         return F.linear(x,w,b)
 
 @export
@@ -188,7 +189,7 @@ class EMLP(nn.Module):
             Module: the EMLP objax module."""
     def __init__(self,rep_in,rep_out,group,ch=384,num_layers=3, bias: bool = True):
         print("Initing EMLP (PyTorch)")
-        assert bias == True, "EMLP currently only supports bias=True"
+        # assert bias == True, "EMLP currently only supports bias=True"
         super().__init__()
         logging.info("Initing EMLP (PyTorch)")
         self.rep_in =rep_in(group)

@@ -19,6 +19,10 @@ logs_symlie/
 logs_symlie_copy/
 
 jobs/slurm_output
+jobs/slurm_output copy
+"jobs/slurm_output copy"
+jobs/"slurm_output copy"
+jobs/slurm_output1
 jobs/slurm_output_noprecision
 jobs/archive_slurm_output
 jobs/arrays
@@ -39,6 +43,7 @@ ext_repos/Equivariant-Net/data_*
 ext_repos/Equivariant-Net/*.nc
 ext_repos/Equivariant-Net/rbc_data.pt
 ext_repos/metalearning-symmetries/data
+ext_repos/equivariant-MLP_custom
 
 ext_repos/G-FNO/results/
 ext_repos/G-FNO/data/

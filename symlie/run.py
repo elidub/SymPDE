@@ -25,7 +25,7 @@ def parse_options(notebook = False):
     # parser.add_argument("--transform_type", type=str, default='space_translation', help="Type of the transformation")
     # parser.add_argument("--linearmodules", nargs='+', default=['MyLinearPw', 'nn.Linear'], help="Linearmodules")
     # parser.add_argument("--bias", action="store_true", help="Bias")
-    parser.add_argument("--bias", type=bool, default=True)
+    parser.add_argument("--bias", type=bool, default=False)
 
     parser.add_argument("--criterion", type=str, default='mses', help="Criterion")
     parser.add_argument("--out_features", type=int, default=1, help="Out features")
@@ -180,7 +180,7 @@ def main(args):
     # if args.n_train >= 1000:
         # args.max_epochs = 100
 
-    args.device = "cuda" if torch.cuda.is_available() else "cpu"
+    args.device = "cuda" if torch.cuda.is_available() and args.net != 'EMLP' else "cpu"
 
     model, datamodule = setup_model(args)
 
