@@ -45,7 +45,6 @@ class MLPFlat(torch.nn.Module):
         x = self.mlp(x)
         x = x.reshape(batch_size, self.space_length, self.time_future)
 
-        assert False
         return x
     
 # class CustomMLP(torch.nn.Module):

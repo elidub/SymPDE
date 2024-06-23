@@ -60,8 +60,8 @@ class Pde1(BasePDE):
     def __str__(self) -> str:
         return r"$0.1 u_{xx}$"
     
-    def _u1(self, u, x, t, eps):
-        return u, x, t
+    # def _u1(self, u, x, t, eps):
+    #     return u, x, t
 
     def _u2(self, u, x, t, eps):
         """
@@ -89,15 +89,15 @@ class Pde1(BasePDE):
     #     u_new = (fourier_shift(u, eps=d[:, None], dim=-1) + eps_u).squeeze(0) # minus is necassary
     #     return u_new, x_new, t_new
 
-    def _u3(self, u, x, t, eps):
-        """
-        Scaling
-        """
-        eps_u = - eps
-        x_new = x * torch.exp(-eps)
-        t_new = t * torch.exp(-2 * eps)
-        u_new = u 
-        return u_new, x_new, t_new
+    # def _u3(self, u, x, t, eps):
+    #     """
+    #     Scaling
+    #     """
+    #     eps_u = - eps
+    #     x_new = x * torch.exp(-eps)
+    #     t_new = t * torch.exp(-2 * eps)
+    #     u_new = u 
+    #     return u_new, x_new, t_new
     
     def _u6(self, u, x, t, eps):
         """

@@ -9,6 +9,7 @@ from model.networks.fno import FNO1d
 from model.networks.cnn import CNN, ResNet, BasicBlock1d, ResNet_conv
 from model.networks.mlp import MLP, CustomMLP
 from model.networks.mlp_flat import MLPFlat
+from model.networks.mlp_combi import CombiMLP
 
 def setup_model(args):
     net = args.net
@@ -33,10 +34,14 @@ def setup_model(args):
     elif net == "MLPFlat":
         hidden_channels = [100, 100, 100] if args.mlp_hidden_channels is None else args.mlp_hidden_channels
         net = MLPFlat(time_history=args.time_history, time_future=args.time_future, space_length = space_length, hidden_channels=hidden_channels, embed_spacetime=args.embed_spacetime)
+    elif net == "CombiMLP":
+        hidden_channels = [100, 100, 100] if args.mlp_hidden_channels is None else args.mlp_hidden_channels
+        net = CombiMLP(implicit_layer_dims=args.implicit_layer_dims, time_history=args.time_history, time_future=args.time_future, space_length = space_length, hidden_channels=hidden_channels, embed_spacetime=args.embed_spacetime)
     else:
         raise NotImplementedError(f"Network {net} not implemented")
     
     criterion = LpLoss()
+    criterion = [(args.lossweight_y, LpLoss())] + [(args.lossweight_o, nn.MSELoss()) for _ in range(len(args.implicit_layer_dims))]
 
     if args.train:
         model = Learner(net, criterion)

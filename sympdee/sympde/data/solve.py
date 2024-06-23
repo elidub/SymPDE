@@ -58,10 +58,12 @@ class SolvePDE:
         Tmax = pde.Tmax if self.Tmax is None else self.Tmax
 
         # Sample random values for L and T
-        l1, l2 = Lmax - Lmax/10, Lmax + Lmax/10
-        t1, t2 = Tmax - Tmax/10, Tmax + Tmax/10
-        L = np.random.uniform(l1, l2)
-        T = np.random.uniform(t1, t2)
+        # l1, l2 = Lmax - Lmax/10, Lmax + Lmax/10
+        # t1, t2 = Tmax - Tmax/10, Tmax + Tmax/10
+        # L = np.random.uniform(l1, l2)
+        # T = np.random.uniform(t1, t2)
+        L, T = Lmax, Tmax
+
 
         x = np.linspace(0, (1-1.0/self.Nx)*L, self.Nx)
         t = np.linspace(0, T, self.Nt)

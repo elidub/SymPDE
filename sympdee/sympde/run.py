@@ -38,6 +38,9 @@ def parse_options(notebook = False):
     parser.add_argument("--embed_spacetime", action ="store_true", help = "Concatenate dx and dt to u in network")
     parser.add_argument("--equiv", type = str, default = "none", help = "Type of equivariance to use (none, mag)")
 
+    parser.add_argument("--lossweight_y", type = float, default = 1.)
+    parser.add_argument("--lossweight_o", type = float, default = 1.)
+
 
     args = parser.parse_args([]) if notebook else parser.parse_args()
     return args
