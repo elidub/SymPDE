@@ -3,7 +3,7 @@ import os
 import pytorch_lightning as pl
 import argparse
 import logging
-
+import pandas as pd
 
 from data.dataset import PDEDataset, PDEDataModule
 from model.setup import setup_model
@@ -11,21 +11,25 @@ from model.setup import setup_model
 def parse_options(notebook = False):
     parser = argparse.ArgumentParser(description='SymPDE')
 
-    parser.add_argument("--data_dir", type=str, default="../data/v1", help="Path to data directory")
+    parser.add_argument("--data_dir", type=str, default="../data/pde_dev", help="Path to data directory")
     parser.add_argument("--seed", type=int, default=42, help="Seed for reproducibility")
-    parser.add_argument("--pde_name", type=str, default="KdV", help="Name of the PDE")
-    parser.add_argument("--net", type=str, default='FNO1d', help="Name of the network")
+    parser.add_argument("--pde_name", type=str, default="Pde1", help="Name of the PDE")
+    parser.add_argument("--net", type=str, default='CombiMLP', help="Name of the network")
     parser.add_argument("--log_dir", type=str, default="../logs", help="Path to log directory")
     parser.add_argument("--max_epochs", type=int, default=3, help="Number of epochs")
     parser.add_argument("--batch_size", type=int, default=16, help="Batch size")
     parser.add_argument("--num_workers", type=int, default=1, help="Number of workers")
-    parser.add_argument("--persistent_workers", action="store_true", help="Persistent workers")
+    parser.add_argument("--persistent_workers", default=True, help="Persistent workers")
     parser.add_argument("--version", type=str, default=None, help="Version of the training run")
     parser.add_argument("--name", type=str, default=None, help="Name of the training run")
 
-    parser.add_argument("--train", action="store_true", help="Train the model")
+    # parser.add_argument("--train", action="store_true", help="Train the model")
+    parser.add_argument("--train", default=True, help="Train the model")
     parser.add_argument("--local", action="store_true", help="Run on local machine")
     parser.add_argument("--do_return", action="store_true", help="Return model, trainer, datamodule")
+
+    # bias
+    parser.add_argument("--bias", default=True, help="Use bias in the network")
 
     parser.add_argument("--n_splits", nargs='+', default=[-1,-1,-1], help="Train, val, test split")
     parser.add_argument("--epsilons", nargs='+', default=[], help="Epsilons for the generators")
@@ -33,10 +37,11 @@ def parse_options(notebook = False):
     parser.add_argument("--mlp_hidden_channels", nargs='+', default=None, help="Hidden channels for MLP")
 
     # Model setup args
-    parser.add_argument("--time_history", type=int, default = 10, help = "Time steps passed to network")
-    parser.add_argument("--time_future",  type=int, default = 5,  help = "Time steps to predict by network")
+    parser.add_argument("--time_history", type=int, default = 3, help = "Time steps passed to network")
+    parser.add_argument("--time_future",  type=int, default = 2,  help = "Time steps to predict by network")
     parser.add_argument("--embed_spacetime", action ="store_true", help = "Concatenate dx and dt to u in network")
     parser.add_argument("--equiv", type = str, default = "none", help = "Type of equivariance to use (none, mag)")
+    parser.add_argument("--space_length", type = int, default = 4, help = "Length of space")
 
     parser.add_argument("--lossweight_y", type = float, default = 1.)
     parser.add_argument("--lossweight_o", type = float, default = 1.)
@@ -47,6 +52,20 @@ def parse_options(notebook = False):
 
 def main(args):
     pl.seed_everything(args.seed, workers=True)
+
+
+    # store_dir = '../store'
+    # n_train_lookup = pd.read_csv(os.path.join(store_dir, 'n_train_lookup.csv'), index_col = 'n_train')
+
+    # vals = n_train_lookup.loc[args.n_train]
+
+    # for key  in ['max_epochs']:
+    #     value = vals[key]
+    #     if key in ['max_epochs']:
+    #         value = int(value)
+    #     print(f'Overwriting {key} = {getattr(args, key)} to {value}')
+    #     setattr(args, key, value)
+
 
     args.epsilons = [float(eps) for eps in args.epsilons]
     args.n_splits = [int(n_split) for n_split in args.n_splits]
@@ -59,6 +78,10 @@ def main(args):
         if args.mlp_hidden_channels is not None:
             mlp_hidden_channels = '-'.join([str(hidden_channel) for hidden_channel in args.mlp_hidden_channels])
             args.name += f'_mlp{mlp_hidden_channels}'
+        if args.implicit_layer_dims is not None:
+            implicit_layer_dims = '-'.join([str(hidden_channel) for hidden_channel in args.implicit_layer_dims])
+            args.name += f'_implicit{implicit_layer_dims}'
+        args.name += f'_ntrain{args.n_splits[0]}'
     print("\n\n###\tVersion: ", args.version, "\t###\n###\tName: ", args.name, "\t###\n\n")
 
     datamodule = PDEDataModule(

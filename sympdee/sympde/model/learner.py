@@ -8,12 +8,15 @@ import torch.nn.functional as F
 from viz.plot_pde_data import plot_pred
 from data.transforms import Transform, TransformRefactored
 from data.utils import d_to_coords
+from data.pdes import PDEs
 
 
 class TransformationBlock:
-    def __init__(self, ):
+    def __init__(self, pde_name):
         self.rng_a, self.rng_b = torch.Generator(), torch.Generator()
         print('Init rng')
+
+        self.pde = PDEs()[pde_name]
 
     def augment(self, u, shape, dx = 2., dt = 7.5, epsilons = None, rand = False):
         """
@@ -23,16 +26,14 @@ class TransformationBlock:
         batch_size, features = u.shape
         u = u.reshape(batch_size, *shape)
 
-        print(u.shape, shape)
-        
         # Get coordinates
-        X = d_to_coords(u, dx, dt)
+        X = d_to_coords(u[0], dx, dt)
         x, t = X.permute(2, 0, 1)[:2]
 
         # Augment
         # u, x, t = self.pde.augment(u.clone(), x.clone(), t.clone(), epsilons=epsilons)
         for aug_method, epsilon in zip(self.pde.aug_methods, epsilons):
-            if epsilon > 0:
+            if epsilon:
                 eps = epsilon * (torch.rand(()) - 0.5) if rand else torch.tensor([epsilon])
                 # print(f'Augmenting with {aug_method} with epsilon = {eps}')
                 u, x, t = aug_method(u.clone(), x.clone(), t.clone(), eps)
@@ -54,7 +55,7 @@ class TransformationBlock:
         epsilons = torch.rand((2,))
 
         x_a = x_b = torch.randn((batch_size, np.prod(shape['b'])), device = weight.device)
-        # # x_a = x_b = x_in
+        # x_a = x_b = x_in
 
         # # Route a: Forward pass, transformation
         out_a = F.linear(x_a, weight, bias)
@@ -72,9 +73,9 @@ class TransformationBlock:
         return (out_a_prime, out_b_prime)
 
 class Learner(pl.LightningModule, TransformationBlock):
-    def __init__(self, net, criterion):
+    def __init__(self, net, criterion, pde_name, grid_sizes):
         super().__init__()
-        TransformationBlock.__init__(self)
+        TransformationBlock.__init__(self, pde_name)
         self.net = net
         self.criterion = criterion
 
@@ -82,7 +83,7 @@ class Learner(pl.LightningModule, TransformationBlock):
         self.y_start = self.x_end = self.net.time_history
         self.y_end = self.net.time_history+self.net.time_future
 
-        self.grid_sizes = [[[3, 5], [3, 5]], [[3, 5], [2, 5]]]
+        self.grid_sizes = grid_sizes
 
     def set_grad(self, grad_true, grad_false):
         try:
@@ -193,8 +194,8 @@ class Learner(pl.LightningModule, TransformationBlock):
     def validation_step(self, batch, batch_idx):
         loss, batch, (y_pred, y_true) = self.step(batch, "val")
 
-        if batch_idx == 0:
-            self.log_fig(batch, y_pred, "val")
+        # if batch_idx == 0:
+        #     self.log_fig(batch, y_pred, "val")
 
     def test_step(self, batch, batch_idx):
         loss, batch, (y_pred, y_true) = self.step(batch, "test")

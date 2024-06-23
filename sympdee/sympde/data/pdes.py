@@ -99,15 +99,15 @@ class Pde1(BasePDE):
     #     u_new = u 
     #     return u_new, x_new, t_new
     
-    def _u6(self, u, x, t, eps):
-        """
-        Scaling (6)
-        """
-        eps_u = - eps
-        x_new = x
-        t_new = t
-        u_new = u * torch.exp(eps_u)
-        return u_new, x_new, t_new
+    # def _u6(self, u, x, t, eps):
+    #     """
+    #     Scaling (6)
+    #     """
+    #     eps_u = - eps
+    #     x_new = x
+    #     t_new = t
+    #     u_new = u * torch.exp(eps_u)
+    #     return u_new, x_new, t_new
 
     def __call__(self, t, u, L):
         return 0.1 * self.dxx(u, L)

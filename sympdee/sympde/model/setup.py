@@ -15,7 +15,7 @@ def setup_model(args):
     net = args.net
 
     # space_length = 256
-    space_length = 5
+    space_length = args.space_length
 
     if net == "FNO1d":
         net = FNO1d(time_history=args.time_history, time_future=args.time_future)
@@ -41,10 +41,10 @@ def setup_model(args):
         raise NotImplementedError(f"Network {net} not implemented")
     
     criterion = LpLoss()
-    criterion = [(args.lossweight_y, LpLoss())] + [(args.lossweight_o, nn.MSELoss()) for _ in range(len(args.implicit_layer_dims))]
+    criterion = [(args.lossweight_y, LpLoss())] + [(args.lossweight_o, nn.MSELoss()) for _ in range(len(args.grid_sizes))]
 
     if args.train:
-        model = Learner(net, criterion)
+        model = Learner(net, criterion, args.pde_name, args.grid_sizes)
         return model
     
     # Load model
