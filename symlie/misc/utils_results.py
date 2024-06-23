@@ -148,7 +148,7 @@ def plot_best(ddd_mean, ddd_std):
     d_std = ddd_std.T.reorder_levels(['net', 'n_train', 'lr', None],).sort_index()
 
     d_mins = {}
-    for net_name in ['Vanilla', 'Trained']:
+    for net_name in ['Vanilla', 'Trained', 'Pre-calculated']:
         n_trains = [100, 1000, 10000]
         d_min = pd.concat([d_mean.loc[pd.IndexSlice[net_name, n_train]].min(axis=0) for n_train in n_trains], axis=1)
         d_min.columns = n_trains
@@ -186,8 +186,8 @@ def plot_best(ddd_mean, ddd_std):
 
     handles, labels = ax.get_legend_handles_labels()
     # labels = ['Vanilla network', r'Trained weight processor $\psi_P$']
-    labels = ['Vanilla network', 'ELL network']
-    fig.legend(handles, labels, loc='upper center', bbox_to_anchor=(0.55, 1.15), ncol = 2)
+    labels = ['Vanilla', 'ELL trained', 'ELL analytic']
+    fig.legend(handles, labels, loc='upper center', bbox_to_anchor=(0.55, 1.15), ncol = 3)
 
     # Using axs instead of suplabel for alignment
     axs[0].set_ylabel('Test loss')

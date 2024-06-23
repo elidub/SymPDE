@@ -2,7 +2,7 @@ seed: 1
 
 net: EMLP
 
-criterion: mses
+# criterion: mses
 # lossweight_y: 1.0
 # lossweight_o: 0.0
 

@@ -1,0 +1,26 @@
+seed: 1
+
+net: EMLP
+lossweight_y: 1.0
+lossweight_o: 0.0
+
+# bias: False
+
+
+
+data_dir: ../data/sine1d
+
+grid_size: [1,7]
+noise_std: 0.5
+y_low: 1
+y_high: 3
+
+eps_mult: 0. 0. 1. 0.
+
+max_epochs: 100
+n_train: 100
+n_val: 1000
+n_test: 1000
+
+# logger: None
+tags: [dev, combidev]

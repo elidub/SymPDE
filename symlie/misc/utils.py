@@ -35,3 +35,26 @@ def tensor_operation(x, operation):
 def numpy_operation(x, operation):
     assert isinstance(x, torch.Tensor)
     return torch.from_numpy(operation(x.numpy()))
+
+def print_nested_keys(d, indent=0):
+    """
+    Recursively prints all the keys of a nested dictionary.
+
+    Parameters:
+    d (dict): The nested dictionary whose keys are to be printed.
+    indent (int): The current indentation level (used for pretty printing).
+    """
+    # Iterate through the dictionary items
+    for key, value in d.items():
+        # Print the current key with appropriate indentation
+        print('  ' * indent + str(key))
+        
+        if isinstance(value, dict):
+            # If the value is a dictionary, recurse into it
+            print_nested_keys(value, indent + 1)
+        elif isinstance(value, list):
+            # If the value is a list, iterate through the list items
+            for item in value:
+                if isinstance(item, dict):
+                    # If the item is a dictionary, recurse into it
+                    print_nested_keys(item, indent + 1)

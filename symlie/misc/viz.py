@@ -64,7 +64,7 @@ def plot1d(x, y = None, l=1, savename = None):
 
 
 
-def wb_plot_pred(w, b, title=None,figsize = (4, 3)):
+def wb_plot_pred(w, b, title=None,figsize = (4, 3), colorbar = True, set_axis_off = False, cmap=None):
 
     if b == None:
         wb = w.detach().numpy()
@@ -78,8 +78,13 @@ def wb_plot_pred(w, b, title=None,figsize = (4, 3)):
             b,
         ], dim = 1).detach().numpy()
 
-    plt.figure(figsize=figsize, tight_layout=True)
-    plt.title(title)
-    plt.imshow(wb)
-    plt.colorbar()
+    fig, ax = plt.subplots(figsize=figsize, tight_layout=True)
+
+    im = ax.imshow(wb, cmap = cmap)
+    
+    ax.set_title(title)
+    if set_axis_off: ax.set_axis_off()
+    if colorbar: fig.colorbar(im, ax=ax)
+
     plt.show()
+    return fig

@@ -91,6 +91,7 @@ class Linear(nn.Linear):
         # print('linear.forward', x.shape,self.proj_w(self.weight).shape,self.proj_b(self.bias).shape)
         # return F.linear(x,self.weight,self.bias)
         w, b = self.proj_w(self.weight),self.proj_b(self.bias)
+        print('\n\nFORWARD\n\n', w.shape, b.shape)
         if not self.bias_custom:
             b = None
         return F.linear(x,w,b)
@@ -196,6 +197,8 @@ class EMLP(nn.Module):
         logging.info("Initing EMLP (PyTorch)")
         self.rep_in =rep_in(group)
         self.rep_out = rep_out(group)
+
+        print('print', self.rep_in, self.rep_out)
         
         self.G=group
         # Parse ch as a single int, a sequence of ints, a single Rep, a sequence of Reps

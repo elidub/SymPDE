@@ -76,7 +76,7 @@ class PDEDataset(torch.utils.data.Dataset):
         for aug_method, epsilon in zip(self.pde.aug_methods, epsilons):
             if epsilon > 0:
                 eps = epsilon * (torch.rand(()) - 0.5) if rand else torch.tensor([epsilon])
-                # print(f'Augmenting with {aug_method} with epsilon = {eps}')
+                print(f'Augmenting with {aug_method} with epsilon = {eps}')
                 u, x, t = aug_method(u.clone(), x.clone(), t.clone(), eps)
 
         dx = x[0,1] - x[0, 0]

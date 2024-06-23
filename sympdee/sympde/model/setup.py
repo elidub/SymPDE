@@ -12,9 +12,9 @@ from model.networks.mlp_flat import MLPFlat
 
 def setup_model(args):
     net = args.net
-    assert False
 
-    space_length = 256
+    # space_length = 256
+    space_length = 5
 
     if net == "FNO1d":
         net = FNO1d(time_history=args.time_history, time_future=args.time_future)

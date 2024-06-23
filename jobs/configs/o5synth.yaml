@@ -1,6 +1,4 @@
-seed: 1
-
-net: CombiTrain
+# net: CombiTrain
 
 # criterion: mses
 # lossweight_y: 1.0

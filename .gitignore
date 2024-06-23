@@ -56,3 +56,6 @@ workbench
 
 logs_symlieold/
 data_symlieold/
+sympdee/logs/*
+notebooks_symlie/.,/data/MNIST/raw/*
+sympdee/data/pde_dev/*
