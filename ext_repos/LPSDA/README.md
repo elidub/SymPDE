@@ -63,7 +63,7 @@ Setting any of these values to zero corresponds to switching off the augmentatio
 KS augmentation is controlled via [time translation (bool), space translation (max_x_shift), Galilean translation (max_velocity)]
 Setting any of these values to zero corresponds to switching off the augmentation.
 
-`CUDA_VISIBLE_DEVICES=0 python experiments/train.py --device=cuda:0 --experiment=Burgers --KS_augmentation=1,1.0,0.4 --train_samples=512`
+`CUDA_VISIBLE_DEVICES c=0 python experiments/train.py --device=cuda:0 --experiment=Burgers --KS_augmentation=1,1.0,0.4 --train_samples=512`
 
 ###  Train PDE solvers for Burgers equation
 
