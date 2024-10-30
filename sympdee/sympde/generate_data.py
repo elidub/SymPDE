@@ -21,7 +21,7 @@ def parse_options(notebook = False):
     parser.add_argument("--Nt", type = int, default = 40, help = "Number of temporal grid points")
     parser.add_argument("--tol", type = float, default = 1e-7, help = "Tolerance for ODE solver")
 
-    parser.add_argument("--pde_names", default = ["Pde1","Pde2"], nargs='+', help = "List of name of the PDEs to generate data for")
+    parser.add_argument("--pde_names", default = ["all"], nargs='+', help = "List of name of the PDEs to generate data for")
     parser.add_argument("--n_splits", default=[3,0,0], nargs='+', help="Train, val, test split")
 
     args = parser.parse_args([]) if notebook else parser.parse_args()

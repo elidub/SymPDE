@@ -141,6 +141,16 @@ class Pde4(BasePDE):
 
     def __str__(self) -> str:
         return r"$(e^{u_x} u_{x})_{x}$"
+    
+    def _u2(self, u, x, t, eps):
+        """
+        Space Translate
+        """
+        x_new = x
+        t_new = t
+        # u_new = fourier_shift(u, eps = -eps, dim = -1)
+        u_new = (fourier_shift(u.unsqueeze(0), eps, dim = -1)).squeeze(0)
+        return u_new, x_new, t_new
 
     def __call__(self, t, u, L):
         return self.dx(np.exp(u) * self.dx(u, L), L)
@@ -240,6 +250,16 @@ class Pde13(BasePDE):
 
     def __str__(self) -> str:
         return r"$\left(e^u u_x\right)_x-1$"
+    
+    def _u2(self, u, x, t, eps):
+        """
+        Space Translate
+        """
+        x_new = x
+        t_new = t
+        # u_new = fourier_shift(u, eps = -eps, dim = -1)
+        u_new = (fourier_shift(u.unsqueeze(0), eps, dim = -1)).squeeze(0)
+        return u_new, x_new, t_new
 
     def __call__(self, t, u, L):
         return self.dx(np.exp(u) * self.dx(u, L), L) - 1

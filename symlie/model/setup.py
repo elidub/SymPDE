@@ -5,9 +5,9 @@ import numpy as np
 import pandas as pd
 import torchvision
 
-from emlp.reps import V
-from emlp.groups import Z, O
-from emlp.datasets import O5Synthetic
+# from emlp.reps import V
+# from emlp.groups import Z, O
+# from emlp.datasets import O5Synthetic
 
 from model.learner import CombiLearner
 from model.networks.mlp import MLP, CombiMLP, EMLP_wrapper, EMLP_MLP_wrapper

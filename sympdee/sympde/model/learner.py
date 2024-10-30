@@ -10,6 +10,24 @@ from data.transforms import Transform, TransformRefactored
 from data.utils import d_to_coords
 from data.pdes import PDEs
 
+class SpaceTranslate():
+    def __init__(self, dim, return_shift = False):
+        self.dim = dim
+        self.return_shift = return_shift
+
+    def __repr__(self) -> str:
+        return f'SpaceTranslate_{self.dim}'
+
+    def __call__(self, x, eps):
+        grid_size = x.shape[self.dim]
+        shift = int(grid_size*eps)
+        # shift = int(grid_size*torch.rand((1,), generator=rng).item())
+        x = torch.roll(x, shifts = shift, dims = self.dim)
+        if self.return_shift:
+            shifts = torch.full(size=(len(x),), fill_value=shift)
+            return x, shifts
+        else:
+            return x
 
 class TransformationBlock:
     def __init__(self, pde_name):
@@ -17,6 +35,8 @@ class TransformationBlock:
         print('Init rng')
 
         self.pde = PDEs()[pde_name]
+
+        self.space_translate = SpaceTranslate(dim = 2)
 
     def augment(self, u, shape, dx = 2., dt = 7.5, epsilons = None, rand = False):
         """
@@ -26,22 +46,39 @@ class TransformationBlock:
         batch_size, features = u.shape
         u = u.reshape(batch_size, *shape)
 
-        # Get coordinates
-        X = d_to_coords(u[0], dx, dt)
-        x, t = X.permute(2, 0, 1)[:2]
+        # for aug_method, epsilon in zip(self.pde.aug_methods, epsilons):
+        #     if epsilon:
+        #         u = self.space_translate(u, epsilon)
+        u = self.space_translate(u, epsilons[0])
 
-        # Augment
-        # u, x, t = self.pde.augment(u.clone(), x.clone(), t.clone(), epsilons=epsilons)
-        for aug_method, epsilon in zip(self.pde.aug_methods, epsilons):
-            if epsilon:
-                eps = epsilon * (torch.rand(()) - 0.5) if rand else torch.tensor([epsilon])
-                # print(f'Augmenting with {aug_method} with epsilon = {eps}')
-                u, x, t = aug_method(u.clone(), x.clone(), t.clone(), eps)
 
-        dx_new = x[0,1] - x[0, 0]
-        dt_new = t[1,0] - t[0, 0]
-        assert dx_new == dx, f"{dx_new}, {dx}"
-        assert dt_new == dt, f"{dt_new}, {dt}"
+        # # Get coordinates
+        # X = d_to_coords(u[0], dx, dt)
+        # x, t = X.permute(2, 0, 1)[:2]
+
+        # # Augment
+        # # u, x, t = self.pde.augment(u.clone(), x.clone(), t.clone(), epsilons=epsilons)
+
+
+        # print('\n\n\nPDE AUG AND EPSILONS')
+
+        # print(u.shape)
+        # print(len(self.pde.aug_methods), len(epsilons))
+        # print(self.pde.aug_methods)
+        # print(epsilons)
+
+        # print('Exiting!'); import sys; sys.exit()
+
+        # for aug_method, epsilon in zip(self.pde.aug_methods, epsilons):
+        #     if epsilon:
+        #         eps = epsilon * (torch.rand(()) - 0.5) if rand else torch.tensor([epsilon])
+        #         # print(f'Augmenting with {aug_method} with epsilon = {eps}')
+        #         u, x, t = aug_method(u.clone(), x.clone(), t.clone(), eps)
+
+        # dx_new = x[0,1] - x[0, 0]
+        # dt_new = t[1,0] - t[0, 0]
+        # assert dx_new == dx, f"{dx_new}, {dx}"
+        # assert dt_new == dt, f"{dt_new}, {dt}"
         u = u.reshape(batch_size, features)
 
 
